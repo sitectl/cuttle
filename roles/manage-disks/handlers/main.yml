@@ -1,0 +1,9 @@
+---
+- name: update-initramfs
+  command: update-initramfs -u -k all
+
+- name: start mount-loopback
+  service:
+    name: mount-loopback
+    state: started
+    enabled: yes

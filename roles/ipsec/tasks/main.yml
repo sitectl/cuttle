@@ -1,0 +1,74 @@
+---
+- name: install ipsec packages
+  apt: name={{ ipsec.implementation.package }}
+
+- name: enable ipsec ip fowarding
+  sysctl: name="net.ipv4.ip_forward" value=1 sysctl_set=yes state=present reload=yes
+
+- name: disable accept redirects
+  sysctl: name="net.ipv4.conf.{{ item }}.accept_redirects" value=0 sysctl_set=yes state=present reload=yes
+  with_items:
+    - all
+    - default
+
+- name: disable send redirects
+  sysctl: name="net.ipv4.conf.{{ item }}.send_redirects" value=0 sysctl_set=yes state=present reload=yes
+  with_items:
+    - all
+    - default
+
+- name: write ipsec config file
+  template: src=etc/ipsec.conf dest=/etc/ipsec.conf
+            owner=root group=root mode=0644
+  notify:
+    - restart {{ ipsec.implementation.service }}
+
+- name: write ipsec configs for connections
+  template: src=etc/ipsec.d/connections.conf dest=/etc/ipsec.d/connections.conf
+            owner=root group=root mode=0644
+  notify:
+    - restart {{ ipsec.implementation.service }}
+
+- name: write ipsec secrets
+  template: src=etc/ipsec.secrets dest=/etc/ipsec.secrets
+            owner=root group=root mode=0600
+  notify:
+    - restart {{ ipsec.implementation.service }}
+
+- include: strongswan.yml
+  when: ipsec.implementation.package == "strongswan"
+
+- name: "allow remote ipsec traffic port 500 for {{ item.key }}"
+  ufw: rule=allow to_port=500 proto=udp src={{ item.value.right }}
+  with_dict: "{{ ipsec.connections }}"
+  tags:
+    - firewall
+
+- name: "allow remote ipsec traffic port 4500 for {{ item.key }}"
+  ufw: rule=allow to_port=4500 proto=udp src={{ item.value.right }}
+  with_dict: "{{ ipsec.connections }}"
+  tags:
+    - firewall
+
+- name: set nat rules
+  blockinfile:
+    dest: /etc/ufw/before.rules
+    marker: "# <-- {mark} ANSIBLE MANAGED BLOCK -->"
+    block: "{{ ipsec.nat_rules }}"
+    insertafter: "^# don't delete the 'COMMIT' line or these rules won't be processed"
+  when: ipsec.nat_enabled|default("False")|bool and ipsec.nat_rules
+  tags:
+    - firewall
+
+- meta: flush_handlers
+
+- name: ensure {{ ipsec.implementation.service }} is running
+  service: name={{ ipsec.implementation.service }} state=started enabled=yes
+
+- include: checks.yml
+  when: sensu is defined and sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

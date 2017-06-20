@@ -1,0 +1,11 @@
+---
+ipsec:
+  nat_enabled: False
+  vti_interface: vti0
+  implementation: 
+    package: openswan
+    service: ipsec
+  config: {} # see envs/examples/ipsec/host_vars for example
+  connections: {} # see envs/examples/ipsec/host_vars for example
+  sharedkeys: {} # see envs/examples/ipsec/host_vars for example
+  nat_rules: # see envs/examples/ipsec/host_vars for example

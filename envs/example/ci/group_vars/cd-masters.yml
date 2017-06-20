@@ -1,0 +1,24 @@
+---
+jenkins:
+  apache:
+    github_hooks_only: true
+  ssh_keys:
+    - name: id_rsa
+      key: '{{ cd.ssh.private_key }}'
+
+cd:
+  secrets:
+    stackrcs:
+      - name: mycloud
+        os_username: mycloud-user
+        os_password: asdf
+        os_project_name: mycloud
+        os_project_id: asdfghjkl
+        os_auth_url: https://mycloud.local:5000/v2.0
+        os_availability_zone: nova
+        os_storage_url: https://mycloud.local:8090/v1
+
+ci:
+  users:
+    jenkins:
+      home: /var/lib/jenkins

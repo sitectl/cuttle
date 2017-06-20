@@ -1,0 +1,29 @@
+---
+- name: devpi use local server
+  command: "{{ pypi_mirror.virtualenv }}/bin/devpi use http://127.0.0.1:4040/root/pypi"
+
+- name: check if root password is set
+  command: "{{ pypi_mirror.virtualenv }}/bin/devpi login root --password ''"
+  register: devpi
+  failed_when: False
+
+- name: set root password
+  command: "{{ pypi_mirror.virtualenv }}/bin/devpi user -m root password='{{ pypi_mirror.root_password }}'"
+  when: devpi.rc == 0
+
+- name: set protected repo users
+  htpasswd: name={{ item.value.username }} password={{ item.value.password }}
+            path={{ pypi_mirror.htpasswd_location }}/.htpasswd
+  when: item.value.password is defined
+  with_dict: "{{ pypi_mirror.repos }}"
+
+- name: create user management script
+  template: src=pypi_mirror/devpi_users.sh
+            dest=/root/devpi_users.sh
+            mode=0700 owner=root
+
+- name: run user management script
+  command: /root/devpi_users.sh
+
+- name: remove user management script
+  file: dest=/root/devpi_users.sh state=absent

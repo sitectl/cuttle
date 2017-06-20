@@ -1,0 +1,368 @@
+{
+  "id": null,
+  "title": "Cleversafe SLA Dashboard",
+  "originalTitle": "Cleversafe SLA Dashboard",
+  "tags": [],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "hideControls": false,
+  "sharedCrosshair": false,
+  "rows": [
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "decimals": 0,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "leftYAxisLabel": "percent",
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 22,
+          "isNew": true,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": true,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [
+            {
+              "alias": "one",
+              "yaxis": 1
+            }
+          ],
+          "span": 12,
+          "stack": false,
+          "steppedLine": true,
+          "targets": [
+            {
+              "refId": "A",
+              "target": "aliasSub(summarize(scale(stats.cleversafe.$cleversafe_instance.status, 100), '$interval', 'avg', false), '.*\\.(\\w+)\\.(\\w+)\\.status,.*', '\\1.\\2')"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Uptime Percent for $cleversafe_instance (interval: $interval)",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "percent",
+            "short"
+          ]
+        }
+      ],
+      "title": "Uptime Status"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "decimals": 3,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "leftYAxisLabel": "seconds",
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 23,
+          "isNew": true,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [
+            {
+              "alias": "one",
+              "yaxis": 1
+            }
+          ],
+          "span": 12,
+          "stack": false,
+          "steppedLine": true,
+          "targets": [
+            {
+              "refId": "A",
+              "target": "aliasSub(stats.cleversafe.$cleversafe_instance.time, '.*\\.(\\w+)\\.(\\w+)\\.time$', '\\1.\\2')"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Response Time for $cleversafe_instance",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "s",
+            "short"
+          ]
+        }
+      ],
+      "title": "Response Time"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "decimals": 0,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": 600,
+            "leftMin": 110,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 24,
+          "isNew": true,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [
+            {
+              "alias": "one",
+              "yaxis": 1
+            }
+          ],
+          "span": 12,
+          "stack": false,
+          "steppedLine": true,
+          "targets": [
+            {
+              "refId": "A",
+              "target": "aliasSub(stats.cleversafe.$cleversafe_instance.code, '.*\\.(\\w+)\\.(\\w+)\\.code$', '\\1.\\2')"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "HTTP Status Code (200: OK, Greater than 3xx: Error)",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        }
+      ],
+      "title": "HTTP Code"
+    }
+  ],
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ],
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "allFormat": "wildcard",
+        "current": {
+          "text": "cleversafe-company1",
+          "value": "cleversafe-company1"
+        },
+        "datasource": null,
+        "includeAll": false,
+        "multi": false,
+        "multiFormat": "wildcard",
+        "name": "cleversafe_instance",
+        "options": [
+          {
+            "text": "cleversafe",
+            "value": "cleversafe",
+            "selected": false
+          },
+          {
+            "text": "cleversafe-company1",
+            "value": "cleversafe-company1",
+            "selected": true
+          }
+        ],
+        "query": "stats.cleversafe.*",
+        "refresh": true,
+        "type": "query"
+      },
+      {
+        "allFormat": "glob",
+        "auto": true,
+        "auto_count": 50,
+        "current": {
+          "text": "auto",
+          "value": "$__auto_interval"
+        },
+        "datasource": null,
+        "includeAll": false,
+        "name": "interval",
+        "options": [
+          {
+            "text": "auto",
+            "value": "$__auto_interval"
+          },
+          {
+            "text": "5 minutes",
+            "value": "5m"
+          },
+          {
+            "text": "15 minutes",
+            "value": "15m"
+          },
+          {
+            "text": "30 minutes",
+            "value": "30m"
+          },
+          {
+            "text": "1 hour",
+            "value": "1h"
+          },
+          {
+            "text": "6 hours",
+            "value": "6h"
+          },
+          {
+            "text": "12 hours",
+            "value": "12h"
+          },
+          {
+            "text": "1 day",
+            "value": "1d"
+          },
+          {
+            "text": "1 week",
+            "value": "1w"
+          },
+          {
+            "text": "1 month",
+            "value": "1month"
+          }
+        ],
+        "type": "interval"
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "refresh": false,
+  "schemaVersion": 8,
+  "version": 7,
+  "links": []
+}

@@ -1,0 +1,30 @@
+---
+- name: install sensu
+  apt:
+    name: "sensu={{ sensu.version }}" 
+    state: present
+    force: yes
+
+- name: sensu sudoers
+  template: src=etc/sudoers.d/sensu
+            dest=/etc/sudoers.d/sensu
+            owner=root
+            group=root
+            mode=0440
+
+- name: sensu service script
+  template: src=etc/init.d/sensu-service
+            dest=/etc/init.d/sensu-service
+            owner=root mode=0755
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

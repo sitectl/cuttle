@@ -1,0 +1,73 @@
+---
+common:
+  ssh:
+    allow_from:
+      - any
+    ssh_host_rsa_key:
+      public: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDLVohq7MeGCq4kU9NBPNk/XUbK0W3sy6GEbapsGYi1qxvx+7gNpYblfUtwrfMyXp1ICuJei8NoXkpXsgnC4EOmPU1HBnwkyVXJmyaBn4u19LjZQ2KrmrH0LC8d3mf3fSTFrj27QHbJk48pnVo7NkgM3ImKXEtUvtrieBYY88lFyHZIW4WuFkMlnmHaxSpSiVBuDcemxzHD0MieHkB2pbA84f2LFI2Gmd1248vnmAC65Qce35ngfkpzktgnhl0Q7CaOY16tdJog0FBsjXtwfUf0nruTKkAwWtbj+g+Rc4Vh8DQ+LqYL7k+tMD/wc6WZ0wp4py9bouSsL0pbwiMCxsyV
+      private: |
+        -----BEGIN RSA PRIVATE KEY-----
+        MIIEpAIBAAKCAQEAy1aIauzHhgquJFPTQTzZP11GytFt7MuhhG2qbBmItasb8fu4
+        DaWG5X1LcK3zMl6dSAriXovDaF5KV7IJwuBDpj1NRwZ8JMlVyZsmgZ+LtfS42UNi
+        q5qx9CwvHd5n930kxa49u0B2yZOPKZ1aOzZIDNyJilxLVL7a4ngWGPPJRch2SFuF
+        rhZDJZ5h2sUqUolQbg3Hpscxw9DInh5AdqWwPOH9ixSNhpndduPL55gAuuUHHt+Z
+        4H5Kc5LYJ4ZdEOwmjmNerXSaINBQbI17cH1H9J67kypAMFrW4/oPkXOFYfA0Pi6m
+        C+5PrTA/8HOlmdMKeKcvW6LkrC9KW8IjAsbMlQIDAQABAoIBAQDAZemAmviTuWlb
+        EEH1GZlKXn0MjauggnEa+BVoYaS8mOJBTnex2ezRGoQWY1GZWHMj5sCYy1AjYgyf
+        ++NGlKMOGjUTvmwa9rKIp5iA0DEHAz8gvKURULePHXubnITtZWk07xCULIP5afjt
+        XGkzW8JDAS3XUEsrLce4v/3QsGPC9SIO5n4Rior3yr6BCAEp7ZEFPd85tyEeYgAA
+        dkdcegDKg1OdtLll2atTZQywXO9OFNwtuMjonZ5Xi9gKXDh3tNbwby1B8GUNl12u
+        PhgYJpCkRKJ2OK/SGJO/mv79OlEbR+kRuSqUoYtwK4cqcWdqCt23L5jqeGL3AfDp
+        j7AW7KKlAoGBAOvFzQb4azzwcDmeo+WIGOiQHrysKgoCFCoiioJSxvLAxf/LZRyE
+        By8rOQ5qZRafCMrm75rX/l8E5468r/es8KZyxofL3QnAIYxn46Yn97WrgwAMj/zb
+        QJewHxr38xtcPH1Y/oIZIDaoKT7LgvyxmgVbrEnogNN3cTjCNB65Q05LAoGBANzI
+        YWKZk5s/CSZdndsaOlRP3Oa1nK1Wk/lwjJ0n8GdwzjnT6Z8DcZqrXAFB7SKc4JKv
+        /iMd9NdvI5IVM/1MxqbBgPdkHz+z1ljCIwSa397ez81EBEHG5s8U0M9NusMc1kEl
+        MTZoLA/KOVf0TV6e4u78PLrYbH2LGk21vYS2QASfAoGBALPF7843zvT5VGjq6IeU
+        3YE+muE72RYmfZ+fFMPIQEBK8u5W9TLoDN5Pc8LlJ003WCn2Ko6D0UY8ZB93Cims
+        6RXRgEV9EX5kzG/Vq0Q/R2Zzb4CzE3s25qqCtUUH+ItNKiZdnDow1Fo4oLJr1OW+
+        ufUJ8HWuXcRgV6lykvE2S/a/AoGAPjVvyzp+rsWqLFdAfVX8jXkbQx51ERpOA4DE
+        /hscz+inEwA02Ys83VnfSLNsv834MRzJvNdZ/8HfAfBbf8m8R4xKbGqXq3lesg+x
+        kkCZR9D8OFgr4uTKcBrrYx4Bu6xKanyySyQ7Fg/i7Hd3vWuDgdcsvXDx0MX7GV5W
+        EijQDP0CgYBdz5VmUa8bkKqQSVjfKJVX5oBtw+FasHx3LSogkCUPmJhinznSSIs/
+        u5mTA8uK+HG5nMvzhaJdr6nMe2AtQB1rBDWceTmL34rhnDajyqWtmTw9fWWlnsZR
+        rbgwnNnBoiK6Osp9KK9fSOptvcrjT/Y3eYlAsZE+JFonK5ofXPm8/Q==
+        -----END RSA PRIVATE KEY-----
+
+_users:
+  ### TODO: this kills the CI, specifically due to how keys get handled.
+  ### manage_authorized_keys: True
+  manage_authorized_keys: False
+
+manage_disks:
+  enabled: True
+  defaults:
+    pesize: 4
+  loopback:
+    enabled: True
+    file: /opt/loopback
+    device: /dev/loop2
+    size: 1G
+  volume_groups:
+    - name: test
+      pvs:
+        - /dev/loop2
+  logical_volumes:
+    - name: test
+      volume_group: test
+      size: 500m
+      filesystem: ext4
+#      filesystem_opts:
+      mount_point: /mnt/test
+#      mount_opts:
+  luks_volumes:
+    - name: crypttest
+      volume_group: test
+      size: 500m
+      filesystem: ext4
+      mount_point: /mnt/crypttest
+      mount_opts: defaults
+      password_file: none
+      crypttab_opts: luks
+
+luks_passphrase: paulczar

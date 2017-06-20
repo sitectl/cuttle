@@ -1,0 +1,52 @@
+---
+- name: create .htpasswd
+  htpasswd: name={{ item.username }} password={{ item.password }}
+            path="{{ netdata_dashboard.mirror_location }}/{{ item.path }}/.htpasswd"
+  with_items: "{{ netdata_dashboard.auth }}"
+
+- name: create .htaccess
+  template: src=etc/apache2/htaccess
+            dest="{{ netdata_dashboard.mirror_location }}/{{ item.path }}/.htaccess"
+  with_items: "{{ netdata_dashboard.auth }}"
+
+- name: create netdata dashboard path
+  file:
+    dest: "{{ netdata_dashboard.path }}"
+    state: directory
+    recurse: true
+
+- name: install netdata dashboard
+  template:
+    src: var/www/html/index.html
+    dest: "{{ netdata_dashboard.path }}/index.html"
+  tags: foo
+
+- name: install apache healthcheck file
+  template:
+    src: var/www/html/health_check
+    dest: "{{ netdata_dashboard.path }}/health_check"
+  when: netdata_dashboard.health_check_enabled|default('False')|bool
+
+- include: apache.yml
+  when: netdata_dashboard.apache.enabled|bool
+
+- name: allow netdata dashboard traffic
+  ufw: rule=allow
+       to_port={{ item.port }}
+       src={{ item.src }}
+       proto={{ item.protocol }}
+  with_items: "{{ netdata_dashboard.firewall }}"
+  tags:
+    - firewall
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

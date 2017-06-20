@@ -1,0 +1,138 @@
+---
+common:
+  firewall:
+    friendly_networks: []
+  sysdig:
+    enabled: False
+
+sensu:
+  enabled: False
+
+collectd:
+  enabled: False
+
+apache:
+  listen:
+    - 80
+    - 443
+    - 81
+    - 444
+    - 82
+    - 445
+    - 83
+    - 446
+
+apt_mirror:
+  protected_repos: ['packagecloud.io']
+  repositories:
+    hwraid:
+      key_url: http://hwraid.le-vert.net/debian/hwraid.le-vert.net.gpg.key
+      type: deb
+      url: http://hwraid.le-vert.net/ubuntu
+      username: apt
+      password: apt
+      distributions:
+        - precise
+      components:
+        - main
+    aptly:
+      url: http://repo.aptly.info/
+      key_url: http://pgp.mit.edu/pks/lookup?op=get&search=0xE083A3782A194991
+      distributions:
+        - squeeze
+      components:
+        - main
+      architectures:
+        - deb
+        - deb-i386
+  apache:
+    port: 80
+    ssl:
+      enabled: True
+      port: 443
+  firewall:
+    - port: 80
+      protocol: tcp
+      src: 0.0.0.0/0
+    - port: 443
+      protocol: tcp
+      src: 0.0.0.0/0
+
+pypi_mirror:
+  repos:
+    bluebox_private:
+      username: bluebox
+      password: nopenopenope
+      index: private
+      mirror:
+        url: https://fdec6132ec19dc59011548774d514af7005c494495107ff9:@packagecloud.io/blueboxcloud
+        cache_expiry: 300
+  apache:
+    port: 81
+    ip: "{{ private_ipv4.address }}"
+    ssl:
+      enabled: True
+      port: 444
+  firewall:
+    - port: 81
+      protocol: tcp
+      src: 0.0.0.0/0
+    - port: 444
+      protocol: tcp
+      src: 0.0.0.0/0
+
+gem_mirror:
+  ip: 127.0.0.1
+  port: 9292
+  apache:
+    port: 82
+    ip: "{{ private_ipv4.address }}"
+    ssl:
+      enabled: True
+      port: 445
+  firewall:
+    - port: 82
+      protocol: tcp
+      src: 0.0.0.0/0
+    - port: 445
+      protocol: tcp
+      src: 0.0.0.0/0
+
+file_mirror:
+  files:
+    - name: 'ubuntu-14.04-server-cloudimg-amd64.manifest'
+      path: 'ubuntu'
+      url: 'http://cloud-images.ubuntu.com/releases/14.04/release/ubuntu-14.04-server-cloudimg-amd64.manifest'
+      #sha256sum: 88a864aae6f67ec7c5c5baeda973ee25054c5fcfd570acbe25ef4c655e8b01ee
+  auth:
+    - path: ubuntu
+      username: ubuntu
+      password: ubuntu
+  apache:
+    ip: "{{ private_ipv4.address }}"
+    port: 83
+    ssl:
+      enabled: True
+      port: 446
+  firewall:
+    - port: 83
+      protocol: tcp
+      src: 0.0.0.0/0
+    - port: 446
+      protocol: tcp
+      src: 0.0.0.0/0
+
+squid:
+  port: 3128
+  allowed_networks:
+    - 172.16.1.115/24
+    - 0.0.0.0/0
+  proxy_domains:
+    - apt-mirror.openstack.blueboxgrid.com
+    - file-mirror.openstack.blueboxgrid.com
+    - pypi-mirror.openstack.blueboxgrid.com
+    - gem-mirror.openstack.blueboxgrid.com
+    - github.com
+  blacklist_packages: []
+  cache_dir:
+    size: 40000

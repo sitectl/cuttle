@@ -1,0 +1,6 @@
+---
+- name: mailutils package
+  apt: pkg=mailutils
+
+- name: add percona-xtrabackup.sh to cron.daily
+  template: src=percona-xtrabackup.sh dest=/etc/cron.daily/percona-xtrabackup owner=root group=root mode=0755

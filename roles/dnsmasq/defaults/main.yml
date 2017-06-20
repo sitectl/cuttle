@@ -1,0 +1,19 @@
+---
+dnsmasq:
+  interface: ~
+  except_interface: ~
+  server: "{{ private_ipv4.address }}"
+  addn_hosts: []
+  dns:
+    servers:
+      - 8.8.8.8
+      - 8.8.4.4
+    hosts:
+      - name: test
+        ip: 127.0.0.1
+  firewall: []
+# EXAMPLE
+#    - port: 53
+#      src: 0.0.0.0
+#      to_ip: any
+#      proto: any

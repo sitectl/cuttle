@@ -1,0 +1,35 @@
+- name: install elasticsearch curator
+  pip: name=elasticsearch-curator version=4.1.2
+  register: result
+  until: result|succeeded
+  retries: 5
+
+- name: install curator symlink
+  file: state=link
+        src=/usr/local/bin/curator
+        dest=/usr/bin/curator
+
+- name: configure curator
+  template: src=etc/elasticsearch/curator.yml
+            dest=/etc/elasticsearch/curator.yml
+
+- name: configure curator actions
+  template: src=etc/elasticsearch/action.yml
+            dest="/etc/elasticsearch/{{ item.key }}.yml"
+  when: "item.value.enabled|bool"
+  with_dict: "{{ elasticsearch.curator.actions }}"
+
+- name: remove old crontab tasks
+  cron: name=curator-{{ item }} state=absent
+  with_items:
+    - delete
+    - close
+    - optimize
+
+- name: install cron tasks
+  cron: name=curator-{{item.key}} state={{ item.state|default('present') }}
+        hour="{{ item.value.hour|default('0') }}" minute="{{ item.value.minute|default('0') }}"
+        user="root" cron_file="curator"
+        job="curator --config /etc/elasticsearch/curator.yml /etc/elasticsearch/{{ item.key }}.yml"
+  when: "item.value.enabled|bool"
+  with_dict: "{{ elasticsearch.curator.actions }}"

@@ -1,0 +1,34 @@
+---
+- name: create netdata user
+  user: name=netdata comment=netdata shell=/bin/false
+        system=yes home=/nonexistent
+
+- name: install netdata
+  apt:
+    package: https://github.com/IBM/cuttle/releases/download/packages/netdata_1.5.1_amd64.deb
+
+- name: ensure netdata service is running
+  service:
+    name: netdata
+    enabled: true
+    state: started
+
+- name: allow access to netdata web
+  ufw: rule=allow to_port=19999 proto=tcp src={{ item }}
+  with_items: "{{ netdata.firewall.allow_from }}"
+  tags:
+    - firewall
+
+- meta: flush_handlers
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

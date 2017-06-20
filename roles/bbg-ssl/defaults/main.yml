@@ -1,0 +1,6 @@
+---
+bbg_ssl:
+  intermediate: ~
+  cert: ~
+  key: ~
+  ca_cert: ~

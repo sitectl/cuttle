@@ -1,0 +1,77 @@
+# {{ ansible_managed }}
+
+{% macro virtualhost() %}
+    ServerAdmin openstack@bluebox.net
+    ServerName {{ apt_mirror.apache.servername }}
+    ServerAlias {{ apt_mirror.apache.serveraliases|join(" ") }}
+    DocumentRoot {{ apt_mirror.path }}/mirror
+    ErrorLog ${APACHE_LOG_DIR}/apt_mirror-error.log
+    CustomLog ${APACHE_LOG_DIR}/apt_mirror-access.log combined
+    FileETag MTime Size
+    Header set Cache-Control public
+    Alias /keys {{ apt_mirror.path }}/keys
+
+    <Directory {{ apt_mirror.path }}/mirror>
+       Options +Indexes +SymLinksIfOwnerMatch
+       AllowOverride None
+       Require all granted
+    </Directory>
+
+    <Directory {{ apt_mirror.path }}/keys>
+       Options Indexes
+       AllowOverride None
+       Require all granted
+    </Directory>
+
+{% for key,value in (apt_mirror.debmirror.repositories|combine(apt_mirror.debmirror.distros)).iteritems()|sort %}
+{% set mirror_path = apt_mirror.path ~"/mirror/"~ key %}
+     Alias /{{ key }}/{{ value.path.rstrip("/") }} {{ mirror_path }}
+{% if value.aliases is defined %}
+{% for value in value.aliases %}
+     Alias {{ value.rstrip("/") }} {{ mirror_path }}
+{% endfor %}
+{% endif %}
+     Alias /{{ key }} {{ mirror_path }}
+     Alias /{{ value.host }}/{{ value.path.rstrip("/") }} {{ mirror_path }}
+     <Directory {{ mirror_path }}>
+{% if value.username is defined and value.password is defined %}
+       Options +Indexes +SymLinksIfOwnerMatch
+       AuthType Basic
+       AuthName "Restricted Content"
+       AuthUserFile {{ apt_mirror.htpasswd_location }}/{{ key }}.htpasswd
+       Require valid-user
+{% else %}
+       Options +Indexes +SymLinksIfOwnerMatch
+       Require all granted
+{% endif %}
+    </Directory>
+{% endfor %}
+{% endmacro %}
+
+{% if apt_mirror.apache.ssl.enabled|bool and apt_mirror.apache.http_redirect|bool %}
+<VirtualHost {{ apt_mirror.apache.ip }}:{{ apt_mirror.apache.port }}>
+    ServerName {{ apt_mirror.apache.servername }}
+    ServerAlias {{ apt_mirror.apache.serveraliases|join(" ") }}
+    RewriteEngine on
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}:{{ apt_mirror.apache.ssl.port }}$1 [R=301,L]
+</VirtualHost>
+{% else %}
+<VirtualHost {{ apt_mirror.apache.ip }}:{{ apt_mirror.apache.port }}>
+{{ virtualhost() }}
+</VirtualHost>
+{% endif %}
+
+{% if apt_mirror.apache.ssl.enabled|bool %}
+<VirtualHost {{ apt_mirror.apache.ssl.ip }}:{{ apt_mirror.apache.ssl.port }}>
+    {{ apache.ssl.settings }}
+    SSLCertificateFile /etc/ssl/certs/{{ apt_mirror.apache.ssl.name|default('sitecontroller') }}.crt
+    SSLCertificateKeyFile /etc/ssl/private/{{ apt_mirror.apache.ssl.name|default('sitecontroller') }}.key
+{% if bbg_ssl.intermediate or apt_mirror.apache.ssl.intermediate %}
+    SSLCertificateChainFile /etc/ssl/certs/{{ apt_mirror.apache.ssl.name|default('sitecontroller') }}-intermediate.crt
+{% endif %}
+{% else %}
+<VirtualHost {{ apt_mirror.apache.ip }}:{{ apt_mirror.apache.port }}>
+{% endif %}
+{{ virtualhost() }}
+</VirtualHost>

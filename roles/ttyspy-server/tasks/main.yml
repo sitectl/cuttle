@@ -1,0 +1,73 @@
+---
+- name: install ttyspy server
+  apt:
+    deb: "{{ ttyspy.server.package }}"
+
+- name: ttyspy transcript directory
+  file:
+    path: "{{ ttyspy.server.transcript_path }}"
+    owner: ttyspy
+    group: ttyspy
+    state: directory
+    mode: 0755
+
+- name: ttyspy server directory
+  file:
+    path: /etc/ttyspy/server
+    owner: ttyspy
+    group: ttyspy
+    state: directory
+    mode: 0750
+
+- name: install server certs & key
+  template:
+    src: "{{ item }}"
+    dest: /etc/ttyspy/server
+    owner: ttyspy
+    group: ttyspy
+    mode: 0640
+  with_fileglob: ../templates/etc/ttyspy/server/*
+
+- name: allow ttyspy traffic
+  ufw:
+    rule: allow
+    to_port: "{{ ttyspy.server.port }}"
+    src: "{{ item }}"
+    proto: tcp
+  with_items: "{{ ttyspy.server.firewall.friendly_networks }}"
+  tags:
+    - firewall
+
+- name: ttyspy-receiver service
+  upstart_service:
+    name: ttyspy-receiver
+    cmd: /usr/bin/ttyspy_receiver
+    args: "-ca /etc/ttyspy/server/ca.pem
+           -cert /etc/ttyspy/server/cert.pem
+           -key /etc/ttyspy/server/key.pem
+           -store {{ ttyspy.server.transcript_path }}"
+    user: ttyspy
+  notify: restart ttyspy-receiver
+
+- meta: flush_handlers
+
+- name: start ttyspy-receiver service
+  service:
+    name: ttyspy-receiver
+    state: started
+    enabled: yes
+
+- include: compression.yml
+  tags: ttyspy-compression
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

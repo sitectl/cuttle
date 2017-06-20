@@ -1,0 +1,4 @@
+---
+- name: install docker process check
+  sensu_check_dict: name="check-docker-process" check="{{ sensu_checks.docker.check_docker_process }}"
+  notify: restart sensu-client missing ok

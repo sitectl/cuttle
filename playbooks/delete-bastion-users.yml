@@ -1,0 +1,54 @@
+# Use this playbook to delete a user from bastion hosts
+#
+# ex: ursula ../sitecontroller-envs/control-wdc04 playbooks/delete-bastion-users.yml --ask-su-pass -e "username=zsais"
+---
+- name: delete bastion users
+  hosts: bastion
+  tasks:
+
+    - fail:
+        msg: "Please specify username with -e"
+      run_once: true
+      when: username is undefined
+
+    - name: warn user
+      run_once: true
+      pause:
+        prompt: "Warning: This action is destructive. Type 'dangerous' to continue"
+      register: warning
+
+    - name: fail if user does not accept warning
+      run_once: true
+      fail:
+        msg: Play cancelled
+      when: warning.user_input != "dangerous"
+
+    - name: kill processes belonging to users
+      shell: "pkill -u {{ username }}"
+      register: pkill_result
+      failed_when: pkill_result.rc > 2
+
+    - name: remove yubiauth files
+      file:
+        path: "/var/yubiauth/users/{{ username }}"
+        state: absent
+
+    - name: remove users from yubiauthd database
+      command: sqlite3 /var/lib/yubiauthd.sqlite
+               "DELETE FROM identities WHERE username LIKE '{{ username }}';"
+
+    - name: remove users from sshagentmux database
+      command: sqlite3 /root/authorization_proxy.db
+               "DELETE FROM authorizations WHERE username LIKE '{{ username }}';"
+
+    - name: remove users from sudoers
+      lineinfile:
+        dest: /etc/sudoers
+        state: absent
+        regexp: "^{{ username }}"
+
+    - name: delete users from system
+      user:
+        name: "{{ username }}"
+        state: absent
+        remove: no

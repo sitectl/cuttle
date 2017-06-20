@@ -1,0 +1,120 @@
+---
+apache:
+  listen:
+    - 80
+    - 443
+    - 1080
+    - 10443
+
+elasticsearch:
+  config:
+    action.disable_delete_all_indices: true
+    bootstrap.mlockall: true
+    cluster.name: elk_example
+    cluster.routing.allocation.node_concurrent_recoveries: 4
+    cluster.routing.allocation.node_initial_primaries_recoveries: 4
+    discovery.zen.minimum_master_nodes: "{{ (groups['elasticsearch']|length / 2)|int + (groups['elasticsearch']|length % 2 > 0)|int }}"
+    discovery.zen.ping.multicast.enabled: false
+    discovery.zen.ping.unicast.hosts: ["{{ hostvars[groups['elasticsearch'][0]][private_interface]['ipv4']['address']|default('172.16.1.104') }}"]
+    gateway.expected_nodes: "{{ groups['elasticsearch']|length }}"
+    gateway.recover_after_nodes: "{{ (groups['elasticsearch']|length / 2)|int + (groups['elasticsearch']|length % 2 > 0)|int }}"
+    index.number_of_replicas: 0
+    indices.breaker.fielddata.limit: 75%
+    indices.fielddata.cache.expire: 1w
+    indices.fielddata.cache.size: 60%
+    indices.recovery.concurrent_streams: 4
+    indices.recovery.max_bytes_per_sec: 75mb
+    indices.store.throttle.max_bytes_per_sec: 150mb
+    node.name: "{{ ansible_hostname }}"
+    network.publish_host: "{{ private_ipv4.address }}"
+    path.conf: /etc/elasticsearch
+    path.data: /var/lib/elasticsearch
+    path.logs: /var/log/elasticsearch
+    path.work: /tmp/elasticsearch
+  firewall:
+    - port: 9200
+      src:
+        - "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+    - port: 9300
+      src:
+        - "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+  heap_size: 512m
+  restart_on_config: true
+  curator:
+    tasks:
+      - action: delete
+        older: 90
+        hour: 2
+      - action: close
+        older: 90
+        hour: 2
+        minute: 15
+      - action: optimize
+        params: "--max_num_segments 1"
+        older: 2
+        hour: 3
+        minute: 0
+
+openid_proxy:
+  http_redirect: true
+  apache:
+    ssl:
+      enabled: true
+      name: openid_proxy
+  sslproxy:
+    enabled: true
+  location_prefixes: []
+  locations:
+    cleversafe:
+      proxy: https://10.143.14.201/
+      url: "/cleversafe/"
+      config:
+        - ProxyPassReverseCookiePath: "/ /cleversafe/qa/"
+        - RequestHeader: "set X-Forwarded-Path /cleversafe/qa/"
+        - RequestHeader: 'set Authorization "Basic YWRtaW46U200cnRjbDB1ZCE="'
+    ipmi:
+      proxy: "http://127.0.0.1:8091/"
+      url: "/ipmi/"
+      config:
+        - RequestHeader: "set X-Proxy-Remote-User %{REMOTE_USER}e env=REMOTE_USER"
+    kibana:
+      proxy: "http://127.0.0.1:5601/"
+      url: "/kibana/"
+    es:
+      proxy: "http://127.0.0.1:9200/"
+    hq:
+      proxy: "http://127.0.0.1:9200/_plugin/hq/"
+      url: "/hq/?url=http://elk01.local/es/"
+    head:
+      proxy: "http://127.0.0.1:9200/_plugin/head/"
+      url: "/head/?base_uri=http://elk01.local/es/"
+    sensu:
+      proxy: "http://monitor01.local:3000/"
+      url: "/sensu/"
+    flapjack:
+      proxy: "http://monitor01.local:3080/"
+      url: "/flapjack/"
+    flapjack_api:
+      proxy: "http://monitor01.local:3081/"
+    grafana:
+      proxy: "http://{{ hostvars[groups['grafana'][0]][private_interface]['ipv4']['address']|default('172.16.1.103') }}:3001/"
+      url: "/grafana/"
+      config:
+        - RequestHeader: unset Authorization
+  firewall:
+    - port: 80
+      protocol: tcp
+      src:
+        - "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+    - port: 443
+      protocol: tcp
+      src:
+        - "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+    - port: 1080
+      protocol: tcp
+      src:
+        - 0.0.0.0/0
+    - port: 10443
+      protocol: tcp
+      src:
+        - 0.0.0.0/0

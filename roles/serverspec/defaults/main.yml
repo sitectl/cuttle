@@ -1,0 +1,11 @@
+---
+serverspec:
+  enabled: True
+  version: 2.37.1
+  version_locked_gems:
+    - name: net-ssh
+      version: 2.9.4
+    - name: specinfra
+    - name: rspec-support
+    - name: rspec-core
+    - name: rspec

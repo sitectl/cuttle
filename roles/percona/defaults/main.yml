@@ -1,0 +1,35 @@
+---
+database:
+  users: {}
+
+percona:
+  replication: False
+  root_password: asdf
+  galera_version: 3.x
+  client_version: 5.6
+  server_version: 5.6
+  sst_auth_user: sst_admin
+  sst_auth_password: asdf
+  wsrep_cluster_name: ursula_infra
+  ip: "{{ private_ipv4.address }}"
+  firewall:
+    - port: 3306
+      src: "{{ groups['percona'] | map('extract', hostvars, [private_interface, 'ipv4', 'address']) | list }}"
+    - port: 4010
+      src: "{{ groups['percona'] | map('extract', hostvars, [private_interface, 'ipv4', 'address']) | list }}"
+    - port: 4011
+      src: "{{ groups['percona'] | map('extract', hostvars, [private_interface, 'ipv4', 'address']) | list }}"
+    - port: 4444
+      src: "{{ groups['percona'] | map('extract', hostvars, [private_interface, 'ipv4', 'address']) | list }}"
+  logs:
+    # See logging-config/defaults/main.yml for filebeat vs. logstash-forwarder example
+    - paths:
+        - /var/lib/mysql/mysql-error.log
+      fields:
+        tags: mysql,percona
+    - paths:
+        - /var/log/garbd.log
+      fields:
+        tags: mysql,percona,garbd
+  logging:
+    forwarder: filebeat

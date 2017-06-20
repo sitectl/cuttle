@@ -1,0 +1,70 @@
+---
+- name: Install java
+  apt: name=openjdk-7-jre
+
+- name: jenkins ssh directory
+  file: path=~jenkins/.ssh state=directory mode=0700 owner=jenkins group=jenkins
+
+- name: install ssh keys
+  copy:
+    dest: '~jenkins/.ssh/{{ item.name }}'
+    mode: '0600'
+    content: '{{ item.key }}'
+    owner: jenkins
+    group: jenkins
+  with_items: '{{ jenkins.ssh_keys }}'
+
+- name: set up log rotation for jenkins
+  logrotate: name=jenkins path=/var/log/jenkins/*.log
+  args:
+    options:
+      - "{{ jenkins.logrotate.frequency }}"
+      - "rotate {{ jenkins.logrotate.rotations }}"
+      - missingok
+      - compress
+      - delaycompress
+      - copytruncate
+      - notifempty
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec
+
+- name: Set max num of file descriptors to sane value
+  lineinfile:
+    dest: /etc/security/limits.conf
+    line: "{{ item }}"
+  with_items:
+    - '*    soft nofile 6400'
+    - '*    hard nofile 6400'
+    - 'root soft nofile 6400'
+    - 'root hard nofile 6400'
+  register: sec_limits
+
+- name: enable max file descriptors in session
+  lineinfile:
+    dest: /etc/pam.d/common-session
+    line: session required pam_limits.so
+  register: session_max_fd
+
+- name: enable max file descriptors in session-noninteractive
+  lineinfile:
+    dest: /etc/pam.d/common-session-noninteractive
+    line: session required pam_limits.so
+  register: sec_non_max_fd
+
+- name: restart if need to
+  command: /bin/true
+  when: sec_limits.changed or session_max_fd.changed or sec_non_max_fd.changed
+  notify:
+     - restart node
+     - wait for node to come back
+

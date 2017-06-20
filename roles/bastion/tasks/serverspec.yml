@@ -1,0 +1,14 @@
+---
+- name: install yubiauthd serverspec tests
+  template:
+    src: serverspec/yubiauthd_spec.rb
+    dest: /etc/serverspec/spec/localhost/yubiauthd_spec.rb
+    mode: 0755
+  when: yubiauthd.enabled|bool
+
+- name: install yama-utils serverspec tests
+  template:
+    src: serverspec/yama-utils_spec.rb
+    dest: /etc/serverspec/spec/localhost/yama-utils_spec.rb
+    mode: 0755
+  when: yama_utils.enabled|bool

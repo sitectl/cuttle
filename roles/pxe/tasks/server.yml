@@ -1,0 +1,105 @@
+---
+- name: install common pxe prereqs
+  apt: pkg={{ item }} state=installed
+  with_items:
+    - tftp
+
+- name: install 16.04 pxe prereqs
+  apt: pkg={{ item }} state=installed
+  with_items:
+    - pxelinux
+  when: ansible_distribution_version == "16.04"
+
+- name: install x86 pxe prereqs
+  apt: pkg={{ item }} state=installed
+  with_items:
+    - syslinux
+    - syslinux-common
+  when:
+    - ansible_architecture != "armv7l"
+    - ansible_architecture != "aarch64"
+
+- name: copy files to tftpboot
+  command: creates="{{ pxe.tftpboot_path }}/{{ item }}" cp /usr/lib/syslinux/{{ item }} {{ pxe.tftpboot_path }}/
+  with_items:
+    - pxelinux.0
+    - vesamenu.c32
+    - memdisk
+    - reboot.c32
+    - poweroff.com
+
+- name: create os tftp directories
+  file:
+    path: "{{ pxe.tftpboot_path }}/{{ item.name }}"
+    state: directory
+    mode: 0755
+  with_items: "{{ pxe.os }}"
+
+- name: download kernel
+  get_url: url={{ item.kernel }}
+           dest={{ pxe.tftpboot_path }}/{{ item.name }}/linux mode=0644
+  with_items: "{{ pxe.os }}"
+  when: proxy_env is not defined
+
+- name: download bootloader
+  get_url: url={{ item.bootloader }}
+           dest={{ pxe.tftpboot_path }}/{{ item.name }}/initrd.gz mode=0644
+  with_items: "{{ pxe.os }}"
+  when: proxy_env is not defined
+
+- name: download kernel via proxy
+  get_url: url={{ item.kernel }}
+           dest={{ pxe.tftpboot_path }}/{{ item.name }}/linux mode=0644
+  with_items: "{{ pxe.os }}"
+  environment: proxy_env
+  when: proxy_env is defined
+
+- name: download bootloader via proxy
+  get_url: url={{ item.bootloader }}
+           dest={{ pxe.tftpboot_path }}/{{ item.name }}/initrd.gz mode=0644
+  with_items: "{{ pxe.os }}"
+  environment: proxy_env
+  when: proxy_env is defined
+
+- name: create os preseeds
+  template:
+    src: "tftpboot/os/{{ item.preseed|default('default_preseed.cfg') }}"
+    dest: "{{ pxe.tftpboot_path }}/{{ item.name }}/preseed.cfg"
+  with_items: "{{ pxe.os }}"
+
+- name: ensure dnsmasq service is running
+  service: name=dnsmasq state=started enabled=yes
+
+- name: allow ipv4 forwarding
+  command: echo 1 > /proc/sys/net/ipv4/ip_forward
+  when: pxe.nat.enabled|bool
+
+- name: Do not enforce forwarding rules with UFW
+  lineinfile: dest=/etc/default/ufw regexp="^DEFAULT_FORWARD_POLICY"
+              line="DEFAULT_FORWARD_POLICY=\"ACCEPT\""
+  when: pxe.nat.enabled|bool
+  notify: reload ufw
+  tags:
+    - firewall
+
+# this is not idempotent,  but is only expected to be needed on short lived
+# mini bootstrappers
+- name: enable NAT on correct interface
+  command: /sbin/iptables --table nat -A POSTROUTING -o {{ pxe.nat.interface_out }} -j MASQUERADE
+  when: pxe.nat.enabled|bool
+
+- name: enable forwarding on correct interface
+  command: /sbin/iptables --append FORWARD --in-interface {{ pxe.nat.interface_in }} -j ACCEPT
+  when: pxe.nat.enabled|bool
+
+- name: permit access to tftpd
+  ufw: rule=allow port=69 proto=udp
+       to_ip={{ pxe.tftp_server }}
+  tags:
+    - firewall
+
+- name: permit access to dhcp
+  ufw: rule=allow to_port=67 from_port=68 proto=udp
+       direction=in interface={{ pxe.pxe_interface }}
+  tags:
+    - firewall

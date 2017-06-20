@@ -1,0 +1,27 @@
+---
+manage_disks:
+  enabled: False
+  defaults:
+    pesize: 4
+  loopback:
+    enabled: False
+    file: /tmp/loopback
+    device: /dev/loop2
+    size: 1G
+  volume_groups: []
+# EXAMPLE:
+#    - name: test
+#      pvs:
+#        - /dev/loop2
+  logical_volumes: []
+# EXAMPLE:
+#    - name: test
+#      volume_group: test
+#      size: 500m
+#      filesystem: ext4
+#      filesystem_opts:
+#      mount_point: /mnt/test
+#      mount_opts:
+  luks_volumes: []
+# Same format as above, plus
+#    - passphrase: whatever

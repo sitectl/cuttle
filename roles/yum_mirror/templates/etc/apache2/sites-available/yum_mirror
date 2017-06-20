@@ -1,0 +1,67 @@
+# {{ ansible_managed }}
+
+{% macro virtualhost() %}
+    ServerAdmin openstack@bluebox.net
+    ServerName {{ yum_mirror.apache.servername }}
+    ServerAlias {{ yum_mirror.apache.serveraliases|join(" ") }}
+    DocumentRoot {{ yum_mirror.path }}/mirror
+    ErrorLog ${APACHE_LOG_DIR}/yum_mirror-error.log
+    CustomLog ${APACHE_LOG_DIR}/yum_mirror-access.log combined
+    Alias /keys {{ yum_mirror.path }}/keys
+
+    <Directory {{ yum_mirror.path }}/mirror>
+       Options +Indexes +SymLinksIfOwnerMatch
+       AllowOverride None
+       Require all granted
+    </Directory>
+
+    <Directory {{ yum_mirror.path }}/keys>
+       Options Indexes
+       AllowOverride None
+       Require all granted
+    </Directory>
+
+{% for key, value in yum_mirror.repositories.iteritems() %}
+    Alias /{{ key }} {{ yum_mirror.path }}/mirror/{{ key }}
+    <Directory {{ yum_mirror.path }}/mirror/{{ key }}>
+{% if value.username is defined and value.password is defined %}
+       Options +Indexes +SymLinksIfOwnerMatch
+       AuthType Basic
+       AuthName "Restricted Content"
+       AuthUserFile {{ yum_mirror.htpasswd_location }}/{{ key }}.htpasswd
+       Require valid-user
+{% else %}
+       Options +Indexes +SymLinksIfOwnerMatch
+       Require all granted
+{% endif %}
+    </Directory>
+{% endfor %}
+{% endmacro %}
+
+{% if yum_mirror.apache.ssl.enabled|bool and yum_mirror.apache.http_redirect|bool %}
+<VirtualHost {{ yum_mirror.apache.ip }}:{{ yum_mirror.apache.port }}>
+    ServerName {{ yum_mirror.apache.servername }}
+    ServerAlias {{ yum_mirror.apache.serveraliases|join(" ") }}
+    RewriteEngine on
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}:{{ yum_mirror.apache.ssl.port }}$1 [R=301,L]
+</VirtualHost>
+{% else %}
+<VirtualHost {{ yum_mirror.apache.ip }}:{{ yum_mirror.apache.port }}>
+{{ virtualhost() }}
+</VirtualHost>
+{% endif %}
+
+{% if yum_mirror.apache.ssl.enabled|bool %}
+<VirtualHost {{ yum_mirror.apache.ssl.ip }}:{{ yum_mirror.apache.ssl.port }}>
+{{ apache.ssl.settings | indent(4,true) }}
+    SSLCertificateFile /etc/ssl/certs/{{ yum_mirror.apache.ssl.name|default('sitecontroller') }}.crt
+    SSLCertificateKeyFile /etc/ssl/private/{{ yum_mirror.apache.ssl.name|default('sitecontroller') }}.key
+{% if bbg_ssl.intermediate or yum_mirror.apache.ssl.intermediate %}
+    SSLCertificateChainFile /etc/ssl/certs/{{ yum_mirror.apache.ssl.name|default('sitecontroller') }}-intermediate.crt
+{% endif %}
+{% else %}
+<VirtualHost {{ yum_mirror.apache.ip }}:{{ yum_mirror.apache.port }}>
+{% endif %}
+{{ virtualhost() }}
+</VirtualHost>

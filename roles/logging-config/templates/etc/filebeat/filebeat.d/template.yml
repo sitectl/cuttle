@@ -1,0 +1,5 @@
+# {{ ansible_managed }}
+---
+filebeat:
+  prospectors:
+    {{ logdata | to_yaml( indent=2, default_flow_style=False ) | indent ( width=4 ) }}

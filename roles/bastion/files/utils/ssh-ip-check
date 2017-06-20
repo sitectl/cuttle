@@ -1,0 +1,382 @@
+#!/usr/bin/perl -T
+#
+# This script is called by SSH when users log into the box.  Its job
+# is to check the connecting IP of the connecting user, and if we've never
+# seen that user connect over the given IP, force a second factor for
+# authentication.  At the present time, that second factor is yubikeys--
+# and this requires this script to check in with yubiauthd using the 'yubiauth'
+# command-line client.
+#
+# Obviously, since a failure in this script means nobody can log in over
+# SSH, it's important this thing react well in a partial failure
+# scenario, eh. The most likely partial failure is for yubiauthd to be
+# not running. In this case, the usual most-appropriate response is to
+# fall back to single-factor auth with a warning.
+#
+# For this command to be used, the sshd_config should be updated with a line
+# like the following:
+#
+#  ForceCommand /usr/bin/ssh-ip-check
+
+# Before anything else, we want to prevent any funny business around signals being
+# used to background or terminate this process unexpectedly.
+$SIG{TERM} = 'IGNORE';
+$SIG{INT} = sub { kill SIGKILL, $$; };
+$SIG{HUP} = 'IGNORE';
+$SIG{TSTP} = 'IGNORE';
+
+# Signal handler for alarm conditions...
+local $SIG{ALRM} = sub {
+    do_timeout();
+};
+
+use strict;
+use Sys::Syslog;
+
+use constant {
+    IPDIR => '.ipauth',
+    AUTHTIMEOUT => 60,
+    AUTHATTEMPTS => 3,
+    REAUTHTIME => 43200,                     # 12 hours
+    YUBIAUTH => '/usr/bin/yubiauth',
+    YADPID => '/var/run/yubiauthd.pid',
+    CONFIGFILE => '/etc/ssh-ip-check.conf'
+};
+
+# Global variables
+my $user;
+my $ip;
+
+# Set of users which are exempt from second factor auth
+my $skipped = {};
+
+sub parse_config($) {
+    my $filename = shift;
+
+    open(CONFIG, '<', $filename)
+        or return undef;
+
+    while (my $line = <CONFIG>) {
+        chomp($line);
+
+        # Trim comments and trailing whitespace
+        $line =~ s/\s*(?:#.*)?$//;
+
+        # Skip blank lines
+        next unless $line;
+
+        # Trim leading whitespace
+        $line =~ s/^\s*//;
+
+        # Add account to skipped hash
+        $skipped->{$line} = 1;
+    }
+    close(CONFIG);
+
+    # Successfully parsed config file
+    return 1;
+}
+
+sub check_environment() {
+    # Start our syslog...
+    openlog("ssh-ip-check", "nofatal", 'authpriv');
+
+    # Set the PATH to something safe so we can exec() in taint mode
+    $ENV{'PATH'} = "/usr/bin:/bin";
+}
+
+# This cleans up IPv6 addresses.  We only care about the most significant /64 in this case
+# so we don't have to re-auth every time an IP changes on a local subnet (eg. due to
+# privacy extensions being enabled on the client machine), but only if the client
+# changes subnet.  Also, I know there's a Net::IP perl module which could do this,
+# but since we don't want to include a whole lot of package dependencies-- and that one's
+# a big one-- and we only really need this single function, we're coding it ourselves here.
+#
+# We're also not checking that the IP address we're getting is a valid IPv6 address.  Because
+# we're populating this from an environment variable, and because we can implicitly trust
+# that environment variable not to be populated with malicious data, this should be OK.
+sub ipv6_subnet($) {
+    my $ip = shift;
+    my @result;
+
+    my @quads = split(/:/,$ip,-1);
+
+    # Start with an empty array
+    for (my $i = 0; $i<8; $i++) {
+        push @result, "0";
+    }
+
+    # Fill the first half of the quad (up to the double-colon)
+    my $i = 0;
+    while (($i < $#quads) && ($quads[$i] ne '')) {
+        # sprintf and hex here eliminate leading zeros.
+        $result[$i] = sprintf("%x",hex($quads[$i]));
+        $i++;
+    }
+
+    # Fill the last half of the quad (up to the double-colon)
+    my $i = $#quads;
+    my $offset = 7 - $i;
+    while (($i > 0) && ($quads[$i] ne '')) {
+        # sprintf and hex here eliminate leading zeros.
+        $result[$i + $offset] = sprintf("%x",hex($quads[$i]));
+        $i--;
+    }
+
+    return $result[0] . "-" . $result[1] . "-" . $result[2] . "-" . $result[3];
+}
+
+# Checks to see whether this user and IP have authed recently.  Returns true if so.
+sub ip_is_authed($$) {
+    my $ip = shift;
+    my $user = shift;
+
+    # If it's an IPv6 address, get the /64 subnet
+    $ip = ipv6_subnet($ip) if ($ip =~ /:/);
+
+    # Sanitize home directory...
+    my $home;
+    if ($ENV{'HOME'} =~ /^([\w\/]+)$/) {
+        $home = $1;
+    } else {
+        syslog
+        syslog('warning', $user . ": Invalid home directory. Cannot auth.");
+        print "Invalid home directory. Cannot auth.\n";
+        closelog();
+        exit 2;
+    }
+
+    if (! -d $home . "/" . IPDIR) {
+	mkdir $home . "/" . IPDIR;
+        return undef;
+    }
+
+    if ( -f $home . "/" . IPDIR . "/$ip") {
+        # Make sure we're not too old.
+        my $age = (stat($home . "/" . IPDIR . "/$ip"))[9];
+        return 1 if ($age > time() - REAUTHTIME);
+    }
+    return undef;
+}
+
+# This returns true if our account is on our "skipped" list for 2 factor auth.
+sub skipped_account($) {
+    my $user = shift;
+    return defined($skipped->{$user});
+}
+
+# Checks to see whether yubiauthd is running. Returns true
+# if so, undef if not.
+sub yubiauthd_alive() {
+    return undef unless (-f YADPID);
+    open (YPID,"<" . YADPID) || return undef;
+    my $pid = <YPID>;
+    close(YPID);
+    chomp($pid);
+    if ($pid =~ /^(\d+)$/) {
+        $pid = $1;
+    } else {
+        return undef;
+    }
+    my $sigs = kill 0, $pid;
+    # Root can signal, others can't, but they can see the pid is alive with the right error string
+    return 1 if ((0 != $sigs) || ("Operation not permitted" eq $!));
+    return undef;
+}
+
+# This actually authenticates an unknown IP / user
+sub auth_ip_user($$) {
+    my $ip = shift;
+    my $user = shift;
+    my $code;
+
+    # Don't wait for that code indefinitely
+    alarm AUTHTIMEOUT;
+
+    print "Press yubikey for 3 seconds: ";
+    $code = <STDIN>;
+    chomp($code);
+
+    # Turn off that alarm
+    alarm 0;
+
+    return undef if ("" eq $code);
+
+    # Make taint check happy, and make sure we've got something that looks like a yubicode
+    if ($code =~ m/^([cbdefghijklnrtuv]{44})$/) {
+        $code = $1;
+    } else {
+        syslog('info', "$user : $ip : Yubikey authentication failure");
+        return undef;
+    }
+
+    my $sret = system(YUBIAUTH, $code);  # Need to check return value of system() call, as SIGINT gets sent to child
+    my $retval = $? >> 8;
+
+    if ((0 == $retval) && (0 == $sret)) {
+        syslog('info', "$user : $ip : Successful IP authentication");
+        # Cache the successful auth...
+
+        # If it's an IPv6 address, get the /64 subnet
+        $ip = ipv6_subnet($ip) if ($ip =~ /:/);
+
+        # Sanitize home directory
+        my $home;
+        if ($ENV{'HOME'} =~ /^([\w\/]+)$/) {
+            $home = $1;
+        }
+
+        # This is the equivalent of a "touch" command without having to spawn a new process.
+        open(AUTH,">" . $home . "/" . IPDIR . "/$ip") || syslog('warning', "$user : $ip : Unable to cache yubi auth: $!");
+        close(AUTH);
+        return 1;
+    } else {
+        # Log the failure
+        syslog('info', "$user : $ip : Yubikey authentication failure");
+    }
+
+    # If we are here, we didn't auth successfully.
+    return undef;
+}
+
+# This is what we do if there's a timeout authenticating...
+sub do_timeout {
+    syslog('warning', "$user: $ip : Timed out while waiting for yubi code");
+    closelog();
+    exit 3;
+}
+
+# This just extracts the client IP address from the SSH_CONNECTION environment variable.
+sub get_ip {
+    my $remote_addr;
+    my $remote_port;
+    my $server_addr;
+    my $server_port;
+
+    if (defined $ENV{'SSH_CONNECTION'} and $ENV{'SSH_CONNECTION'} =~
+        m/^([:\.\da-f]{2,39})\s+(\d{2,5})\s+([:\.\da-f]{2,39})\s+(\d{2,5})$/i) {
+        $remote_addr = $1;
+        $remote_port = $2;
+        $server_addr = $3;
+        $server_port = $4;
+        return $remote_addr;
+    }
+    return undef;
+}
+
+# Prints the motd without having to spawn an external process.
+sub print_motd {
+    open (MOTD, "</etc/motd") || syslog('warning', "Could not print /etc/motd: $!");
+    while (my $line = <MOTD>) {
+        print $line;
+    }
+    close(MOTD);
+}
+
+# This takes care of "doing the right thing" after a successful authentication
+sub post_auth {
+    my $cmd = $ENV{'SSH_ORIGINAL_COMMAND'};
+
+    # Allow an additional access control filter be specified as a
+    # ssh-ip-check argument
+    if (@ARGV) {
+        $cmd = shift @ARGV;
+        # Make taint checking happy.
+        if ($cmd =~ /^(.+)$/) {
+            $cmd = $1;
+        }
+        closelog();
+        exec($cmd, @ARGV);
+        die("exec($cmd) failed: $!");
+    }
+
+    my $shell;
+    # Make taint checking happy...
+    if ($ENV{'SHELL'} =~ /^([\w\/]+)$/) {
+        $shell = $1;
+    }
+
+    # Do we even have a command to run?
+    unless (defined($cmd)) {
+        print_motd();
+        closelog();
+        exec($shell,"-l");
+        die("exec($shell) failed: $!");
+    }
+
+    # Make taint checking happy.  Blindly accept any commands the user typed.
+    if ($cmd =~ /^(.+)$/) {
+        $cmd = $1;
+    }
+
+    closelog();
+    exec($shell,"-c",$cmd);
+    die("exec($shell -c $cmd) failed: $!");
+}
+
+sub main {
+    check_environment();
+    $user = `/usr/bin/whoami`;
+    chomp($user);
+
+    # Make taint mode happy
+    if ($user =~ /^(.+)$/) {
+        $user = $1;
+    }
+
+    # See if yubiauthd is working. Fall back to single-factor auth with warning
+    # if not, eh.
+    if (!yubiauthd_alive) {
+        print "\n!!!!  WARNING! yubiauthd not running! Two-factor auth unavailable!  !!!!\n\n";
+        syslog('warning', $user . ": Skipping 2-factor auth check because yubiauthd is not running");
+        closelog();
+        post_auth();
+    }
+
+    unless ($ip = get_ip()) {
+        syslog('warning', $user . ": Unable to parse connecting IP");
+        closelog();
+        exit 2;
+    }
+
+    # Are we already authed?
+    if (ip_is_authed($ip,$user)) {
+        syslog('info', "$user : $ip : Cached IP authentication found");
+        closelog();
+        post_auth();
+    }
+
+    # Parse config and add users to skipped
+    my $config_file = CONFIGFILE;
+    my $config = parse_config($config_file);
+
+    # Display warning if there is an error in parsing config, but continue
+    if (!$config) {
+      print "\nUnable to parse config file. Skipped users may not work properly.\n\n";
+      syslog('warning', $user . ": Unable to parse config file. Skipped users may not work properly.");
+      closelog();
+    }
+    # Config successfully loaded, check if second factor can be skipped
+    else {
+      # Skipping auth for this user?
+      if (skipped_account($user)) {
+          syslog('info', "$user : $ip : IP authentication skipped");
+          closelog();
+          post_auth();
+      }
+    }
+
+    # If we are here, we need to auth...
+    for (my $i = 0; $i < AUTHATTEMPTS ; $i++) {
+        post_auth() if (auth_ip_user($ip,$user));
+    }
+
+    # If we are here, we didn't successfully auth.
+    syslog('warning', "$user : $ip : Too many failed yubikey authentication attempts");
+    closelog();
+    exit 1;
+}
+
+
+main();
+# vim: ai si ts=4 sw=4 et

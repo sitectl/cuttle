@@ -1,0 +1,10 @@
+---
+- name: restart filebeat
+  service:
+    name: filebeat
+    state: restarted
+  register: handler
+  failed_when:
+    - handler.failed is defined
+    - handler.msg.find('Could not find the requested service') == -1
+    - handler.msg.find('service not found') == -1

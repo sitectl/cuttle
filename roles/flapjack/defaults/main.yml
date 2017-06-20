@@ -1,0 +1,69 @@
+---
+flapjack:
+  firewall:
+    - port: 3080
+      src: 127.0.0.1
+    - port: 3081
+      src: 127.0.0.1
+    - port: 3090
+      src: 127.0.0.1
+      when: flapjack.receivers.httpbroker.enabled|bool
+  dashboard:
+    address: 0.0.0.0
+    port: 3080
+    base_url: "http://monitor.local:3080/"
+    auto_refresh: 120
+  api:
+    address: 0.0.0.0
+    port: 3081
+    base_url: "http://monitor.local:3081/"
+  receivers:
+    httpbroker:
+      enabled: True
+      port: 3090
+      db: 0
+      interval: 10s
+      debug: False
+  notifications:
+    pagerduty:
+      enabled: no
+    slack:
+      enabled: no
+      account_sid: "webhookbot"
+      endpoint: "https://hooks.slack.com/services/xxx/yyy/"
+      auth_token: "zzzzz"
+    email:
+      enabled: no
+      from: "Flapjack Notification <flapjack@example.com>"
+      host: smtp.example.com
+      port: 25
+      starttls: false
+      auth:
+        enabled: false
+        type: ~
+        username: ~
+        password: ~
+    jabber:
+      enabled: false
+      server: ~
+      port: 5222
+      username: ~
+      password: ~
+      rooms: []
+    webhook:
+      enabled: false
+      hooks: []
+      # EXAMPLE:
+      # - url: "http://127.0.0.1/flapjack_notification"
+      #   timeout: 30
+    # "out-of-band" end-to-end testing, used for monitoring other instances of
+    # flapjack to ensure that they are running correctly
+    oobetet:
+      enabled: false
+  redis:
+    host: 127.0.0.1
+    port: 6380
+    db: 0
+  logrotate:
+    frequency: daily
+    rotations: 7

@@ -1,0 +1,39 @@
+---
+- name: install dependencies
+  apt:
+    pkg: "{{ item }}"
+  with_items: "{{ ttyspy.common.dependencies }}"
+
+- name: ttyspy group
+  group:
+    name: ttyspy
+    state: present
+
+- name: ttyspy user
+  user:
+    name: ttyspy
+    groups: ttyspy
+    home: /nonexistent
+    shell: /bin/false
+    system: true
+    comment: ttyspy
+
+- name: ttyspy directory
+  file:
+    path: /etc/ttyspy
+    owner: ttyspy
+    group: ttyspy
+    state: directory
+    mode: 0755
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

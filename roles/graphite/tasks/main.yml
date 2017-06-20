@@ -1,0 +1,171 @@
+---
+- name: create graphite user
+  user:
+    name: graphite
+    comment: graphite
+    shell: /bin/false
+    system: yes
+    home: /nonexistent
+
+- name: graphite dirs owned by graphite user
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: graphite
+    group: graphite
+  with_items:
+    - "{{ graphite.path.home }}"
+    - "{{ graphite.path.virtualenv }}"
+    - "{{ graphite.path.virtualenv }}/conf"
+    - "{{ graphite.path.data }}"
+    - "{{ graphite.path.data }}/whisper"
+    - "{{ graphite.path.data }}/rrd"
+    - /var/run/graphite
+    - /var/log/graphite
+    - /var/log/graphite/webapp
+
+# pip install carbon isn't idempotent.  lets make it so.
+- name: check if carbon is installed
+  stat:
+    path: "{{ graphite.path.virtualenv }}/bin/carbon-cache.py"
+  register: carbon
+
+- name: pip install carbon
+  pip:
+    name: carbon
+    virtualenv: "{{ graphite.path.virtualenv }}"
+  when: not carbon.stat.exists
+
+- name: install carbon-cache service
+  template:
+    src: etc/init/carbon-cache.conf
+    dest: /etc/init/carbon-cache.conf
+  when: ansible_distribution_version == "14.04"
+
+- name: install carbon-cache service
+  systemd_service:
+    name: carbon-cache
+    description: Graphite carbon-cache-a instance.
+    cmd: "{{ graphite.path.virtualenv }}/bin/twistd"
+    args: "--nodaemon --reactor=epoll --no_save carbon-cache --config {{ graphite.path.home }}/conf/carbon.conf"
+    env_vars:
+      - GRAPHITE_ROOT={{ graphite.path.home }}
+      - PYTHONPATH={{ graphite.path.install_root }}/opt/graphite/lib
+    user: graphite
+    group: graphite
+    restart: always
+    service_type: simple
+  notify: restart carbon-cache
+  when: ansible_distribution_version != "14.04"
+
+- name: configure carbon
+  template:
+    src: opt/graphite/conf/{{ item }}
+    dest: "{{ graphite.path.home }}/conf/{{ item }}"
+    owner: graphite
+  with_items:
+    - carbon.conf
+    - storage-schemas.conf
+    - graphite.wsgi
+  notify:
+    - restart carbon-cache
+
+# pip install graphite-web isn't idempotent.  lets make it so.
+- name: check if graphite-web is installed
+  stat:
+    path: "{{ graphite.path.install_root }}/webapp/graphite/storage.py"
+  register: graphite_web
+
+- name: pip install graphite-web
+  pip:
+    name: graphite-web
+    virtualenv: "{{ graphite.path.virtualenv }}"
+  when: not graphite_web.stat.exists
+  notify: setup graphite database
+
+- name: graphite webapp configuration
+  template:
+    src: opt/graphite/webapp/graphite/local_settings.py
+    dest: "{{ graphite.path.install_root }}/webapp/graphite/local_settings.py"
+  notify:
+    - restart apache
+
+# GPH034
+- name: start and enable graphite carbon
+  service:
+    name: carbon-cache
+    state: started
+    enabled: yes
+
+- meta: flush_handlers
+
+- name: set up log rotation for graphite carbon-cache
+  logrotate:
+    name: graphite-carbon
+    path: /var/log/graphite/*.log
+  args:
+    options:
+      - "{{ graphite.logrotate.frequency }}"
+      - "size {{ graphite.logrotate.size }}"
+      - "rotate {{ graphite.logrotate.rotations }}"
+      - missingok
+      - copytruncate
+      - compress
+      - notifempty
+
+- name: set up log rotation for graphite webapp
+  logrotate:
+    name: graphite-webapp
+    path: /var/log/graphite/webapp/*.log
+  args:
+    options:
+      - "{{ graphite.logrotate.frequency }}"
+      - "size {{ graphite.logrotate.size }}"
+      - "rotate {{ graphite.logrotate.rotations }}"
+      - missingok
+      - copytruncate
+      - compress
+      - notifempty
+
+- name: graphite vhosts configuration
+  template:
+    src: etc/apache2/sites-available/graphite
+    dest: /etc/apache2/sites-available/graphite.conf
+
+- name: enable graphite vhost
+  apache2_site:
+    state: enabled
+    name: graphite
+  notify:
+    - restart apache
+
+- name: allow graphite to be polled
+  ufw:
+    rule: allow
+    proto: tcp
+    to_port: "{{ graphite.remote_poll.port }}"
+    src: "{{ item }}"
+  when: graphite.remote_poll.enabled|default(False)|bool
+  with_items: "{{ graphite.remote_poll.allowed_networks }}"
+  tags:
+    - firewall
+
+- meta: flush_handlers
+
+- name: ensure apache is running
+  service:
+    name: apache2
+    state: started
+    enabled: yes
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

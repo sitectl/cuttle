@@ -1,0 +1,48 @@
+# {{ ansible_managed }}
+
+{% macro virtualhost() %}
+    ServerAdmin openstack@bluebox.net
+    ServerName {{ gem_mirror.apache.servername }}
+    ServerAlias {{ gem_mirror.apache.serveraliases|join(" ") }}
+    DocumentRoot {{ gem_mirror.config_location }}
+    ErrorLog ${APACHE_LOG_DIR}/gem_mirror-error.log
+    CustomLog ${APACHE_LOG_DIR}/gem_mirror-access.log combined
+    FileETag MTime Size
+    Header set Cache-Control public
+    ProxyRequests Off
+    ProxyPass / http://{{ varnish.host if varnish.enabled else gem_mirror.host }}:{{ varnish.port if varnish.enabled else gem_mirror.port }}/
+    ProxyPassReverse / http://{{ varnish.host if varnish.enabled else gem_mirror.host }}:{{ varnish.port if varnish.enabled else gem_mirror.port }}/
+    <Directory {{ gem_mirror.mirror_location }}>
+        Options Indexes
+        AllowOverride None
+        Require all granted
+    </Directory>
+{% endmacro %}
+
+{% if gem_mirror.apache.ssl.enabled|bool and gem_mirror.apache.http_redirect|bool %}
+<VirtualHost {{ gem_mirror.apache.ip }}:{{ gem_mirror.apache.port }}>
+    ServerName {{ gem_mirror.apache.servername }}
+    ServerAlias {{ gem_mirror.apache.serveraliases|join(" ") }}
+    RewriteEngine on
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}:{{ gem_mirror.apache.ssl.port }}$1 [R=301,L]
+</VirtualHost>
+{% else %}
+<VirtualHost {{ gem_mirror.apache.ip }}:{{ gem_mirror.apache.port }}>
+{{ virtualhost() }}
+</VirtualHost>
+{% endif %}
+
+{% if gem_mirror.apache.ssl.enabled|bool %}
+<VirtualHost {{ gem_mirror.apache.ssl.ip }}:{{ gem_mirror.apache.ssl.port }}>
+    {{ apache.ssl.settings }}
+    SSLCertificateFile /etc/ssl/certs/{{ gem_mirror.apache.ssl.name|default('sitecontroller') }}.crt
+    SSLCertificateKeyFile /etc/ssl/private/{{ gem_mirror.apache.ssl.name|default('sitecontroller') }}.key
+{% if bbg_ssl.intermediate or gem_mirror.apache.ssl.intermediate %}
+    SSLCertificateChainFile /etc/ssl/certs/{{ gem_mirror.apache.ssl.name|default('sitecontroller') }}-intermediate.crt
+{% endif %}
+{% else %}
+<VirtualHost {{ gem_mirror.apache.ip }}:{{ gem_mirror.apache.port }}>
+{% endif %}
+{{ virtualhost() }}
+</VirtualHost>

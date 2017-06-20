@@ -1,0 +1,6 @@
+---
+- name: install filebeat process check
+  sensu_check_dict:
+    name: "check-filebeat-process"
+    check: "{{ sensu_checks.logging.check_filebeat_process }}"
+  notify: restart sensu-client missing ok

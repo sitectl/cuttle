@@ -1,0 +1,31 @@
+---
+- name: install bash prompt customizations
+  template:
+    src: etc/profile.d/prompt.sh
+    dest: /etc/profile.d/prompt.sh
+
+- name: install tmux fix ssh
+  template:
+    src: etc/profile.d/tmux_fix_ssh.sh
+    dest: /etc/profile.d/tmux_fix_ssh.sh
+  when: common.shell_customization.tmux_fix_ssh|bool
+
+- name: override admin_user bashrc
+  template:
+    src: admin_user/bashrc
+    dest: ~{{admin_user}}/.bashrc
+
+- name: override admin_user bash_profile
+  template:
+    src: admin_user/bashrc
+    dest: ~{{admin_user}}/.bash_profile
+
+- name: override admin user gitconfig
+  template:
+    src: admin_user/gitconfig
+    dest: ~{{admin_user}}/.gitconfig
+
+- name: override admin user tmux conf
+  template:
+    src: admin_user/tmux.conf
+    dest: ~{{admin_user}}/.tmux.conf

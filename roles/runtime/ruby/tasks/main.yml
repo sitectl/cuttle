@@ -1,0 +1,25 @@
+---
+- name: set 14.04 ruby version
+  set_fact: ruby_version=2.0
+  when: ansible_distribution_version == "14.04"
+
+- name: set 16.04 ruby version
+  set_fact: ruby_version=2.3
+  when: ansible_distribution_version == "16.04"
+
+- name: install ruby packages
+  apt: pkg={{ item }}
+  with_items:
+      - ruby{{ ruby_version }}
+      - ruby{{ ruby_version }}-dev
+  register: result
+  until: result|succeeded
+  retries: 5
+  
+- name: install ruby gems
+  gem: name={{ item }} user_install=no
+  with_items:
+    - rake
+  register: result
+  until: result|succeeded
+  retries: 5

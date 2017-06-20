@@ -1,0 +1,58 @@
+---
+gem_mirror:
+  bin_location: '/usr/local/bin'
+  home: '/opt/gem_mirror'
+  config_location: '/opt/gem_mirror/config'
+  mirror_location: '/opt/gem_mirror/files'
+  ruby_gems_url: https://rubygems.org/
+  worker_processes: 16 # !!!update the sensu-check/defaults/main.yml too!!!
+  rubygems_proxy: true
+  allow_remote_failure: true
+  timeout: 30 # seconds
+  host: 127.0.0.1
+  port: 9292
+  packages:
+    - name: rack
+      version: '1.6.6'
+    - name: sinatra
+      version: '1.4.8'
+    - name: geminabox
+      version: '0.13.5'
+    - name: unicorn
+      version: '5.3.0'
+  apache:
+    enabled: true
+    http_redirect: False
+    servername: mirror01.local
+    serveraliases:
+      - mirror01
+    port: 80
+    ip: '*'
+    ssl:
+      enabled: False
+      port: 443
+      ip: '*'
+      name: sitecontroller
+      cert: ~
+      key: ~
+      intermediate: ~
+  firewall:
+    - port: 80
+      protocol: tcp
+      src: 0.0.0.0/0
+  logs:
+    # See logging-config/defaults/main.yml for filebeat vs. logstash-forwarder example
+    - paths:
+        - /var/log/upstart/gem_mirror.log
+      fields:
+        tags: mirror,gem-mirror
+    - paths:
+        - /var/log/apache2/gem_mirror-access.log
+      fields:
+        tags: mirror,apache_access
+    - paths:
+        - /var/log/apache2/gem_mirror-error.log
+      fields:
+        tags: mirror,apache_error
+  logging:
+    forwarder: filebeat

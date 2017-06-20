@@ -1,0 +1,19 @@
+---
+- name: create databases
+  mysql_db: name={{ item.1 }} state=present
+  with_subelements:
+    - "{{ database.users }}"
+    - databases
+  run_once: true
+
+- name: create users
+  mysql_user: name={{ item.0.username }}
+              password={{ item.0.password }}
+              priv={{ item.1 }}.*:ALL
+              host={{ item.0.host }}
+              append_privs=yes
+              state=present
+  with_subelements:
+    - "{{ database.users }}"
+    - databases
+  run_once: true

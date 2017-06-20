@@ -1,0 +1,17 @@
+default:
+  memory: 1024
+  cpus: 1
+
+vms:
+  bastion01:
+    ip_address:
+      - 172.16.0.150
+      - 172.16.1.150
+  bastion02:
+    ip_address:
+      - 172.16.0.151
+      - 172.16.1.151
+  ttyspy01:
+    ip_address:
+      - 172.16.0.152
+      - 172.16.1.152

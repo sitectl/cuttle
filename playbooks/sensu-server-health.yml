@@ -1,0 +1,33 @@
+# Use this playbook to retrieve info from sensu-server
+#
+# EXAMPLE
+#
+# $ ursula ../sitecontroller-envs/remote-$DC playbooks/sensu-server-health.yml
+#
+# OUTPUT: /tmp/sensu-server-health.txt
+---
+- name: sensu-server health
+  hosts: monitor
+  tasks:
+
+    - name: query sensu-api
+      uri:
+        url: http://localhost:4567/info
+        user: sensu
+        password: "{{ secrets.sensu.server.rabbitmq.admin }}"
+      register: sensu_info
+
+    - local_action: file
+      args:
+        path: /tmp/sensu-server-health.txt
+        state: touch
+
+    - local_action: lineinfile
+      args:
+        line: "{{ site_abrv }}:"
+        dest: /tmp/sensu-server-health.txt
+
+    - local_action: lineinfile
+      args:
+        line: "  {{ sensu_info.json.transport | to_yaml(default_flow_style=False, indent=2) | indent(width=2) }}\n"
+        dest: /tmp/sensu-server-health.txt

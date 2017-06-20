@@ -1,0 +1,6 @@
+- name: install postfix for flapjack email routing
+  apt: pkg=postfix
+
+- name: configure postfix to only listen on loopback
+  lineinfile: dest=/etc/postfix/main.cf regexp="^inet_interfaces" line="inet_interfaces = loopback-only"
+  notify: restart postfix

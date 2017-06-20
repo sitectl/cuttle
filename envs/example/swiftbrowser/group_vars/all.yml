@@ -1,0 +1,19 @@
+---
+public_interface: ansible_eth1
+private_interface: ansible_eth2
+public_ipv4: "{{ hostvars[inventory_hostname][public_interface]['ipv4'] }}"
+private_ipv4: "{{ hostvars[inventory_hostname][private_interface]['ipv4'] }}"
+
+sensu:
+  client:
+    enable_checks: False
+
+
+secrets:
+  swiftbrowser:
+    os_password: PASSWORD
+
+
+apache:
+  listen:
+    - 80

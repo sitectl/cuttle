@@ -1,0 +1,73 @@
+---
+- name: install logstash
+  apt:
+    pkg: "logstash={{ logstash.version }}"
+  register: result
+  until: result|succeeded
+  retries: 5
+
+- name: logstash log directory
+  file: dest=/var/log/logstash
+        owner=logstash group=logstash mode=0750
+        state=directory
+
+- name: remove logstash directory acl
+  command: setfacl -b /var/log/logstash
+
+- name: set up log rotation for logstash
+  logrotate: name=logstash path=/var/log/logstash/*.log
+  args:
+    options:
+      - "{{ logstash.logrotate.frequency }}"
+      - "rotate {{ logstash.logrotate.rotations }}"
+      - missingok
+      - compress
+      - copytruncate
+      - delaycompress
+      - notifempty
+
+- name: configure logstash
+  template: src={{ item }} dest=/{{ item }}
+  with_items:
+    - etc/default/logstash
+  notify: restart logstash
+
+- name: configure logstash pipeline
+  template: src=etc/logstash/conf.d/pipeline.conf dest=/etc/logstash/conf.d/pipeline.conf
+  notify: restart logstash
+
+- name: create logstash patterns directory
+  file: dest=/etc/logstash/patterns state=directory mode=0755
+
+- name: configure logstash patterns
+  template: src=etc/logstash/patterns/{{ item }} dest=/etc/logstash/patterns/{{ item }}
+  with_items: "{{ logstash.patterns }}"
+  notify: restart logstash
+
+- name: add logstash user to needed groups
+  user: name=logstash groups=ssl-key,ssl-cert append=true
+
+- name: allow logstash traffic
+  ufw: rule=allow to_port={{ item.0.port }} proto={{ item.0.protocol }} src={{ item.1|default('127.0.0.1') }}
+  with_subelements:
+    - "{{ logstash.firewall }}"
+    - src
+  tags:
+    - firewall
+
+- meta: flush_handlers
+
+- name: enable and start logstash service
+  service: name=logstash state=started enabled=yes
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

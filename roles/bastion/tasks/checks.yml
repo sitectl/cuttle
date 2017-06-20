@@ -1,0 +1,6 @@
+---
+- name: install yubiauthd process check
+  sensu_check_dict: name="check-yubiauthd-process"
+                    check="{{ sensu_checks.yubiauthd.check_yubiauthd_process }}"
+  when: yubiauthd.enabled|bool
+  notify: restart sensu-client missing ok

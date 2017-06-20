@@ -1,0 +1,142 @@
+---
+common:
+  firewall:
+    friendly_networks:
+      - 0.0.0.0/0
+
+squid:
+  port: 3128
+  allowed_networks:
+    - 0.0.0.0/0
+  proxy_domains:
+    - apt-mirror.openstack.blueboxgrid.com
+    - file-mirror.openstack.blueboxgrid.com
+    - pypi-mirror.openstack.blueboxgrid.com
+    - gem-mirror.openstack.blueboxgrid.com
+    - github.com
+  blacklist_packages: []
+  cache_dir:
+    size: 40000
+
+pxe:
+  tftpboot_path: /opt/pxe/tftpboot
+  tftp_interface: "{{ private_device_interface }}"
+  tftp_server: "{{ private_ipv4.address }}"
+  dhcp_ranges:
+    - tag: default
+      range: 172.16.1.50,172.16.1.55,255.255.255.0,2h
+      gateway: 172.16.1.125
+      dns: 8.8.8.8
+  nat:
+    enabled: True
+    interface_in: eth2
+    interface_out: eth0
+  # for serial_com: COM1=0, COM2=1, and COM3=2. Overrideable on each host.
+  serial_com: ~
+  ks_interface: auto
+  mirror_http_proxy: http://172.16.1.125:3128
+  # LOCAL with Public Mirrors
+  mirror_http_hostname: archive.ubuntu.com
+  mirror_http_directory: /ubuntu/
+  # LOCAL with Internal BBC Mirrors
+  # mirror_http_hostname: apt-mirror.openstack.bbg
+  # mirror_http_directory: /archive.ubuntu.com/ubuntu
+  # LOCAL with Public BBC Mirrors
+  # mirror_http_directory: /archive.ubuntu.com/ubuntu
+
+  timeout: 100
+  os:
+    - name: trusty
+      kernel: https://file-mirror.openstack.blueboxgrid.com/pxe/trusty/linux
+      bootloader: https://file-mirror.openstack.blueboxgrid.com/pxe/trusty/initrd.gz
+#      mirror_http_hostname: apt-mirror.openstack.blueboxgrid.com
+#      mirror_http_directory: /archive.ubuntu.com/ubuntu
+      mirror_http_proxy: http://172.16.1.125:3128
+      root_password: password
+      kernel_image:
+      ntp_server:
+      packages:
+        - curl
+        - openssh-server
+        - build-essential
+        - sudo
+        - wget
+  ssh_pub_keys:
+    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC5slg9GeZdOxYljn0dDqk3/ZaYLRtO7ll9d8kZQTV0c2jfndHPsvokJhHkBmKcL9cdR1VCow9KpzthIXaCVcMlKaps4jDKJQJKoWSlN7ZxM8ZlMwDVNV8gp+L65JYK8yEqDk4lPdjBDzMrC2aFscvhJWBIPoKbXZrrXtuOVNwjLSGSV0hD8O0AzMgsL/dNJM2dI/WPhdP0VVvNicLBZ5089HSgQCj6zKpQnHgtHzsCcLp4Oklo9BFftWgS4E+1Xc0hdMLumrK8ZLBy2j4U7UZWgv/p8oOsqGuC4AN480Z/u0hWhAGHDy/P/OjOIyaPm9BDH5EqXwzymYiwN73S7yX1Z5yGfVXKliaMKSqrwUJX+zbkXHO0UZqwyxqKADE+/QAjHCvI2QOecNfDQroNyBF1K+43NKHnI0i+pepqgDVN/7nrf73c+lr5wEpMF7+454bN/pLK6ylGUl4XduG+U22hIdo57eYuP86e1Cu3c035iYwLNbAY6q8su5jDn1/BElLQpLQmyzZBb/91qPR2rQ+lt98gWMK78xVV4+ywA9Yj+HzB4fzRgQrmC3O+kgMxczXbP5SLulZTr0Uq0zoPMgS4OL8YsdVTKSVA3SitfkOjOrS5b18Zk58EV0aOiAsNxGr5yU8fAqBHi05zy7V42t0wK4k80yOG7NaWRG3tWfvCvQ== test key
+  servers:
+    - name: bootstrapper
+      mac: A0:36:9F:7D:02:2C
+      serial_com: ~
+      os: trusty
+      preseed: vagrant_preseed.cfg
+      network: |
+            auto lo
+              iface lo inet loopback
+
+            auto eth0
+              iface eth0 inet manual
+              bond-master bond0
+
+            auto eth1
+              iface eth1 inet manual
+              bond-master bond0
+
+            auto bond0
+              iface bond0 inet static
+              address 10.254.19.11
+              netmask 255.255.255.0
+              bond-mode 4
+              bond-miimon 100
+              bond-lacp-rate 1
+              bond-slaves eth0 eth1
+
+            auto bond0.104
+            iface bond0.104 inet static
+              address 10.254.22.11
+              gateway 10.254.22.1
+              netmask 255.255.255.0
+              vlan-raw-device bond0
+      root_password: password
+      firstuser: blueboxadmin
+      firstpass: password
+      packages:
+        - curl
+        - openssh-server
+        - build-essential
+        - sudo
+        - wget
+        - vim
+        - vlan
+        - ipmitool
+
+apt_mirror:
+  enabled: False
+pypi_mirror:
+  enabled: False
+gem_mirror:
+  enabled: False
+file_mirror:
+  enabled: False
+
+dnsmasq:
+  enabled: True
+  interface: eth2
+  firewall:
+    - port: 53
+      src: 0.0.0.0
+      to_ip: any
+      proto: any
+  dns:
+  # PUBLIC DNS
+    servers:
+      - 8.8.8.8
+      - 8.8.4.4
+
+sensu:
+  enabled: False
+
+collectd:
+  enabled: False
+
+serverspec:
+  enabled: False

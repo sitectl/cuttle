@@ -1,0 +1,11 @@
+---
+dependencies:
+  - role: apt-repos
+    repos:
+      - repo: "deb {{ apt_repos.sensu.repo }} {{ apt_repos.sensu.distribution|default('sensu') }} main"
+        key_url: '{{ apt_repos.sensu.key_url }}'
+  - role: logging-config
+    service: sensu
+    logdata: "{{ sensu.logs }}"
+    forward_type: "{{ sensu.logging.forwarder }}"
+    when: logging.enabled|default("True")|bool

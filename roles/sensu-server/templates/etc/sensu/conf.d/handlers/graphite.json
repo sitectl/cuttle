@@ -1,0 +1,12 @@
+{
+  "handlers": {
+    "graphite": {
+      "type": "tcp",
+      "socket": {
+        "host": "{{ sensu.server.handlers.graphite.host }}",
+        "port": {{ sensu.server.handlers.graphite.port }}
+      },
+      "mutator": "only_check_output"
+    }
+  }
+}

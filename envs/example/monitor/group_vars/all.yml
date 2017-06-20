@@ -1,0 +1,169 @@
+---
+site_abrv: example
+stack_name: example
+datacenter: example
+public_interface: ansible_eth2
+private_interface: ansible_eth1
+public_ipv4: "{{ hostvars[inventory_hostname][public_interface]['ipv4'] }}"
+private_ipv4: "{{ hostvars[inventory_hostname][private_interface]['ipv4'] }}"
+
+serverspec:
+  enabled: True
+
+apache:
+  listen:
+    - 80
+    - 8081
+
+database:
+  host: "{{ hostvars[groups['percona'][0]][private_interface]['ipv4']['address']|default('172.16.1.103') }}"
+  port: 3306
+  users:
+    graphite:
+      databases:
+        - graphite
+      username: graphite
+      password: graphite
+      host: '%'
+    grafana:
+      databases:
+        - grafana
+      username: grafana
+      password: grafana
+      host: '%'
+
+graphite:
+  amqp:
+    enabled: False
+    verbose: False
+    host: 172.16.0.15
+    port: 5672
+    vhost: /graphite
+    user: graphite
+    password: graphite
+    exchange: metrics
+    metric_name_in_body: True
+
+rabbitmq:
+  users:
+    - username: admin
+      password: admin
+      vhost: /
+    - username: sensu
+      password: sensu
+      vhost: /sensu
+    - username: graphite
+      password: graphite
+      vhost: /graphite
+
+sensu:
+  client:
+    rabbitmq:
+      host: 172.16.0.15
+      username: sensu
+      password: sensu
+      vhost: /sensu
+      hostgroup: sensu
+  server:
+    rabbitmq:
+      host: 172.16.0.15
+      username: sensu
+      password: sensu
+      vhost: /sensu
+      hostgroup: sensu
+    handlers:
+      default:
+        - flapjack_http
+      flapjack:
+        enabled: False
+        host: 127.0.0.1
+        port: 6380
+      flapjack_http:
+        enabled: True
+        uri: http://127.0.0.1:3090
+        ttl: -1 # -1 disables, otherwise httpbroker re-sends last received state until ttl expires
+        service_owner: development
+  api:
+    bind_ip: 0.0.0.0
+    firewall:
+      - port: 4567
+        src: "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+  dashboard:
+    host: 0.0.0.0
+    datacenters:
+      - hostname: localhost
+        password: admin
+      - hostname: monitor.local
+        password: admin
+    firewall:
+      - port: 3000
+        src: "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+
+flapjack:
+  dashboard:
+    base_url: "http://monitor.local/flapjack/"
+  api:
+    base_url: "http://monitor.local/flapjack_api/"
+  receivers:
+    httpbroker:
+      enabled: True
+      debug: True
+  firewall:
+    - port: 3080
+      src: "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+    - port: 3081
+      src: "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+    - port: 3090
+      src: "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+
+openid_proxy:
+  http_redirect: False
+  apache:
+    servername: monitor.local
+  listen:
+    ip: "0.0.0.0"
+    port: 80
+  firewall:
+    - port: 80
+      protocol: tcp
+      src:
+        - any
+  locations:
+    root:
+      path: "/"
+    sensu:
+      proxy: "http://127.0.0.1:3000/"
+      url: "/sensu/"
+    flapjack:
+      proxy: "http://127.0.0.1:3080/"
+      url: "/flapjack/"
+    flapjack_api:
+      proxy: "http://127.0.0.1:3081/"
+    grafana:
+      proxy: "http://127.0.0.1:3001/"
+      url: "/grafana/"
+  ssl:
+    enabled: False
+
+grafana:
+  host: "{{ hostvars[groups['grafana'][0]][private_interface]['ipv4']['address']|default('172.16.1.103') }}"
+  server:
+    http_port: 3001
+    http_addr:  0.0.0.0
+    root_url: "/grafana/"
+  security:
+    enabled: True
+    admin_user: admin
+    admin_password: admin
+    anonymous: true
+    secret_key: nopenopenopenope
+
+  database:
+    type: mysql
+    host: "{{ database.host }}:3306"
+    name: "{{ database.users.grafana.database }}"
+    user: "{{ database.users.grafana.username }}"
+    password: "{{ database.users.grafana.password }}"
+  firewall:
+    - port: 5671
+      src: "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"

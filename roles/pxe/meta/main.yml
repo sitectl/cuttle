@@ -1,0 +1,5 @@
+---
+dependencies:
+  - role: dnsmasq
+    when: pxe.enable_server|bool
+  - role: sensu-check

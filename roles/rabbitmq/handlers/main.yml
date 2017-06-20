@@ -1,0 +1,8 @@
+---
+- name: restart rabbitmq
+  service: name=rabbitmq-server state=restarted
+
+- name: login as rabbitmq to update limits
+  command: sudo -i -u rabbitmq
+  register: rabbitmq_login
+  failed_when: rabbitmq_login.rc != 1

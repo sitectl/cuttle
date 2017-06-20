@@ -1,0 +1,97 @@
+---
+public_interface: ansible_eth1
+private_interface: ansible_eth2
+public_ipv4: "{{ hostvars[inventory_hostname][public_interface]['ipv4'] }}"
+private_ipv4: "{{ hostvars[inventory_hostname][private_interface]['ipv4'] }}"
+
+elasticsearch:
+  config:
+    cluster.name: "elk_{{ stack_name }}"
+    #index.number_of_replicas: 1
+    discovery.zen.minimum_master_nodes: "{{ (groups['elasticsearch']|length / 2)|int + (groups['elasticsearch']|length % 2 > 0)|int }}"
+    discovery.zen.ping.unicast.hosts: "['{{ hostvars['elk01'][private_interface]['ipv4']['address'] }}','{{ hostvars['elk02'][private_interface]['ipv4']['address'] }}']"
+    gateway.expected_nodes: "{{ groups['elasticsearch']|length }}"
+    gateway.recover_after_nodes: "{{ (groups['elasticsearch']|length / 2)|int + (groups['elasticsearch']|length % 2 > 0)|int }}"
+    cluster.routing.allocation.disk.watermark.low: 10gb
+    cluster.routing.allocation.disk.watermark.high: 5gb
+    node.name: "{{ ansible_hostname }}"
+    path.conf: /etc/elasticsearch
+    path.data: /var/lib/elasticsearch
+    path.logs: /var/log/elasticsearch
+    http.bind_host: "0.0.0.0"
+    network.publish_host: "{{ public_ipv4.address }}"
+  curator:
+    tasks:
+      - action: delete
+        older: 2
+        hour: 2
+      - action: close
+        older: 2
+        hour: 2
+        minute: 15
+      - action: optimize
+        params: "--max_num_segments 1"
+        older: 2
+        hour: 3
+        minute: 0
+      - action: bloom
+        state: absent
+  firewall:
+    - port: 9200
+      src:
+        - "{{ hostvars['elk01'][private_interface]['ipv4']['address'] }}/32"
+        - "{{ hostvars['elk02'][private_interface]['ipv4']['address'] }}/32"
+    - port: 9300
+      src:
+        - "{{ hostvars['elk01'][private_interface]['ipv4']['address'] }}/32"
+        - "{{ hostvars['elk02'][private_interface]['ipv4']['address'] }}/32"
+  heap_size: 512m
+  restart_on_config: true
+
+logging:
+  forward:
+    host: "{{ hostvars['elk01'][private_interface]['ipv4']['address'] }}"
+
+apache:
+  listen:
+    - 80
+    - 443
+
+openid_proxy:
+  locations:
+    root:
+      path: "/"
+    kibana:
+      proxy: "http://127.0.0.1:5601/"
+      url: "/kibana/"
+    elasticsearch:
+      proxy: "http://127.0.0.1:9200/"
+      url: "/kibana/elasticsearch/"
+    hq:
+      proxy: "http://127.0.0.1:9200/_plugin/HQ/"
+      url: "/hq/?url=http://ip_of_host/kibana/elasticsearch/"
+    head:
+      proxy: "http://127.0.0.1:9200/_plugin/head/"
+      url: "/head/?base_uri=http://ip_of_host/kibana/elasticsearch/"
+    bigdesk:
+      proxy: "http://127.0.0.1:9200/_plugin/bigdesk/"
+      url: "/bigdesk/?endpoint=http://ip_of_host/kibana/elasticsearch/&connect=true"
+  admin:
+    apache:
+      state: present
+    users:
+      - username: admin
+        password: admin
+  listen:
+    admin_ip: "*"
+    admin_port: 80
+    admin_port_ssl: 443
+  firewall:
+    - port: 80
+      protocol: tcp
+      src:
+        - 0.0.0.0/0
+    - port: 443
+      protocol: tcp
+      src:
+        - 0.0.0.0/0

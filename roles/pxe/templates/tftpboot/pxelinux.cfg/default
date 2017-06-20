@@ -1,0 +1,57 @@
+# {{ ansible_managed }}
+
+{% macro os_menu_items() -%}
+{% for OS in pxe.os -%}
+label {{ OS.name }}
+  kernel {{ OS.name }}/linux
+  append initrd={{ OS.name }}/initrd.gz vga=normal ramdisk_size=16384 root=/dev/ram rw preseed/url=tftp://{{pxe.tftp_server}}/{{ OS.name }}/preseed.cfg preseed/interactive={{pxe.interactive}} debian-installer/locale=en_US keyboard-configuration/layoutcode=us localechooser/translation/warn-light=true localechooser/translation/warn-severe=true netcfg/choose_interface={{ pxe.ks_interface }} netcfg/get_hostname=ubuntu -- {% if pxe.serial_com is defined %} console=tty0 console=ttyS{{ pxe.serial_com }},115200n8{% endif %} consoleblank=0 --
+
+{% endfor -%}
+{% endmacro -%}
+
+serial {{ pxe.serial_com }} 115200 0
+
+# PXE boot options
+prompt 0
+default vesamenu.c32
+menu title Rebuild and diagnosis options
+timeout 100
+
+# Launch local installation
+label local
+menu label Start system from local storage
+localboot 0
+
+menu separator
+
+menu begin Operating systems
+menu title Operating system options
+
+{{ os_menu_items() }}
+
+# Go back to the previous menu
+menu separator
+label exit
+menu label <- Exit
+menu goto .top
+menu end
+
+menu begin Tools
+menu title Tools
+
+# Local command - reboot
+label reboot
+menu label Reboot
+com32 reboot.c32
+
+# Local command - shutdown
+label poweroff
+menu label Power Off
+comboot poweroff.com
+
+# Go back to the previous menu
+menu separator
+label exit
+menu label <- Exit
+menu goto .top
+menu end

@@ -1,0 +1,39 @@
+---
+- name: create git_pull binary
+  template:
+    src: git_pull
+    dest: /usr/sbin/git_pull
+    owner: root
+    group: root
+    mode: 0700
+
+- name: allow blueboxadmin to run git_pull
+  template:
+    src: git_pull.sudoers
+    dest: /etc/sudoers.d/git_pull
+    owner: root
+    group: root
+    mode: 0700
+
+- name: set up cronjob to run git_pull hourly
+  cron:
+    name: git_pull
+    minute: "{{ support_tools.cron.minute }}"
+    hour: "{{ support_tools.cron.hour }}"
+    cron_file: "ansible_git_pull_{{ item.name }}"
+    job: "/usr/sbin/git_pull {{ item.name }} 2>&1 | logger -t git_pull"
+    user: root
+  with_items: "{{ support_tools.git }}"
+  when: item.auto_update|default('false')|bool
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

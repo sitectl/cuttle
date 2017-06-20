@@ -1,0 +1,11 @@
+---
+security:
+  always_update:
+    apt:
+      - bash
+      - openssl
+      - libssl1.0.0
+      - libc6
+      - openssh-server
+      - openssh-client
+      - ntp

@@ -1,0 +1,99 @@
+---
+- name: install python swift client
+  pip: name=python-swiftclient
+
+- name: create mirror user
+  user: name=mirror comment=mirror shell=/bin/false
+        system=yes home=/nonexistent
+
+- name: create file mirror location
+  file: dest={{ file_mirror.mirror_location }} state=directory
+        owner=mirror recurse=true
+
+- name: remove unwanted files
+  file: dest="{{ file_mirror.mirror_location }}/{{ item }}" state=absent
+  with_items: "{{ file_mirror.remove }}"
+
+- name: ensure file mirror path exists for web files
+  file: dest="{{ file_mirror.mirror_location }}/{{ item.path|default('misc') }}"
+        state=directory
+        owner=mirror recurse=true
+  with_items: "{{ file_mirror.files }}"
+
+- name: ensure file mirror path exists for swift files
+  file: dest="{{ file_mirror.mirror_location }}/{{ item.cloud }}/{{ item.container }}"
+        state=directory
+        owner=mirror recurse=true
+  with_items: "{{ file_mirror.swift.objects }}"
+
+- name: create .htpasswd
+  htpasswd: name={{ item.username }} password={{ item.password }}
+            path="{{ file_mirror.mirror_location }}/{{ item.path }}/.htpasswd"
+  with_items: "{{ file_mirror.auth }}"
+
+- name: create .htaccess
+  template: src=etc/apache2/htaccess
+            dest="{{ file_mirror.mirror_location }}/{{ item.path }}/.htaccess"
+  with_items: "{{ file_mirror.auth }}"
+
+- name: download files via proxy
+  get_url:
+    url: "{{ item.url }}"
+    dest: "{{ file_mirror.mirror_location }}/{{ item.path|default('misc') }}/{{ item.name }}"
+    mode: 0644
+    sha256sum: "{{ item.sha256sum|default(omit) }}"
+    force: "{{ item.force|default(omit) }}"
+  with_items: "{{ file_mirror.files }}"
+  environment: proxy_env
+  when: proxy_env is defined
+
+- name: download files directly
+  get_url:
+    url: "{{ item.url }}"
+    dest: "{{ file_mirror.mirror_location }}/{{ item.path|default('misc') }}/{{ item.name }}"
+    mode: 0644
+    sha256sum: "{{ item.sha256sum|default(omit) }}"
+    force: "{{ item.force|default(omit) }}"
+  with_items: "{{ file_mirror.files }}"
+  when: proxy_env is not defined
+
+- name: download files from swift (force)
+  command: "swift download {{ item.container }} {{ item.file }}"
+  args:
+    chdir: "{{ file_mirror.mirror_location }}/{{ item.cloud }}/{{ item.container }}"
+  when: item.force|default("False")|bool
+  with_items: "{{ file_mirror.swift.objects }}"
+  environment: "{{ file_mirror.swift['clouds'][item.cloud] }}"
+
+- name: download files from swift
+  command: "swift download {{ item.container }} {{ item.file }}"
+  args:
+    chdir: "{{ file_mirror.mirror_location }}/{{ item.cloud }}/{{ item.container }}"
+    creates: "{{ file_mirror.mirror_location }}/{{ item.cloud }}/{{ item.container }}/{{ item.file }}"
+  when: not item.force|default("False")|bool
+  with_items: "{{ file_mirror.swift.objects }}"
+  environment: "{{ file_mirror.swift['clouds'][item.cloud] }}"
+
+- include: apache.yml
+  when: file_mirror.apache.enabled|bool
+
+- name: allow file-mirror traffic
+  ufw: rule=allow
+       to_port={{ item.port }}
+       src={{ item.src }}
+       proto={{ item.protocol }}
+  with_items: "{{ file_mirror.firewall }}"
+  tags:
+    - firewall
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

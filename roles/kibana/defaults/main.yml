@@ -1,0 +1,29 @@
+---
+kibana:
+  version: "5.4.1"
+  config:
+    server.host: 0.0.0.0
+    server.port: 5601
+    server.basePath: "/kibana"
+    logging.dest: /var/log/kibana/kibana.log
+  firewall: []
+  plugins:
+    - name: x-pack@5.4.1
+      file: x-pack-5.4.1.zip
+      url: http://artifacts.elastic.co/downloads/packs/x-pack/x-pack-5.4.1.zip
+      sha256sum: 7a93565b8d4af2d7d4dc804245543a4f38b2b31f8d0395dad792b7ea05d0088c
+      config:
+        xpack.security.enabled: false
+  default_index:
+    name: "[logstash-]YYYY.MM.DD"
+    intervalName: "days"
+  config_in_es: true
+  force_config: false
+  logs:
+    # See logging-config/defaults/main.yml for filebeat vs. logstash-forwarder example
+    - paths:
+        - /var/log/upstart/kibana.log
+      fields:
+        tags: elk,kibana
+  logging:
+    forwarder: filebeat

@@ -1,0 +1,17 @@
+---
+
+- name: restart node
+  command: shutdown -r now 
+  async: 0
+  poll: 0
+  failed_when: False
+- name: wait for node to come back
+  wait_for:
+    host: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+    state: started
+    port: 22
+    delay: 1
+    timeout: 300
+    connect_timeout: 15
+  delegate_to: "{{ groups['sshproxy'][0] }}"
+

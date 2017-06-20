@@ -1,0 +1,4 @@
+---
+- name: RED011 install redis-server process check
+  sensu_check_dict: name="check-redis-server-process" check="{{ sensu_checks.redis.check_redis_server_process }}"
+  notify: restart sensu-client missing ok

@@ -1,0 +1,30 @@
+---
+yama_utils:
+  enabled: false
+  dependencies:
+    - libdbi-perl
+    - libdbd-mysql-perl
+    - python-daemon
+
+yubiauthd:
+  enabled: false
+  package: https://github.com/blueboxgroup/yubiauthd/releases/download/1.0.1/yubiauthd_1.0.1_all.deb
+  hosts: []
+  skipped_users:
+    - root
+  dependencies:
+    - sqlite3
+    - libev-perl
+    - libanyevent-perl
+    - libdbd-sqlite3-perl
+    - libdigest-hmac-perl
+    - libdigest-sha-perl
+    - libauth-yubikey-decrypter-perl
+    - libio-socket-ip-perl
+  log_path: /var/log/yubiauthd.log
+  auth_socket: /var/run/yubiauthd.sock
+  sync_socket_secret: nopenopenopenopenopenopenope
+  sync_port: 32
+  firewall:
+    friendly_networks:
+      - 0.0.0.0/0

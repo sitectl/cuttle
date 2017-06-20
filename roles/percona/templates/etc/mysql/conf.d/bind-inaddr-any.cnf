@@ -1,0 +1,4 @@
+# {{ ansible_managed }}
+
+[mysqld]
+bind-address = 0.0.0.0

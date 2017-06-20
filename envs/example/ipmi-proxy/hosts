@@ -1,0 +1,5 @@
+[ipmi-proxy]
+ipmi-proxy01
+
+[openid_proxy]
+ipmi-proxy01

@@ -1,0 +1,240 @@
+---
+- name: ensure connectivity to all nodes
+  hosts: all:!vyatta-*
+  gather_facts: false
+  pre_tasks:
+     - name: make sure python is installed
+       raw: "[[ -e /usr/bin/python ]] || apt-get update && apt-get -y install python"
+       changed_when: false
+  tasks:
+    - action: ping
+      tags: ['ping']
+    - action: setup
+      tags: ['ping']
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true
+  max_fail_percentage: 0
+
+- name: sitecontroller base
+  hosts: all:!vyatta-*
+  roles:
+    - role: _sitecontroller
+      tags: ['sc', 'sitecontroller']
+  environment: "{{ env_vars|default({}) }}"
+  tags: ['always']
+  any_errors_fatal: true
+
+- name: common items
+  hosts: all:!vyatta-*
+  roles:
+    - role: common
+      tags: ['common']
+    - role: manage-disks
+      tags: ['manage-disks']
+      when: manage_disks.enabled|default("False")|bool
+    - role: dnsmasq
+      tags: ['dnsmasq']
+      when: dnsmasq.enabled|default("False")|bool
+    - role: sensu-client
+      tags: ['sensu-client']
+      when: sensu.client.enabled|default("True")|bool
+    - role: logging
+      tags: ['logging']
+      when: logging.enabled|default("True")|bool
+    - role: collectd
+      tags: ['collectd']
+      when: collectd.enabled|default("False")|bool
+    - role: docker
+      tags: ['docker']
+      when: docker.enabled|default("False")|bool
+    - role: netdata
+      tags: ['netdata']
+      when: netdata.enabled|default("False")|bool
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true
+
+- name: bastion server
+  hosts: bastion
+  serial: 1
+  roles:
+    - role: ttyspy-client
+      tags: ['ttyspy-client']
+      when: ttyspy.client.enabled|default("False")|bool
+    - role: sshagentmux
+      tags: ['sshagentmux']
+      when: sshagentmux.enabled|default("False")|bool
+#    - role: support-tools
+#      tags: ['support-tools']
+#      when: support_tools.enabled|default("False")|bool
+#    - role: bastion
+#      tags: ['bastion-role']
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true
+
+- name: ttyspy server
+  hosts: ttyspy-server
+  roles:
+    - role: ttyspy-server
+      tags: ['ttyspy-server']
+      when: ttyspy.server.enabled|default("False")|bool
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true
+
+- name: ipsec
+  hosts: ipsec
+  roles:
+    - role: ipsec
+      tags: ['ipsec']
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true
+
+- name: squid server
+  hosts: squid
+  roles:
+    - role: squid
+      tags: ['squid']
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true
+
+- name: netdata dashboard
+  hosts: netdata_dashboard
+  roles:
+    - role: netdata-dashboard
+      tags: ['netdata-dashboard']
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true
+
+- name: mirror server
+  hosts: mirror
+  roles:
+    - role: apt-mirror
+      tags: ['apt-mirror', 'debmirror']
+      when: apt_mirror.enabled|default('True')|bool
+    - role: pypi-mirror
+      tags: ['pypi-mirror']
+      when: pypi_mirror.enabled|default('True')|bool
+    - role: gem-mirror
+      tags: ['gem-mirror']
+      when: gem_mirror.enabled|default('True')|bool
+    - role: file-mirror
+      tags: ['file-mirror']
+      when: file_mirror.enabled|default('True')|bool
+    - role: yum_mirror
+      tags: ['yum-mirror']
+      when: yum_mirror.enabled|default('True')|bool
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true
+
+- name: elk
+  hosts: elk
+  roles:
+    - role: elasticsearch
+      tags: ['elasticsearch']
+    - role: logstash
+      tags: ['logstash']
+    - role: kibana
+      tags: ['kibana']
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true
+
+- name: rally benchmark host
+  hosts: rally
+  roles:
+    - rally
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true
+
+- name: percona server
+  hosts: percona
+  roles:
+    - role: percona
+      tags: ['percona']
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true
+
+- name: monitor server
+  hosts: monitor
+  roles:
+    - role: rabbitmq
+      tags: ['rabbitmq']
+    - role: sensu-server
+      tags: ['sensu-server']
+      when: sensu.server.enabled|default("True")|bool
+    - role: graphite
+      tags: ['graphite']
+      when: graphite.enabled|default("True")|bool
+    - role: grafana
+      tags: ['grafana']
+      when: grafana.enabled|default("True")|bool
+    - role: flapjack
+      tags: ['flapjack']
+      when: flapjack.enabled|default("False")|bool
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true
+
+- name: pxe server
+  hosts: pxe
+  roles:
+    - role: pxe
+      tags: ['pxe']
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true
+
+- name: consul
+  hosts: consul
+  roles:
+    - role: consul
+      tags: ['consul']
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true
+
+- name: vault
+  hosts: vault
+  roles:
+    - role: vault
+      tags: ['vault']
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true
+
+- name: openid_proxy
+  hosts: openid_proxy
+  roles:
+    - role: openid_proxy
+      tags: ['openid-proxy']
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true
+
+- name: netman server
+  hosts: netman
+  roles:
+    - role: harden
+      tags: ['harden']
+    - role: postfix-simple
+      tags: ['postfix-simple']
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true
+
+- name: ipmi proxy server
+  hosts: ipmi-proxy
+  roles:
+    - role: ipmi-proxy
+      tags: ['ipmi-proxy']
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true
+
+- name: boxpanel worker queue
+  hosts: bpw-queue
+  serial: 1
+  roles:
+    - role: rabbitmq
+      tags: ['rabbitmq']
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true
+
+- name: security
+  hosts: all:!vyatta-*
+  roles:
+    - role: security
+      tags: ['security', 'always']
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true

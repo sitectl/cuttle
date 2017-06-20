@@ -1,0 +1,59 @@
+---
+public_interface: ansible_eth1
+private_interface: ansible_eth2
+public_ipv4: "{{ hostvars[inventory_hostname][public_interface]['ipv4'] }}"
+private_ipv4: "{{ hostvars[inventory_hostname][private_interface]['ipv4'] }}"
+
+common:
+  firewall:
+    friendly_networks:
+      - "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+  ssh:
+    allow_from:
+      - "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+
+ipmi_proxy:
+  datacenters:
+    - name: lab01
+      data_center_uuid: 7cd69350-35e8-4677-98fe-aad60fc9e191
+      backend_source_ip: 172.16.0.16
+    - name: lab02
+      data_center_uuid: eb1e05be-a1f5-46a8-9808-cbb033979f4f
+      backend_source_ip: 172.16.0.16
+  ip_pool:
+    - 172.16.1.21
+    - 172.16.1.22
+  apache:
+    allow_from:
+      - 127.0.0.1
+      - "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+      - "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+
+apache:
+  listen:
+    - 80
+    - 443
+    - 81
+    - 444
+    - 82
+    - 445
+    - 83
+    - 446
+    - 8091
+
+openid_proxy:
+  locations:
+    ipmi:
+      proxy: "http://127.0.0.1:8091/"
+      url: "/ipmi/"
+      config:
+        - RequestHeader: "set X-Proxy-Remote-User %{REMOTE_USER}e env=REMOTE_USER"
+  firewall:
+    - port: 80
+      protocol: tcp
+      src:
+        - "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+    - port: 443
+      protocol: tcp
+      src:
+        - "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"

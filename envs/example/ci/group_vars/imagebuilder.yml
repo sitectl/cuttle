@@ -1,0 +1,10 @@
+---
+ci:
+  users:
+    dib:
+      home: /home/dib
+
+  stackrc:
+    path: ~dib/stackrc
+    user: dib
+    group: dib

@@ -1,0 +1,207 @@
+# {{ ansible_managed }}
+
+---
+production:
+  pid_dir: /var/run/flapjack/
+  log_dir: /var/log/flapjack/
+  daemonize: yes
+  logger:
+    level: INFO
+    syslog_errors: yes
+  redis:
+    host: {{ flapjack.redis.host }}
+    port: {{ flapjack.redis.port }}
+    db: {{ flapjack.redis.db }}
+  # Processes monitoring events off the *events* queue (a redis list) and decides
+  # what actions to take (generate notification event, record state changes, etc)
+  processor:
+    enabled: yes
+    queue: events
+    notifier_queue: notifications
+    archive_events: true
+    events_archive_maxage: 10800
+    # Flapjack sets scheduled maintenance on new check results so contacts aren't
+    # notified as soon as Flapjack becomes aware of an entity to notify on.
+    # This is useful is cases where your monitoring starts checking something
+    # before it is completely provisioned
+    # Value parsed by https://github.com/hpoydar/chronic_duration
+    # You can disable this setting by specifying "0 seconds".
+    new_check_scheduled_maintenance_duration: 0 seconds
+    new_check_scheduled_maintenance_ignore_tags:
+      - bypass_ncsm
+    logger:
+      level: INFO
+      syslog_errors: yes
+  # Processes notification events off the *notifications* queue (a redis list) and
+  # works out who to notify, and on which media, and with what kind of notification
+  # message. It then creates jobs for the various notification gateways below.
+  notifier:
+    enabled: yes
+    queue: notifications
+    pagerduty_queue: pagerduty_notifications
+    slack_queue: slack_notifications
+    email_queue: email_notifications
+    jabber_queue: jabber_notifications
+    webhook_queue: webhook_notifications
+    notification_log_file: /var/log/flapjack/notification.log
+    default_contact_timezone: UTC
+    logger:
+      level: INFO
+      syslog_errors: yes
+  gateways:
+    {%- if flapjack.notifications.pagerduty.enabled|bool %}
+    # Sends notifications to and accepts acknowledgements from [PagerDuty](http://www.pagerduty.com/)
+    # (NB: contacts will need to have a registered PagerDuty account to use this)
+    pagerduty:
+      enabled: {{ flapjack.notifications.pagerduty.enabled }}
+      # the redis queue this pikelet will look for notifications on
+      queue: pagerduty_notifications
+      logger:
+        level: INFO
+        syslog_errors: yes
+      # location of custom alert templates
+      templates:
+        alert.text: '/etc/flapjack/templates/pagerduty.erb'
+    {% endif %}
+    {%- if flapjack.notifications.slack.enabled|bool %}
+    # Sends notifications via Slack
+    slack:
+      enabled: {{ flapjack.notifications.slack.enabled }}
+      queue: slack_notifications
+      account_sid: {{ flapjack.notifications.slack.account_sid }}
+      endpoint: {{ flapjack.notifications.slack.endpoint }}
+      auth_token: {{ flapjack.notifications.slack.auth_token }}
+      from: ""
+      logger:
+        level: INFO
+        syslog_errors: yes
+      # location of custom alert templates
+      #templates:
+      #  rollup.text: '/etc/flapjack/templates/slack/rollup.text.erb'
+      #  alert.text: '/etc/flapjack/templates/slack/alert.text.erb'
+    {% endif %}
+    {%- if flapjack.notifications.email.enabled|bool %}
+    # Generates email notifications
+    email:
+      enabled: {{ flapjack.notifications.email.enabled }}
+      # the redis queue this pikelet will look for notifications on
+      queue: email_notifications
+      logger:
+        level: INFO
+        syslog_errors: yes
+      # these values are passed directly through to EventMachine::Protocols::SmtpClient configuration,
+      # and can be omitted if the defaults are acceptable
+      smtp_config:
+        from: {{ flapjack.notifications.email.from }}
+        # reply_to: "flapjack@support.example"
+        host: {{ flapjack.notifications.email.host }}
+        port: {{ flapjack.notifications.email.port }}
+        starttls: {{ flapjack.notifications.email.starttls }}
+        {% if flapjack.notifications.email.auth.enabled|bool %}
+        auth:
+          type: {{ flapjack.notifications.email.auth.type }}
+          username: {{ flapjack.notifications.email.auth.username }}
+          password: {{ flapjack.notifications.email.auth.password }}
+        {% endif %}
+      # location of custom alert templates
+      #templates:
+      #  rollup_subject.text: '/etc/flapjack/templates/email/rollup_subject.text.erb'
+      #  alert_subject.text: '/etc/flapjack/templates/email/alert_subject.text.erb'
+      #  rollup.text: '/etc/flapjack/templates/email/rollup.text.erb'
+      #  alert.text: '/etc/flapjack/templates/email/alert.text.erb'
+      #  rollup.html: '/etc/flapjack/templates/email/rollup.html.erb'
+      #  alert.html: '/etc/flapjack/templates/email/alert.html.erb'
+    {% endif %}
+    {%- if flapjack.notifications.jabber.enabled|bool %}
+    # Connects to an XMPP (jabber) server, sends notifications (to rooms and individuals),
+    # handles acknowledgements from jabber users and other commands.
+    jabber:
+      enabled: {{ flapjack.notifications.jabber.enabled }}
+      # the redis queue this pikelet will look for notifications on
+      queue: jabber_notifications
+      server: {{ flapjack.notifications.jabber.server }}
+      port: {{ flapjack.notifications.jabber.port }}
+      jabberid: {{ flapjack.notifications.jabber.username }}
+      password: {{ flapjack.notifications.jabber.password }}
+      alias: "flapjack"
+      # List of strings that this pikelet user will respond to
+      identifiers:
+        - "@flapjack"
+      # the Multi-User Chats the pikelet should join and announce to
+      rooms: {{ flapjack.notifications.jabber.rooms }}
+      logger:
+        level: INFO
+        syslog_errors: yes
+      # location of custom alert templates
+      #templates:
+      #  rollup.text: '/etc/flapjack/templates/jabber/rollup.text.erb'
+      #  alert.text: '/etc/flapjack/templates/jabber/alert.text.erb'
+    {% endif %}
+    {%- if flapjack.notifications.webhook.enabled|bool %}
+    webhook:
+      enabled: {{ flapjack.notifications.webhook.enabled }}
+      queue: webhook_notifications
+      hooks: {{ flapjack.notifications.webhook.enabled }}
+      logger:
+        level: INFO
+        syslog_errors: yes
+    {% endif %}
+    # Browsable web interface
+    web:
+      enabled: yes
+      bind_address: {{ flapjack.dashboard.address }}
+      port: {{ flapjack.dashboard.port }}
+      timeout: 300
+      # Seconds between auto_refresh of entities/checks pages.  Set to 0 to disable
+      auto_refresh: {{ flapjack.dashboard.auto_refresh }}
+      access_log: "/var/log/flapjack/web_access.log"
+      # Main URL for this service eg: "http://flapjack.example/"
+      base_url: {{ flapjack.dashboard.base_url }}
+      # URL for accessing the JSONAPI service from the browser
+      api_url: {{ flapjack.api.base_url }}
+      # Full path to location of logo file, e.g. /etc/flapjack/custom_logo.png
+      #logo_image_path: "/etc/flapjack/web/custom_logo/flapjack-2013-notext-transparent-300-300.png"
+      show_exceptions: false
+      logger:
+        level: INFO
+        syslog_errors: yes
+    # HTTP API server
+    jsonapi:
+      enabled: yes
+      bind_address: {{ flapjack.api.address }}
+      port: {{ flapjack.api.port }}
+      timeout: 300
+      access_log: "/var/log/flapjack/jsonapi_access.log"
+      # Main URL for this service eg: "http://flapjack.example:3081/"
+      base_url: {{ flapjack.api.base_url }}
+      logger:
+        level: INFO
+        syslog_errors: yes
+    {% if flapjack.notifications.oobetet.enabled|bool %}
+    # "out-of-band" end-to-end testing, used for monitoring other instances of
+    # flapjack to ensure that they are running correctly
+    oobetet:
+      enabled: no
+      server: "jabber.example.com"
+      port: 5222
+      # jabberid, password, alias, rooms: see the jabber pikelet
+      jabberid: "flapjacktest@jabber.example.com"
+      password: "nuther-good-password"
+      alias: "flapjacktest"
+      # The check oobetet should watch for the state change
+      watched_check: "PING"
+      # The entitiy that the check should be associated with
+      watched_entity: "foo.example.com"
+      # The maximum amount of time allowed to pass between state changes on that check
+      max_latency: 300
+      # The API key for a service in PagerDuty that the oobetet will use to alert you
+      pagerduty_contact: "11111111111111111111111111111111"
+      # Jabber rooms to join
+      rooms:
+        - "flapjacktest@conference.jabber.example.com"
+        - "gimp@conference.jabber.example.com"
+        - "log@conference.jabber.example.com"
+      logger:
+        level: INFO
+        syslog_errors: yes
+    {% endif %}

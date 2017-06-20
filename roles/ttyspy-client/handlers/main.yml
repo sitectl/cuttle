@@ -1,0 +1,5 @@
+---
+- name: restart ttyspyd
+  service:
+    name: ttyspyd
+    state: restarted

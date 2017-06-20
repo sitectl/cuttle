@@ -1,0 +1,4 @@
+---
+python:
+  pip_version: 9.0.1
+  setuptools_version: 36.0.1

@@ -1,0 +1,64 @@
+# Run this playbook against a remote SC to cut over its central SC.
+# This playbook should be run AFTER site.yml.
+#
+# Example:
+#   ursula ../sitecontroller-envs/remote-sjc01 site.yml
+#   ursula ../sitecontroller-envs/remote-sjc01 playbooks/central-cutover.yml
+---
+- name: central cutover - common
+  hosts: all:!vyatta-*
+  tasks:
+    - name: flush dnsmasq cache
+      command: killall -HUP dnsmasq
+
+    - name: force stop for various services
+      service:
+        name: "{{ item }}"
+        state: stopped
+        must_exist: false
+      with_items:
+        - dnsmasq
+        - ntp
+        - sensu-client
+
+    - name: pause for 30 seconds
+      pause:
+        seconds: 30
+
+    - name: force start for various services
+      service:
+        name: "{{ item }}"
+        state: started
+        must_exist: false
+      with_items:
+        - dnsmasq
+        - ntp
+        - sensu-client
+
+
+- name: central cutover - bootstrap
+  hosts: bootstrap
+  tasks:
+    - name: force restart for various services
+      service:
+        name: "{{ item }}"
+        state: restarted
+        must_exist: false
+      with_items:
+        - squid
+
+- name: central cutover - monitor
+  hosts: monitor
+  tasks:
+    - name: restart sensu-server
+      shell: kill -9 `cat /var/run/sensu/sensu*.pid | xargs`
+
+    - name: force restart for various services
+      service:
+        name: "{{ item }}"
+        state: started
+        must_exist: false
+      with_items:
+        - sensu-server
+        - sensu-api
+        - sensu-client

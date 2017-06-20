@@ -1,0 +1,37 @@
+---
+# Check Site Controller services are up, running, functional, and compliant.
+# Pre-Validation:
+#   Run manual connectivity checks, but not serverspecs
+#   ex: ursula <env> playbooks/validation.yml -e 'ping_test=True,specs=False'
+# Post-Validation:
+#   Run serverspecs by default, all else optional
+#   ex: ursula <env> playbooks/validation.yml -e 'ping_test=True'
+
+- name: validate networking from SC to CC
+  # Ensure all networking is established and reachable
+  hosts: all:!vyatta-*
+  tasks:
+    - name: validate networking to SC - standard MTU
+      command: ping -M do -s 1410 -c 3 -t 5 "{{ item.ip }}"
+      with_items: "{{ etc_hosts }}"
+      when: ping_test|default("False")|bool
+
+- name: validate networking from SC to CC
+  # Ensure all networking is established and reachable
+  hosts: all:!vyatta-*
+  serial: 1
+  tasks:
+    - name: central sitecontroller reachable
+      command: ping -M do -s 1371 -c 3 -t 5 mirror.openstack.bbg
+      when: ping_test|default("False")|bool
+
+    - name: update apt cache
+      apt: update_cache=yes cache_valid_time=3600
+
+- name: run serverspec
+  hosts: all:!vyatta-*
+  tasks:
+    - name: run serverspec
+      command: /usr/bin/ruby -S rspec /etc/serverspec/spec/localhost
+               chdir=/etc/serverspec/
+      when: specs|default("True")|bool

@@ -1,0 +1,74 @@
+---
+# needed when not running playbooks/add-bastion-users.yml
+- name: set users_to_add when not defined
+  set_fact:
+    users_to_add: "{{ users }}"
+  when: users_to_add is not defined
+
+- name: create groups
+  group:
+    name: "{{ item.key }}"
+    system: "{{ item.value.system | default(omit) }}"
+    state: present
+  with_dict: "{{ user_groups }}"
+
+- name: create users
+  user:
+    name: "{{ item.key }}"
+    group: "{{ item.value.primary_group | default(omit) }}"
+    groups: "{{ item.value.groups | default() | join(',') or omit }}"
+    home: "{{ item.value.home | default(omit) }}"
+    createhome: "{{ item.value.createhome | default(omit) }}"
+    uid: "{{ item.value.uid | default(omit) }}"
+    shell: "{{ item.value.shell | default('/bin/bash') }}"
+    comment: "{{ item.value.comment | default(omit) }}"
+  with_dict: "{{ users_to_add }}"
+
+- block:
+
+  - name: create root-managed authorized keys directory
+    file:
+      path: /etc/ssh/authorized_keys
+      owner: root
+      group: root
+      state: directory
+      mode: 0755
+
+  - name: add root-managed authorized keys
+    template:
+      src: authorized_keys
+      dest: "/etc/ssh/authorized_keys/{{ item.key }}.keys"
+      owner: root
+      group: root
+      mode: 0644
+    with_dict: "{{ users_to_add }}"
+
+  when: _users.manage_authorized_keys|bool
+
+- block:
+
+  - name: ensure user has .ssh path
+    file:
+      path: "~{{ item.key }}/.ssh"
+      owner: "{{ item.key }}"
+      group: "{{ item.key }}"
+      state: directory
+      mode: 0700
+    with_dict: "{{ users_to_add }}"
+
+  - name: add ssh authorized keys
+    template:
+      src: authorized_keys
+      dest: "~{{ item.key }}/.ssh/authorized_keys"
+      owner: root
+      group: "{{ item.key }}"
+      mode: 0644
+    with_dict: "{{ users_to_add }}"
+    notify:
+      - place authorized keys checksums
+
+  when: not _users.manage_authorized_keys|bool
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

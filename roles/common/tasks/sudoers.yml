@@ -1,0 +1,32 @@
+---
+- name: ensure admin user has sudo access
+  template:
+    src: etc/sudoers.d/admin_user
+    dest: /etc/sudoers.d/admin_user
+    owner: root
+    group: root
+    mode: 0700
+  when: (groups['bastion'] is not defined or inventory_hostname not in groups['bastion']) and
+        (groups['ttyspy-server'] is not defined or inventory_hostname not in groups['ttyspy-server'])
+
+- name: ensure blueboxadmin does not have sudo access
+  file:
+    dest: "/etc/sudoers.d/admin_user"
+    state: absent
+  when: (groups['bastion'] is defined and inventory_hostname in groups['bastion']) or
+        (groups['ttyspy-server'] is defined and inventory_hostname in groups['ttyspy-server'])
+
+- name: write general sudoers file
+  template:
+    src: etc/sudoers.d/blueboxcloud
+    dest: /etc/sudoers.d/blueboxcloud
+    owner: root
+    group: root
+    mode: 0744
+
+- name: configure sudoers
+  template: src=etc/sudoers
+            dest=/etc/sudoers
+            owner=root
+            group=root
+            mode=0440

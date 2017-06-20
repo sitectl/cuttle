@@ -1,0 +1,5 @@
+---
+- name: install ttyspy-receiver process check
+  sensu_check_dict: name="check-ttyspy-receiver-process"
+                    check="{{ sensu_checks.ttyspy_server.check_ttyspy_receiver_process }}"
+  notify: restart sensu-client missing ok

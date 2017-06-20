@@ -1,0 +1,6 @@
+[bastion]
+bastion01
+bastion02
+
+[ttyspy-server]
+ttyspy01

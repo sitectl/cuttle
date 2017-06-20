@@ -1,0 +1,76 @@
+---
+# setup settings for oauth2_proxy
+oauth2_proxy:
+  package: https://github.com/IBM/cuttle/releases/download/packages/oauth2-proxy_2.0.1.2.a631197_amd64.deb
+  vhost_name: "oauth2_proxy"
+  docroot: "/var/www/html"
+  apache_status: true
+  http_redirect: true
+  locations: []
+  apache:
+    enabled: true
+    ip: 0.0.0.0
+    port: 80
+    servername: "oauth2_proxy"
+    serveradmin: "admin@cuttle.net"
+    serveraliases: []
+    ssl:
+      enabled: true
+      ip: 0.0.0.0
+      port: 443
+      key: ~
+      cert: ~
+      intermediate: ~
+    auth_proxy:
+      enabled: true
+      log_level: "warn"
+      ip: 127.0.0.1
+      port: 8080
+    protected_locations:
+      enabled: true
+      log_level: "warn"
+      ip: 127.0.0.1
+      port: 80
+      url: "http://127.0.0.1"
+  firewall:
+    - port: 443
+      protocol: tcp
+      src:
+        - any
+    - port: 80
+      protocol: tcp
+      src:
+        - any
+  logs:
+    # See logging-config/defaults/main.yml for filebeat vs. logstash-forwarder example
+    - paths:
+        - "/var/log/apache2/oauth2-auth-proxy-*-access.log"
+        - "/var/log/apache2/oauth2-protected-locations-*-access.log"
+      fields:
+        tags: oauth2_proxy,apache_access
+    - paths:
+        - "/var/log/apache2/oauth2-auth-proxy-*-error.log"
+        - "/var/log/apache2/oauth2-protected-locations-*-error.log"
+      fields:
+        tags: oauth2_proxy,apache_error
+  logging:
+    forwarder: filebeat
+  config:
+    # Implies port 80
+    client_id: "add GitHub client ID here"
+    client_secret: "add GitHub client secret here"
+    email_domains:
+      - '"ibm.com"'
+      - '"us.ibm.com"'
+      - '"cn.ibm.com"'
+      - '"uk.ibm.com"'
+    pass_access_token: "true"
+    cookie_name: "oauth2_proxy_cookie"
+    cookie_secret: "oauth2_proxy_secret_pass"
+    cookie_domain: ""
+    cookie_expire: "168h"
+    cookie_refresh: "24h"
+    cookie_secure: "true"
+    cookie_httponly: "false"
+    provider: "github"
+    provider_url: "https://github.com"

@@ -1,0 +1,24 @@
+---
+vault:
+  version: 0.5.2
+  download:
+    url: https://releases.hashicorp.com/vault/0.5.2/vault_0.5.2_linux_amd64.zip
+    sha256sum: 7517b21d2c709e661914fbae1f6bf3622d9347b0fe9fc3334d78a01d1e1b4ec2
+  bind_interface: lo
+  bind_port: 8200
+  bin_path: /opt/vault/bin
+  archive_path: /opt/vault/archives
+  config_path: /opt/vault/etc
+  config_file: /opt/vault/etc/vault.hcl
+  enabled: True
+  backend:
+    store: consul
+    scheme: http
+  telemetry:
+    enabled: False
+    statsd_address: 127.0.0.1
+    statsd_port: 8125
+  tls:
+    enabled: False
+    cert_file: '/etc/ssl/certs/vault.crt'
+    key_file: '/etc/ssl/private/vault.key'

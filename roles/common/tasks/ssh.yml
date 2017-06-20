@@ -1,0 +1,54 @@
+---
+- name: install GHE authorized keys app
+  template:
+    src: bin/ghe_authorized_keys.py
+    dest: /usr/local/bin/ghe_authorized_keys.py
+    owner: root
+    group: root
+    mode: 0755
+  when: common.ssh.ghe_authorized_keys.enabled|bool
+
+- name: configure ssh settings
+  template: src=etc/ssh/sshd_config
+            dest=/etc/ssh/sshd_config
+            owner=root
+            group=root
+            mode=0644
+  notify:
+    - reload-sshd
+
+- name: add ssh private keys
+  template:
+    src: ssh-private-key
+    dest: "{{ item.dest }}"
+    owner: "{{ item.owner|default('root') }}"
+    group: "{{ item.group|default('root') }}"
+    mode: 0600
+  with_items: "{{ common.ssh.private_keys}}"
+
+- name: lay down ssh host rsa public key
+  template:
+    src: "etc/ssh/ssh_host_rsa_key.pub"
+    dest: "/etc/ssh/ssh_host_rsa_key.pub"
+    mode: 644
+    owner: root
+    group: root
+  when: common.ssh.ssh_host_rsa_key.public
+  notify:
+    - reload-sshd
+
+- name: lay down ssh host rsa private key
+  template:
+    src: "etc/ssh/ssh_host_rsa_key"
+    dest: "/etc/ssh/ssh_host_rsa_key"
+    mode: 600
+    owner: root
+    group: root
+  when: common.ssh.ssh_host_rsa_key.private
+  notify:
+    - reload-sshd
+
+- meta: flush_handlers
+
+- name: ensure ssh service is running
+  service: name=ssh state=started enabled=yes

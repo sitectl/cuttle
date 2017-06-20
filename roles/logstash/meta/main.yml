@@ -1,0 +1,20 @@
+---
+dependencies:
+  - role: bbg-ssl
+    name: "{{ logstash.ssl.name }}"
+    ssl_cert: "{{ logstash.ssl.cert }}"
+    ssl_key: "{{ logstash.ssl.key }}"
+    ssl_intermediate: "{{ logstash.ssl.intermediate }}"
+    ssl_ca_cert: ~
+    tags: bbg-ssl
+  - role: apt-repos
+    repos:
+      - repo: 'deb {{ apt_repos.logstash.repo }} stable main'
+        key_url: '{{ apt_repos.logstash.key_url }}'
+  - role: runtime/java
+  - role: logging-config
+    service: logstash
+    logdata: "{{ logstash.logs }}"
+    forward_type: "{{ logstash.logging.forwarder }}"
+    when: logging.enabled|default("True")|bool
+  - role: sensu-check

@@ -1,0 +1,324 @@
+---
+site_abrv: example
+stack_name: example
+datacenter: example
+deploy_type: example
+public_device_interface: eth1
+private_device_interface: eth0
+public_interface: ansible_eth1
+private_interface: ansible_eth0
+public_ipv4: "{{ hostvars[inventory_hostname][public_interface]['ipv4'] }}"
+private_ipv4: "{{ hostvars[inventory_hostname][private_interface]['ipv4'] }}"
+admin_user: blueboxadmin
+
+env_vars: {}
+
+sitecontroller:
+  apt:
+    force_cache_update: true
+#  python:
+#    pypi_mirror: https://pypi-mirror.example.com/root/pypi
+#    trusted_host: pypi-mirror.example.com
+#  ruby:
+#    gem_sources:
+#      - https://gem-mirror.example.com
+#  ubuntu_mirror: https://apt-mirror.example.com/trusty/ubuntu
+
+secrets:
+  sensu:
+    server:
+      rabbitmq:
+        admin: w4HLrz8DHtB84shd
+
+common:
+  sysdig:
+    enabled: False
+  firewall:
+    friendly_networks:
+      - "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+      - "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+  ssh:
+    allow_from:
+      - "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+      - "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+    disable_dns: True
+  users:
+    - name: blueboxadmin
+      #pass:
+      public_keys: []
+
+  hwraid:
+    enabled: false
+
+sshagentmux:
+  enabled: False
+
+database:
+  host: 172.16.0.17
+  port: 3306
+  users:
+    graphite:
+      databases:
+        - graphite
+      username: graphite
+      password: graphite
+      host: '172.16.0.%'
+    grafana:
+      databases:
+        - grafana
+      username: grafana
+      password: grafana
+      host: '172.16.0.%'
+
+serverspec:
+  enabled: True
+
+sensu:
+  client:
+    enable_metrics: true
+    enable_checks: true
+
+openid_proxy:
+  locations:
+    root:
+      path: "/"
+      auth_type: "openid-connect"
+    sensu:
+      proxy: "http://172.16.0.15:3000/"
+      auth_type: "openid-connect"
+  firewall:
+    - port: 80
+      protocol: tcp
+      src:
+        - "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+    - port: 443
+      protocol: tcp
+      src:
+        - "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+
+logging:
+  enabled: true
+  follow:
+    global_fields:
+      customer_id: "0"
+      cluster_name: "vagrant"
+  forward:
+    host: 172.16.0.13
+
+logstash:
+  filters:
+    - template: filter-drop-empty
+    - template: filter-tags
+    - template: filter-syslog
+    - template: filter-openstack
+  outputs:
+    - name: elasticsearch
+      config:
+        hosts: "127.0.0.1:9200"
+        index: logstash-%{+YYYY.MM.dd}
+        manage_template: false
+  firewall:
+    - port: 1514
+      protocol: tcp
+      src:
+        - "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+        - "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+    - port: 1515
+      protocol: tcp
+      src:
+        - "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+        - "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+    - port: 4560
+      protocol: tcp
+      src:
+        - "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+        - "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+    - port: 4561
+      protocol: tcp
+      src:
+        - "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+        - "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+
+apt_repos:
+  docker:
+    repo: http://apt.dockerproject.org/repo/
+    key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xF76221572C52609D
+  hwraid:
+    repo: http://hwraid.le-vert.net/ubuntu
+    key_url: http://hwraid.le-vert.net/debian/hwraid.le-vert.net.gpg.key
+  sensu:
+    repo: http://repositories.sensuapp.org/apt
+    key_url: http://repositories.sensuapp.org/apt/pubkey.gpg
+  percona:
+    repo: http://repo.percona.com/apt
+    key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x9334A25F8507EFA5
+  rabbitmq:
+    repo: http://www.rabbitmq.com/debian
+    key_url: https://www.rabbitmq.com/rabbitmq-release-signing-key.asc
+  erlang:
+    repo: http://packages.erlang-solutions.com/debian
+    key_url: https://packages.erlang-solutions.com/debian/erlang_solutions.asc
+#  aptly:
+#    repo: https://apt-mirror.openstack.blueboxgrid.com/aptly/squeeze
+#    key_url: https://apt-mirror.openstack.blueboxgrid.com/keys/aptly.key
+  elasticsearch:
+    repo: http://artifacts.elastic.co/packages/5.x/apt/
+    key_url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+  logstash:
+    repo: http://artifacts.elastic.co/packages/5.x/apt
+    key_url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+  kibana:
+    repo: http://artifacts.elastic.co/packages/5.x/apt
+    key_url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+  jenkins:
+    repo: https://pkg.jenkins.io/debian
+    key_url: https://pkg.jenkins.io/debian/jenkins.io.key
+  flapjack:
+    repo: http://packages.flapjack.io/deb/v1/
+    key_url: http://pgp.mit.edu/pks/lookup?op=get&search=0x8406B0E3803709B6
+  grafana:
+    repo: http://packagecloud.io/grafana/stable/debian/
+    key_url: https://packagecloud.io/gpg.key
+  filebeat:
+    repo: http://packages.elastic.co/beats/apt
+    key_url: http://packages.elastic.co/GPG-KEY-elasticsearch
+  sensu_checks:
+    repo: ~
+    key_url: ~
+
+pxe_files: True
+
+pxe:
+  enable_server: True
+  servers:
+    - name: test
+      mac: 08:00:27:09:4C:2B
+      ipmi: 10.254.18.27
+      os: trusty
+      preseed: default_preseed.cfg
+      network: ~
+
+dnsmasq:
+  interface: lo
+  server: 127.0.0.1
+  dns:
+    hosts: []
+
+# creates http://172.16.0.18:8098/git/mirror/noVNC.git
+git_server:
+  web:
+    port: 8098
+  path: /srv/git
+  authorized_keys: []
+  mirrors:
+    - name: noVNC
+      url: https://github.com/kanaka/noVNC.git
+
+pypi_mirror:
+  cron: false
+
+consul:
+  bind: "{{ private_ipv4.address }}"
+  bootstrap_expect: 1
+
+kibana:
+  force_config: true
+
+elasticsearch:
+  restart_on_config: true # enable in dev for easier testing, disable in prod
+
+grafana:
+  dashboards:
+    path: /usr/share/grafana/public/dashboards
+    public:
+      enabled:
+        - bbc-standard-sla.json
+        - bbc-basic-host.json
+        - cleversafe-standard-sla.json
+        - bbc-ceph-usage.json
+
+percona:
+  root_password: asdf
+  galera_version: 3.x
+  client_version: 5.6
+  server_version: 5.6
+  sst_auth_user: sst_admin
+  sst_auth_password: asdf
+  wsrep_cluster_name: example-sitecontroller
+  ip: "{{ hostvars[inventory_hostname][private_interface]['ipv4']['address'] }}"
+
+git_repos:
+  ursula: https://github.com/blueboxgroup/ursula.git
+
+support_tools:
+  enabled: True
+  git:
+    - name: ursula-master
+      path: /opt/git/ursula/master
+      owner: "{{ admin_user }}"
+      repo: "{{ git_repos.ursula }}"
+      rev: master
+      auto_update: true
+  virtualenvs:
+    - name: ursula-master
+      path: /opt/venv/ursula/master
+      owner: "{{ admin_user }}"
+      requirements: /opt/git/ursula/master/requirements.txt
+  alternatives:
+    - name: ursula
+      path: /opt/venv/ursula/master/bin/ursula
+      link: /usr/local/bin/ursula
+
+bbg_ssl:
+  intermediate: ~
+  cert: |
+    -----BEGIN CERTIFICATE-----
+    MIIDbjCCAlagAwIBAgIJANyptbhIpO8TMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV
+    BAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX
+    aWRnaXRzIFB0eSBMdGQwHhcNMTUwMTE0MTg0MTQyWhcNMTYwMTE0MTg0MTQyWjBF
+    MQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50
+    ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+    CgKCAQEA1MWu8kJ20FCLbBIMqgTlKCOL54X06C0bERm3wIOwu6dk35s7uy78I2pt
+    dA2sbwLeIMiJHKY85eBNI+pMZGNsRYajl3BZRvSWcjO6DHGN8k0ljf6gvzAlzyG0
+    2Pz0Th1R2fveOE0fNZcT/JqbKLFb/Cu3GoaC/wUAbRK36qgzQkX4hQD0QVylhdmS
+    82Fsr6H4fl7iybn7w1HwA2DG4MuJRjCeskujfz0ch7/BBdON84SDVGcemHkO45R/
+    c6n49jnTHiJ5CJXsZz4uH8lEs0Q6CW2GMtVbPiXfJ8TLBdSgMp6atVMCMNsa0Pg1
+    I5hXAqknZf9Uc3KWdBRkufJrwHnFuwIDAQABo2EwXzAPBgNVHREECDAGhwSsEAAN
+    MB0GA1UdDgQWBBQzjGYx1ss5NQuRGAf3nk7KenvLyTAfBgNVHSMEGDAWgBQzjGYx
+    1ss5NQuRGAf3nk7KenvLyTAMBgNVHRMEBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IB
+    AQBAcq4Fe5+5jeRBqS0R9EApBeQZfCV+h88UpzAsWWhxicft1BUiftMzAwAE0VnG
+    xTB96jmlmHXjSR8ugCED4A6wkjW3mDo5SmkWLQBCY1EHSUdIgVbhK4zxP4TLhGbD
+    54+nGAsRLM1Hb5UlI1uCa4E/1gdeLUd41vSfKc8/A133Rl1CMpFLHuMgE1VgVQkU
+    ElkHVD8xQlOrza/yMT1eGg4tbR4ukqjdC4vOWqGPmajlR+gk/sJ2Ut1CzN4fcmtj
+    yqcwxri9aiDB1mimS+m/SjKvPf6lV5bDRtQWXbCPAWzq8gKvv2PqoNyyZOxbqJhM
+    eb0+9ULVAGAYtcZuNHgs0bH+
+    -----END CERTIFICATE-----
+  key: |
+    -----BEGIN PRIVATE KEY-----
+    MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDUxa7yQnbQUIts
+    EgyqBOUoI4vnhfToLRsRGbfAg7C7p2Tfmzu7Lvwjam10DaxvAt4gyIkcpjzl4E0j
+    6kxkY2xFhqOXcFlG9JZyM7oMcY3yTSWN/qC/MCXPIbTY/PROHVHZ+944TR81lxP8
+    mpsosVv8K7cahoL/BQBtErfqqDNCRfiFAPRBXKWF2ZLzYWyvofh+XuLJufvDUfAD
+    YMbgy4lGMJ6yS6N/PRyHv8EF043zhINUZx6YeQ7jlH9zqfj2OdMeInkIlexnPi4f
+    yUSzRDoJbYYy1Vs+Jd8nxMsF1KAynpq1UwIw2xrQ+DUjmFcCqSdl/1RzcpZ0FGS5
+    8mvAecW7AgMBAAECggEAeP6BYdpR3lwvLKGG+hgWiCDOqjYO8wjTX4IUcDFzCwNB
+    5bZM3UD2uN0IqPotmGM1Fcdz0QrnjoFi3I2cK2ouY8sQtEl7O1JTS1YG8pSQd71P
+    IdQubQpgNc2hHdOayeD6bs8/qxyQJtVm1DrHCPjyqg/h6/+Z9pNNjrkaRSKpI4HF
+    Jtuj8iRHV9yWDoNU1eWO6qzoEU1fNE48XVefpLpVDJx0u4Ih8/BHguTBH1DO5qQt
+    sNkBUNh09Fy3ZqM2085ZMmi+W+EqtNJyYsB7J2324Bga7Voo71s9HNDZWLWHTIYW
+    jaPBRvn4mjlVua1o8Dd3/RQ2JVzwiv/aZ47IGw3cgQKBgQDwco2IduJkWHnOyPKZ
+    +uo4xmYBa8UswBMqmfPaTijZ4naG9J34LjZFtvsJhSqOrdKEYbP3ONz3UwvOFUQg
+    kzC/F5TJidDzNXPiLd+3NpssofnVwLKdZUwORkLoBph7oAY2fImaoWIGfPsHyam5
+    o4RWbsyhxKozFyBn2NBIyxQ0EQKBgQDiiN6rsHusVdH5OreO6Z8RvB9ULUH8seB+
+    f1oYiHSfPZQ4fkwsB8k9gF6yJOb/Kob3FSoc5GRpd4TK9DXHTZh41Q3/CSwveYYa
+    5BJlupXGgAzu6vFuyUxAw/TclZFD9uAjrlfu8lbRpBHzKZtJnJQtgNPFflH6ZxbY
+    ljlNO4f5CwKBgA42l0szy9omqLyigES94k6M28bFuhgVGozwIMwMxrlqe5sqppPf
+    F3IziM9dQdDBUaplpB+/CsDL9eyusSJD0SPanv7y2Jkn1bvO/mR0I+QVhxEtnOFU
+    9ZP6b0YL7cORCAz8e53aYFMF3EjvkMracZ4yWoJNf8oZWd8Jn/ZNmtohAoGAN/yF
+    s78BQb1QEJ2PYhWhB5wLzh0FUvOPPRQyax/GWti4OiIUp0khVj7UqIhwQp37DzO+
+    3bcgjeRJAHPMmr41sZ9OPzrAHdeV6i110oiDnbRl/eI42x2K5/LGIIIijb6E9KyQ
+    9PAVvugiu4sL4ux8vqY5MHUgw5cY0VyHOuw8lbMCgYBPZtqsJs+zrkZj9HD+lQvo
+    N2CQtonrnIwqaorgbZVr1PDBJo0AHBraQRt/0Xpzu4Q/rjkHxlhESjW17Ax3JS1s
+    gRwuu+SIjud/7fZcGy8to7MbdJrWiYFUOlQF6F/kEIq3bsHmJWbi1FgTdeQkkEl6
+    DFeUkc2q0uaO1lZIAnMA4w==
+    -----END PRIVATE KEY-----

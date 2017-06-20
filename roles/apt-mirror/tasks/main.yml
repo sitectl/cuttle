@@ -1,0 +1,67 @@
+---
+- name: create mirror user
+  user:
+    name: apt-mirror
+    comment: apt-mirror
+    shell: /bin/false
+    system: yes
+    home: /nonexistent
+
+- name: create mirror directories
+  file:
+    dest: "{{ item }}"
+    state: directory
+    recurse: true
+    owner: apt-mirror
+    group: apt-mirror
+  with_items:
+    - "{{ apt_mirror.path }}"
+    - "{{ apt_mirror.path }}/mirror"
+
+- include: debmirror.yml
+  when: (apt_mirror.debmirror.repositories|combine(apt_mirror.debmirror.distros)) | length > 0
+
+- name: add main apache vhost
+  template:
+    src: etc/apache2/sites-available/apt_mirror
+    dest: /etc/apache2/sites-available/apt_mirror.conf
+  notify:
+    - restart apache
+  tags: apt-mirror-apache-config
+
+- name: enable repo vhost
+  apache2_site:
+    state: enabled
+    name: apt_mirror
+  notify:
+    - restart apache
+
+- meta: flush_handlers
+
+- name: ensure apache is running
+  service:
+    name: apache2
+    state: started
+    enabled: yes
+
+- name: allow apt-mirror traffic
+  ufw:
+    rule: allow
+    to_port: "{{ item.port }}"
+    src: "{{ item.src }}"
+    proto: "{{ item.protocol }}"
+  with_items: "{{ apt_mirror.firewall }}"
+  tags:
+    - firewall
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

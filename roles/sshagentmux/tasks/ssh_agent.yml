@@ -1,0 +1,14 @@
+---
+- set_fact:
+    current_group: "{{ item }}"
+
+- name: ask for passphrase for ssh key
+  pause:
+    prompt: "enter passphrase for {{ current_group.key }} ssh key"
+  register: passphrase
+  when: current_group.value.ssh_keys is defined and
+        current_group.value.ssh_keys.enable_passphrase|default('False')|bool
+
+- name: add ssh keys to authorization_proxy ssh agent session
+  shell: echo {{ passphrase.user_input|default("") }} | SSH_AUTH_SOCK={{ sshagentmux.auth_socket }} ssh-add /root/.ssh/{{ current_group.key }}-id_rsa
+  when: current_group.value.ssh_keys is defined

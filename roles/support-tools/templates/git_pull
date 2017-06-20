@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# {{ ansible_managed }}
+
+# lulz what is this? you cna't source a socket.
+# source {{ sshagentmux.auth_socket }}
+
+declare -a errors
+
+case "$1" in
+{% for repo in support_tools.git %}
+    {{ repo.name }})
+        echo Updating {{ repo.path }} to {{ repo.rev }}
+        cd {{ repo.path }}
+        git pull origin {{ repo.rev }}
+        (( $? )) && errors+=( {{ repo.name }} )
+        ;;
+{% endfor %}
+    all)
+{% for repo in support_tools.git %}
+        echo Updating {{ repo.path }} to {{ repo.rev }}
+        cd {{ repo.path }}
+        git pull origin {{ repo.rev }}
+        (( $? )) && errors+=( {{ repo.name }} )
+{% endfor %}
+        ;;
+    *)
+        errors+=( "$1" )
+        echo "Usage: git_pull repo_name"
+        echo "valid repo_names: all {% for repo in support_tools.git %}{{ repo.name }} {% endfor %}"
+esac
+
+if [ {{ "${#errors[@]}" }} -ne 0 ]; then
+    echo '{"name": "git_pull", "ttl": 7200, "output": "git_pull failed for repo(s): '${errors[@]}'", "status": 1}' | nc localhost 3030
+else
+    echo '{"name": "git_pull", "ttl": 7200, "output": "git_pull successful", "status": 0}' | nc localhost 3030
+fi

@@ -1,0 +1,56 @@
+---
+pxe_files: False
+
+pxe:
+  enable_server: True
+  interactive: false
+  pxe_interface: "{{ private_device_interface }}"
+  tftpboot_path: /srv/pxe/tftpboot
+  tftp_interface: "{{ private_device_interface }}"
+  tftp_server: "{{ private_ipv4.address }}"
+  no_dhcp_interface: ~
+  timeout: 100
+  dhcp_ranges:
+    - tag: default
+      range: 172.16.0.50,172.16.0.70,255.255.255.0,2h
+      gateway: 172.16.0.1
+      dns: 8.8.8.8
+    - tag: second
+      range: 172.16.5.50,172.16.5.70,255.255.255.0,2h
+      gateway: 172.16.5.1
+      dns: 8.8.8.8
+  # for serial_com: COM1=0, COM2=1, and COM3=2. Overrideable on each host.
+  nat:
+    enabled: False
+  serial_com: 1
+  ks_interface: auto
+  mirror_http_hostname: archive.ubuntu.com
+  mirror_http_directory: /ubuntu/
+  mirror_http_proxy: ''
+  ntp_server:
+  partman_disk: /dev/sda
+  packages:
+    - curl
+    - openssh-server
+    - build-essential
+    - sudo
+    - wget
+    - ifenslave
+    - vlan
+  root_password: changeme
+  blueboxadmin_password: changeme
+  ssh_pub_keys: []
+  os:
+    - name: precise
+      kernel: http://archive.ubuntu.com/ubuntu/dists/precise-updates/main/installer-amd64/current/images/netboot/ubuntu-installer/amd64/linux
+      bootloader: http://archive.ubuntu.com/ubuntu/dists/precise-updates/main/installer-amd64/current/images/netboot/ubuntu-installer/amd64/initrd.gz
+      root_password: password
+      kernel_image: linux-generic-lts-quantal
+      ntp_server:
+    - name: trusty
+      kernel: http://archive.ubuntu.com/ubuntu/dists/trusty-updates/main/installer-amd64/current/images/netboot/ubuntu-installer/amd64/linux
+      bootloader: http://archive.ubuntu.com/ubuntu/dists/trusty-updates/main/installer-amd64/current/images/netboot/ubuntu-installer/amd64/initrd.gz
+      root_password: password
+      kernel_image:
+      ntp_server:
+  servers: []

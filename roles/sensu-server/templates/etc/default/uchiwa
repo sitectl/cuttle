@@ -1,0 +1,3 @@
+# {{ ansible_managed }}
+
+args="-c /etc/sensu-server/uchiwa.json -p /opt/uchiwa/src/public"

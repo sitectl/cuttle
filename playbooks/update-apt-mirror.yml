@@ -1,0 +1,38 @@
+# To update all mirrors, run:
+# ursula <env> playbooks/update-apt-mirror.yml
+# ex: ursula ../sitecontroller-envs/control-iad01 playbooks/update-apt-mirror.yml
+#
+# To update individual mirrors, run:
+# ursula <env> playbooks/update-apt-mirror.yml -t apt-mirror-split --extra-vars 'repos=<mirror1>,<mirror2>'
+# ex: ursula ../sitecontroller-envs/control-iad01 playbooks/update-apt-mirror.yml -t apt-mirror-split --extra-vars 'repos=blueboxcloud_misc'
+
+---
+- name: update apt-mirror
+  hosts: mirror
+  any_errors_fatal: true
+  environment: "{{ env_vars|default({}) }}"
+  tasks:
+    - name: run apt-mirror
+      command: /usr/bin/apt-mirror
+      become: true
+      become_user: apt-mirror
+      register: apt_mirror
+      when: repos is not defined
+
+    - debug: msg="{{ apt_mirror.stdout }}"
+      when: not apt_mirror|skipped
+
+    - name: update targeted apt-mirror(s)
+      command: /usr/bin/apt-mirror /etc/apt/mirror.list.d/{{ item }}
+      become: true
+      become_user: apt-mirror
+      with_items:
+        - "{{ (repos|default('')).split(',') |default([]) }}"
+      register: apt_mirror
+      tags: apt-mirror-split
+      when: repos is defined
+
+    - debug: msg="{{ item.stdout }}"
+      tags: apt-mirror-split
+      with_items: "{{ apt_mirror.results }}"
+      when: repos is defined

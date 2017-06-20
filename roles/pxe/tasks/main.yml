@@ -1,0 +1,30 @@
+---
+- name: create tftpboot directory
+  file:
+    path: "{{ pxe.tftpboot_path }}"
+    state: directory
+    owner: dnsmasq
+    mode: 0755
+
+- include: server.yml
+  when: pxe.enable_server|bool
+
+- include: install.yml
+  when: pxe_files|bool
+
+- include: remove.yml
+  when: not pxe_files|bool
+
+- meta: flush_handlers
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

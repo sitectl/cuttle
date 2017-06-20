@@ -1,0 +1,7 @@
+common:
+  users:
+    - name: jenkins
+      home: /var/lib/jenkins
+jenkins:
+  packagecloud:
+    token: "thisisbadtoken"

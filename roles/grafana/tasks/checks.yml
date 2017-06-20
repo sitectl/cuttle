@@ -1,0 +1,4 @@
+---
+- name: GFN015 install grafana-server process check
+  sensu_check_dict: name="check-grafana-process" check="{{ sensu_checks.grafana.check_grafana_process }}"
+  notify: restart sensu-client missing ok

@@ -1,0 +1,9 @@
+---
+public_interface: ansible_eth2
+private_interface: ansible_eth1
+public_ipv4: "{{ hostvars[inventory_hostname][public_interface]['ipv4'] }}"
+private_ipv4: "{{ hostvars[inventory_hostname][private_interface]['ipv4'] }}"
+apache:
+  listen:
+    - 80
+    - 443

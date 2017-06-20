@@ -1,0 +1,23 @@
+{% macro local_external_address() -%}
+{% for address in ansible_all_ipv4_addresses %}
+{% if loop.last %}
+{{- address -}}
+{%- endif -%}
+{% endfor -%}
+{% endmacro -%}
+
+{
+  "client": {
+    "name": "{{ sensu.client_name|default(ansible_hostname ~ '.' ~ ansible_domain ~ '-' ~ site_abrv|default('unknown_site')) }}",
+    "address": "{{ local_external_address() }}",
+    "subscriptions": [ "all" ],
+    "keepalive": {
+      "thresholds": {
+        "warning": 60,
+        "critical": 180
+      },
+      "handlers": ["default"],
+      "refresh": 1800
+    }
+  }
+}

@@ -1,0 +1,24 @@
+---
+- name: sensu server force restart
+  hosts: sensu
+  tasks:
+    - name: kill sensu-server
+      command: pkill -9 sensu-server
+
+    - name: remove sensu-server pid file
+      file:
+        path: /var/run/sensu/sensu-server.pid
+        state: absent
+
+    - name: start sensu-server
+      service:
+        name: sensu-server
+        state: started
+        enabled: yes
+
+    - name: start sensu-api
+      service:
+        name: sensu-api
+        state: started
+        enabled: yes
+

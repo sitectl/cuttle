@@ -1,0 +1,26 @@
+---
+- name: install postfix
+  apt: pkg=postfix state=present
+
+- name: install postfix configuration
+  template: src=etc/postfix/main.cf
+            dest=/etc/postfix/main.cf
+  notify:
+    - restart postfix
+
+- meta: flush_handlers
+
+- name: start and enable postfix service
+  service: name=postfix state=started enabled=yes
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

@@ -1,0 +1,3 @@
+---
+- name: install rally venv
+  command: /opt/stack/rally/install_rally.sh --target /opt/bbc/rally

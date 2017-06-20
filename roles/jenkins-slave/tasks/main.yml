@@ -1,0 +1,60 @@
+---
+- name: install gitconfig
+  template:
+    src: gitconfig
+    dest: ~jenkins/.gitconfig
+
+- name: install system dependencies
+  apt: pkg={{ item }}
+  with_items: "{{ jenkins.slave.apt }}"
+
+- name: install python dependencies
+  pip: name={{ item }}
+  with_items: "{{ jenkins.slave.pip }}"
+
+- name: install gem dependencies
+  gem:
+    name: "{{ item }}"
+    user_install: no
+    include_dependencies: yes
+  with_items: "{{ jenkins.slave.gem }}"
+  register: result
+  until: result|succeeded
+  retries: 5
+
+- name: package_cloud credentials file
+  template:
+    src: var/lib/jenkins/packagecloud
+    dest: ~jenkins/.packagecloud
+    owner: jenkins
+    mode: "0600"
+
+- name: make vault private_vars directories
+  file: dest=~jenkins/private_vars state=directory owner=jenkins
+
+- name: make vault rhel and ubuntu directories
+  file: dest=~jenkins/private_vars/{{ item }} state=directory owner=jenkins
+  with_items:
+    - rhel
+    - ubuntu
+
+- name: copy private variables templates into place
+  template:
+    src: private_vars/{{ item }}/default.yml
+    dest: ~jenkins/private_vars/{{ item }}/default.yml
+    owner: jenkins
+  with_items:
+    - rhel
+    - ubuntu
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

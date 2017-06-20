@@ -1,0 +1,3 @@
+Defaults env_keep += "DIB_RELEASE"
+Defaults env_keep += "OVERWRITE_OLD_IMAGE"
+{{ imagebuilder.build_user }} ALL=(ALL)NOPASSWD:/usr/local/bin/disk-image-create

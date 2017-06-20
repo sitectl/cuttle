@@ -1,0 +1,14 @@
+[bastion]
+bastion01
+
+[openid_proxy]
+openid-proxy01
+
+[ipmi-proxy]
+ipmi-proxy01
+
+[sensu]
+monitor01
+
+[rabbitmq]
+monitor01

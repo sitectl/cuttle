@@ -1,0 +1,13 @@
+---
+- name: restart pypi_mirror server
+  service: name=pypi_mirror state=restarted
+
+- name: stop pypi_mirror server
+  service: name=pypi_mirror state=stopped
+
+- name: initialize pypi-mirror server
+  command: "{{ pypi_mirror.virtualenv }}/bin/devpi-server --serverdir {{ pypi_mirror.mirror_location }} --role {{ pypi_mirror.role }} {% if pypi_mirror.master_url %}--master {{ pypi_mirror.master_url }}{% endif %} --init --stop"
+  args:
+    creates: "{{ pypi_mirror.mirror_location }}/.serverversion"
+  become: true
+  become_user: mirror

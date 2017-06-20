@@ -1,0 +1,53 @@
+# {{ ansible_managed }}
+
+{% macro virtualhost(servername) %}
+    ServerAdmin openstack@bluebox.net
+    ServerName {{ pypi_mirror.apache.servername }}
+    ServerAlias {{ pypi_mirror.apache.serveraliases|join(" ") }}
+    DocumentRoot {{ pypi_mirror.mirror_location}}
+    ErrorLog ${APACHE_LOG_DIR}/pypi_mirror-error.log
+    CustomLog ${APACHE_LOG_DIR}/pypi_mirror-access.log combined
+    FileETag MTime Size
+    Header set Cache-Control public
+    RequestHeader set X-outside-url %{REQUEST_SCHEME}s://%{HTTP_HOST}s
+    RequestHeader set X-Real-IP %{REMOTE_ADDR}s
+{% for repo,location in pypi_mirror.repos.iteritems() %}
+{% if location.password is defined %}
+    <Location /{{ location.username }}/{{ location.index }}>
+        AuthUserFile {{ pypi_mirror.htpasswd_location }}/.htpasswd
+        AuthType Basic
+        AuthName "Authentication Required"
+        Require valid-user
+    </Location>
+{% endif %}
+{% endfor %}
+    <Location />
+        ProxyPass http://localhost:4040/
+        ProxyPassReverse http://localhost:4040/
+        ProxyPreserveHost On
+    </Location>
+{% endmacro %}
+
+{% if pypi_mirror.apache.ssl.enabled|bool and pypi_mirror.apache.http_redirect|bool %}
+<VirtualHost {{ pypi_mirror.apache.ip }}:{{ pypi_mirror.apache.port }}>
+    RewriteEngine on
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}:{{ pypi_mirror.apache.ssl.port }}$1 [R=301,L]
+</VirtualHost>
+{% else %}
+<VirtualHost {{ pypi_mirror.apache.ip }}:{{ pypi_mirror.apache.port }}>
+    {{ virtualhost(pypi_mirror.apache.servername) }}
+</VirtualHost>
+{% endif %}
+
+{% if pypi_mirror.apache.ssl.enabled|bool %}
+<VirtualHost {{ pypi_mirror.apache.ssl.ip }}:{{ pypi_mirror.apache.ssl.port }}>
+    {{ virtualhost(pypi_mirror.apache.ssl.servername) }}
+    {{ apache.ssl.settings }}
+    SSLCertificateFile /etc/ssl/certs/{{ pypi_mirror.apache.ssl.name|default('sitecontroller') }}.crt
+    SSLCertificateKeyFile /etc/ssl/private/{{ pypi_mirror.apache.ssl.name|default('sitecontroller') }}.key
+{% if bbg_ssl.intermediate or pypi_mirror.apache.ssl.intermediate %}
+    SSLCertificateChainFile /etc/ssl/certs/{{ pypi_mirror.apache.ssl.name|default('sitecontroller') }}-intermediate.crt
+{% endif %}
+    </VirtualHost>
+{% endif %}

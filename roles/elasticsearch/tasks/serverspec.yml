@@ -1,0 +1,6 @@
+---
+- name: serverspec tests elasticsearch tech specs
+  template: src={{ item }}
+            dest=/etc/serverspec/spec/localhost/
+            mode=0755
+  with_fileglob: ../templates/serverspec/*

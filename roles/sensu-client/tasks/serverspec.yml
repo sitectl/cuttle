@@ -1,0 +1,43 @@
+---
+- name: install version-locked gems
+  gem: name="{{ item.name }}" version="{{ item.version | default(omit) }}"
+       executable=/opt/sensu/embedded/bin/gem
+       user_install=no
+  with_items: "{{ serverspec.version_locked_gems }}"
+  register: result
+  until: result|succeeded
+  retries: 5
+  notify: restart sensu-client
+
+- name: install serverspec gem
+  gem: name=serverspec version="{{ serverspec.version }}"
+       executable=/opt/sensu/embedded/bin/gem
+       user_install=no
+  register: result
+  until: result|succeeded
+  retries: 5
+  notify: restart sensu-client
+
+- name: install serverspec sensu plugin
+  gem: name=sensu-plugins-serverspec version=0.0.2
+       executable=/opt/sensu/embedded/bin/gem
+       user_install=no
+  register: result
+  until: result|succeeded
+  retries: 5
+  notify: restart sensu-client
+
+- name: install serverspec-extended-types gem
+  gem: name=serverspec-extended-types version=0.0.3
+       executable=/opt/sensu/embedded/bin/gem
+       user_install=no
+  register: result
+  until: result|succeeded
+  retries: 5
+  notify: restart sensu-client
+
+- name: serverspec checks for sensu-client role
+  template: src={{ item }}
+            dest=/etc/serverspec/spec/localhost/
+            mode=0755
+  with_fileglob: ../templates/serverspec/*

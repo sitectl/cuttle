@@ -1,0 +1,4 @@
+# {{ ansible_managed }}
+
+Cmnd_Alias  IPMI_PROXY = /usr/local/bin/ipmi-proxy-tool.py
+www-data    ALL=(ALL) NOPASSWD:IPMI_PROXY

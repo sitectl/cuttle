@@ -1,0 +1,45 @@
+---
+- name: stop redis-server
+  service: name=redis-server state=stopped must_exist=false
+
+- name: create redis user
+  user: name=redis groups=adm home=/usr/share/redis
+        comment=redis shell=/bin/false
+        system=yes
+  notify:
+    - restart redis-server
+
+- name: redis log directory
+  file: dest=/var/log/redis
+        owner=redis group=adm mode=0775
+        state=directory
+  notify:
+    - restart redis-server
+
+- name: fix redis service
+  template: src=etc/init.d/redis-server dest=/etc/init.d/redis-server
+            mode=0755
+  notify:
+    - restart redis-server
+
+- name: install redis-server package
+  apt: pkg=redis-server
+  notify:
+    - restart redis-server
+
+- meta: flush_handlers
+
+- name: start redis-server
+  service: name=redis-server state=started enabled=yes
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

@@ -1,0 +1,22 @@
+---
+- name: install ufw
+  apt: pkg=ufw
+  register: result
+  until: result|succeeded
+  retries: 5
+
+- name: Permit SSH
+  ufw: rule=allow to_port=22 proto=tcp src={{ item }}
+  with_items: "{{ common.ssh.allow_from }}"
+
+- name: Permit unrestricted access from remainder of cluster
+  ufw: rule=allow from_ip={{ item }} proto=any
+  with_items: "{{ common.firewall.friendly_networks }}"
+
+- name: Do not enforce forwarding rules with UFW
+  lineinfile: dest=/etc/default/ufw regexp="^DEFAULT_FORWARD_POLICY"
+              line="DEFAULT_FORWARD_POLICY=\"ACCEPT\""
+  when: common.firewall.forwarding|bool
+
+- name: Enable UFW (after configuring SSH access)
+  ufw: state=enabled

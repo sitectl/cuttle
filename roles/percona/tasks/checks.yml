@@ -1,0 +1,10 @@
+---
+- name: install mysql process check
+  sensu_check_dict: name="check-mysql-process" check="{{ sensu_checks.percona.check_mysql_process }}"
+  notify: restart sensu-client missing ok
+  when: inventory_hostname in groups.percona_primary or inventory_hostname in groups.percona_secondary|default('[]')
+
+- name: install garbd process check
+  sensu_check_dict: name="check-garbd-process" check="{{ sensu_checks.percona.check_garbd_process }}"
+  notify: restart sensu-client missing ok
+  when: inventory_hostname in groups.percona_arbiter|default('[]')

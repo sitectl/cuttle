@@ -1,0 +1,164 @@
+---
+- name: add rabbit user
+  user: name=rabbitmq home=/var/lib/rabbitmq system=true shell=/bin/false comment=rabbitmq
+
+- name: rabbit directory
+  file: dest=/etc/rabbitmq
+        owner=rabbitmq group=rabbitmq mode=0755
+        state=directory
+
+- name: rabbit log directory
+  file: dest=/var/log/rabbitmq
+        owner=rabbitmq group=rabbitmq mode=0755
+        state=directory
+
+- name: install erlang-solutions erlang
+  apt: pkg=esl-erlang
+
+- name: install rabbitmq
+  apt: pkg=rabbitmq-server
+
+- name: add rabbitmq environment configuration
+  template: src=etc/rabbitmq/rabbitmq-env.conf
+            dest=/etc/rabbitmq/rabbitmq-env.conf
+            owner=rabbitmq group=rabbitmq mode=0600
+
+- name: add rabbitmq security limits file
+  template:
+    src: etc/security/limits.d/10-rabbitmq.conf
+    dest: /etc/security/limits.d/10-rabbitmq.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - login as rabbitmq to update limits
+    - restart rabbitmq
+
+- name: add rabbitmq defaults
+  template:
+    src: etc/default/rabbitmq-server
+    dest: /etc/default/rabbitmq-server
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - login as rabbitmq to update limits
+    - restart rabbitmq
+
+# Create the cluster if desired
+- include: cluster.yml
+  when: rabbitmq.cluster
+
+- name: rabbit cert directory
+  file: dest=/etc/rabbitmq/ssl
+        owner=rabbitmq group=rabbitmq mode=0755
+        state=directory
+
+- name: create CA cert
+  template: src=etc/rabbitmq/ssl/cacert.pem
+            dest=/etc/rabbitmq/ssl/cacert.pem
+            owner=rabbitmq group=rabbitmq mode=0600
+  when: rabbitmq.ssl and rabbitmq.ssl.ca_cert is defined
+  notify: restart rabbitmq
+
+- name: create cert
+  template: src=etc/rabbitmq/ssl/cert.pem
+            dest=/etc/rabbitmq/ssl/cert.pem
+            owner=rabbitmq group=rabbitmq mode=0600
+  when: rabbitmq.ssl
+  notify: restart rabbitmq
+
+- name: create key
+  template: src=etc/rabbitmq/ssl/key.pem
+            dest=/etc/rabbitmq/ssl/key.pem
+            owner=rabbitmq group=rabbitmq mode=0600
+  when: rabbitmq.ssl
+  notify: restart rabbitmq
+
+- name: configure rabbitmq server
+  template: src=etc/rabbitmq/rabbitmq.config
+            dest=/etc/rabbitmq/rabbitmq.config
+            owner=rabbitmq group=rabbitmq mode=0600
+  notify: restart rabbitmq
+
+- meta: flush_handlers
+
+- name: enable and start rabbitmq-server service
+  service: name=rabbitmq-server state=started enabled=yes
+
+- name: install rabbitmq plugins
+  rabbitmq_plugin: names={{ item }} state=enabled
+  with_items: "{{ rabbitmq.plugins }}"
+
+- name: install rabbitmqadmin
+  get_url:
+    url: "{{ rabbitmq.admin_cli_url }}"
+    dest: /usr/local/bin/rabbitmqadmin
+
+- name: correct rabbitmqadmin modes
+  file: group=root owner=root mode=0755 path=/usr/local/bin/rabbitmqadmin
+
+- name: rabbit vhost
+  rabbitmq_vhost:
+    name: "{{ item.vhost }}"
+    state: present
+  when: item.vhost is defined
+  with_items: "{{ rabbitmq.users }}"
+
+- name: rabbit user
+  rabbitmq_user:
+    user: "{{ item.username }}"
+    password: "{{ item.password }}"
+    vhost: "{{ item.vhost | default(omit) }}"
+    tags: administrator
+    configure_priv: .*
+    read_priv: .*
+    write_priv: .*
+    permissions: "{{ item.permissions | default(omit) }}"
+    state: present
+  when: not rabbitmq.cluster and
+        item.username is defined and item.password is defined
+  with_items: "{{ rabbitmq.users }}"
+
+- name: rabbit user clustered
+  rabbitmq_user:
+    user: "{{ item.username }}"
+    password: "{{ item.password }}"
+    node: "{{ rabbitmq.nodename }}"
+    vhost: "{{ item.vhost | default(omit) }}"
+    tags: administrator
+    configure_priv: .*
+    read_priv: .*
+    write_priv: .*
+    permissions: "{{ item.permissions | default(omit) }}"
+    state: present
+  when: rabbitmq.cluster and
+        item.username is defined and item.password is defined
+  with_items: "{{ rabbitmq.users }}"
+
+# Backward compatibility with existing configurations.
+- name: remove default rabbit user
+  rabbitmq_user: user=guest state=absent
+  when: not rabbitmq.cluster
+
+- name: remove default rabbit user clustered
+  rabbitmq_user: user=guest state=absent node={{ rabbitmq.nodename }}
+  when: rabbitmq.cluster
+
+- name: rabbitmq firewall
+  ufw: rule=allow to_port={{ item.port }} proto=tcp src={{ item.src }}
+  with_items: "{{ rabbitmq.firewall }}"
+  tags:
+    - firewall
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

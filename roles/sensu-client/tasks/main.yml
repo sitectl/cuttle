@@ -1,0 +1,99 @@
+---
+- name: sensu config directories
+  file: dest={{ item }} mode=0755
+    state=directory
+    owner=sensu
+  with_items:
+    - /etc/sensu/ssl
+    - /etc/sensu/conf.d/checks
+
+- name: create cert
+  template: src=etc/sensu/ssl/cert.pem
+    dest=/etc/sensu/ssl/cert.pem
+    owner=sensu
+    mode=0660
+  notify:
+    - restart sensu-client
+
+- name: create key
+  template: src=etc/sensu/ssl/key.pem
+    dest=/etc/sensu/ssl/key.pem
+    owner=sensu
+    mode=0660
+  notify:
+    - restart sensu-client
+
+- name: configure sensu
+  template: src={{ item }}
+    dest=/{{ item }} mode=0644
+  with_items:
+    - etc/sensu/conf.d/client.json
+    - etc/sensu/conf.d/rabbitmq.json
+  notify:
+    - restart sensu-client
+
+- name: create sensu plugins dir
+  file:
+    dest: "{{ sensu.client.plugin_path }}"
+    state: directory
+    owner: root
+    mode: 0755
+
+- name: install ursula sensu plugins
+  apt:
+    pkg: "ursula-monitoring-sensu={{ sensu.client.ursula_sensu_plugins.version }}"
+  when: sensu.client.plugins_from == "apt"
+  notify:
+    - restart sensu-client
+
+- name: Copy each file over that matches the given pattern
+  copy:
+    src: "{{ item }}"
+    dest: "{{ sensu.client.plugin_path }}"
+    owner: "root"
+    mode: 0600
+  when: sensu.client.plugins_from == "file"
+  with_fileglob:
+    - "plugins/*"
+  notify:
+    - restart sensu-client
+
+- name: specify plugins path
+  lineinfile: dest=/etc/default/sensu regexp=^PLUGINS_DIR
+              line=PLUGINS_DIR="{{ sensu.client.plugin_path }}"
+  notify: restart sensu-client
+
+- name: use embedded ruby
+  lineinfile: dest=/etc/default/sensu regexp=^EMBEDDED_RUBY
+              line=EMBEDDED_RUBY=true
+  notify: restart sensu-client
+
+- name: install gems into sensu embedded ruby
+  gem:
+    name: "{{ item }}"
+    executable: /opt/sensu/embedded/bin/gem
+    user_install: no
+  with_items:
+   - rest-client
+   - http-cookie
+   - domain_name
+  register: result
+  until: result|succeeded
+  retries: 5
+  notify:
+    - restart sensu-client
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec
+
+- meta: flush_handlers
+
+- name: start sensu-client
+  service: name=sensu-client state=started enabled=yes

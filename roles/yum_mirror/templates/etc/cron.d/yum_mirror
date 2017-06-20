@@ -1,0 +1,9 @@
+# {{ ansible_managed }}
+
+{% for key,value in yum_mirror.repositories|dictsort() %}
+# {{ key }} -- yum repo qualifier
+{{ value.cron|default(yum_mirror.cron) }} yum-mirror /bin/bash /etc/yum/repo-manager/{{ key }}.sh
+
+{% endfor %}
+
+

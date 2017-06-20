@@ -1,0 +1,46 @@
+---
+grafana:
+  version: ~
+  graphite_url: http://172.16.0.17:8080
+  elasticsearch_url: http://172.16.0.13:9200
+  server:
+    http_port: 3001
+    http_addr: 0.0.0.0
+  security:
+    enabled: false
+    anonymous: false
+    admin_user: admin
+    admin_password: admin
+    basic: true
+    secret_key: dsfdgrgrgrfewfdewgfreGregvre
+  database:
+    type: sqlite3
+    path: "/usr/share/grafana/data/grafana.db"
+    host: "127.0.0.1:3306"
+    name: "grafana"
+    user: "grafana"
+    password: "grafana"
+  dashboards:
+    path: ~
+    public:
+      enabled: []
+      disabled: []
+  firewall:
+    - port: 5671
+      src: "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+  logs:
+    # See logging-config/defaults/main.yml for filebeat vs. logstash-forwarder example
+    - paths:
+        - /var/log/grafana/*
+      fields:
+        tags: grafana
+  logging:
+    forwarder: filebeat
+  logrotate:
+    frequency: 'daily'
+    rotations: 7
+  remote_graphite:
+    datasources:
+      - name: graphite
+        hostname: 127.0.0.1
+        port: 8081

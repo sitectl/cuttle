@@ -1,0 +1,4 @@
+---
+- name: LST031 install logstash process check
+  sensu_check_dict: name="check-logstash-process" check="{{ sensu_checks.logstash.check_logstash_process }}"
+  notify: restart sensu-client missing ok

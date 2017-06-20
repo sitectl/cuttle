@@ -1,0 +1,145 @@
+---
+- name: install dependencies
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - yum
+    - createrepo
+    - yum-utils
+
+- name: create yum-mirror user
+  user:
+    name: yum-mirror
+    comment: yum-mirror
+    shell: /bin/false
+    system: yes
+    home: "{{ yum_mirror.path }}"
+
+- name: create yum-mirror repo config directory
+  file:
+    dest: "/etc/yum/{{ item }}"
+    state: directory
+    owner: yum-mirror
+    mode: 0755
+    recurse: true
+  with_items:
+    - repos.d
+    - repo-manager
+
+- name: lay down yum.conf
+  template: 
+    src: "etc/yum/yum.conf"
+    dest: "/etc/yum/yum.conf"
+    owner: yum-mirror
+
+- name: configure yum repos
+  template:
+    src: "etc/yum/repos.d/mirror-template"
+    dest: "/etc/yum/repos.d/{{ item.key }}.repo"
+    owner: yum-mirror
+  with_dict: "{{ yum_mirror.repositories }}"
+
+- name: sync and create repo shell script
+  template:
+    src: "etc/yum/repo-manager/repo-manager-template.sh"
+    dest: "/etc/yum/repo-manager/{{ item.key }}.sh"
+    owner: yum-mirror
+    mode: 0755
+  with_dict: "{{ yum_mirror.repositories }}"
+
+- name: repo manager script cron jobs
+  template:
+    src: "etc/cron.d/yum_mirror"
+    dest: "/etc/cron.d/yum_mirror"
+
+- name: keys path
+  file:
+    dest: "{{ yum_mirror.path }}/keys"
+    state: directory
+    mode: 0755
+    owner: yum-mirror
+  tags: yum-mirror-keys
+
+- name: download repo keys
+  get_url:
+    url: "{{ item.value.key_url }}"
+    dest: "{{ yum_mirror.path }}/keys/{{ item.key }}.key"
+    mode: 0644
+  when: item.value.key_url is defined
+  with_dict: "{{ yum_mirror.repositories }}"
+  tags: yum-mirror-keys
+
+- name: create yum mirror htpasswd location
+  file:
+    name: "{{ yum_mirror.htpasswd_location }}"
+    state: directory
+    owner: yum-mirror
+
+- name: create per repo mirror directory
+  file:
+    dest: "{{ yum_mirror.path }}/mirror/{{ item.key }}"
+    state: directory
+    mode: 0755
+    owner: yum-mirror
+  with_dict: "{{ yum_mirror.repositories }}"
+
+- name: create per repo .htpasswd
+  htpasswd:
+    name: "{{ item.value.username }}"
+    password: "{{ item.value.password }}"
+    path: "{{ yum_mirror.htpasswd_location }}/{{ item.key }}.htpasswd"
+  with_dict: "{{ yum_mirror.repositories }}"
+  when: item.value.username is defined and item.value.password is defined
+
+- name: add main apache vhost
+  template:
+    src: "etc/apache2/sites-available/yum_mirror"
+    dest: "/etc/apache2/sites-available/yum_mirror.conf"
+  notify:
+    - restart apache
+  tags: yum-mirror-apache-config
+
+- name: enable repo vhost
+  apache2_site:
+    state: enabled
+    name: yum_mirror
+  notify:
+    - restart apache
+
+- meta: flush_handlers
+
+- name: ensure apache is running
+  service:
+    name: apache2
+    state: started
+    enabled: yes
+
+- name: pull repo files
+  shell: "/bin/bash /etc/yum/repo-manager/{{ item.key }}.sh"
+  become: true
+  become_user: yum-mirror
+  when: yum_mirror.pull_files and "{{ item.value.enabled }}"
+  with_dict: "{{ yum_mirror.repositories }}"
+
+- name: allow yum-mirror traffic
+  ufw:
+    rule: allow
+    to_port: "{{ item.port }}"
+    src: "{{ item.src }}"
+    proto: "{{ item.protocol }}"
+  with_items: "{{ yum_mirror.firewall }}"
+  tags:
+    - firewall
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

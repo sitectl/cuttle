@@ -1,0 +1,16 @@
+---
+sshagentmux:
+  enabled: false
+  auth_db: /root/authorization_proxy.db
+  auth_socket: /var/run/authorization_proxy.sock
+  virtualenv_path: /opt/venv/sshagentmux
+  logs:
+    - paths:
+        - /var/log/authorization_proxy.log
+      fields:
+        tags: audit,auth,sshagentmux
+
+users_to_add: {}
+user_groups: {}
+sorted_authorizations: {}
+sorted_identities: {}

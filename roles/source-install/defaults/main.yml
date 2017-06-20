@@ -1,0 +1,13 @@
+---
+source_install:
+  name: source-install
+  virtualenv: {}
+    # EXAMPLE
+    # path: /opt/venv/<name>
+    # requirements: /opt/git/<name>/master/requirements.txt
+    # extra_index: http://pypi-mirror/private/index/simple
+  git: []
+  system_deps: []
+  pip_packages: []
+  alternatives: []
+  cleanup: []

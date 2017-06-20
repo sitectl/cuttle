@@ -1,0 +1,5 @@
+---
+- name: restart ttyspy-receiver
+  service:
+    name: ttyspy-receiver
+    state: restarted

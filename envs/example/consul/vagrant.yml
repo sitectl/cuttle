@@ -1,0 +1,11 @@
+default:
+  memory: 512
+  cpus: 1
+
+vms:
+  consul-01:
+    ip_address: 172.16.0.22
+  consul-02:
+    ip_address: 172.16.0.23
+  consul-03:
+    ip_address: 172.16.0.24

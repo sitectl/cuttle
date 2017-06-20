@@ -1,0 +1,35 @@
+---
+- name: install gpg
+  apt: pkg=gnupg
+
+- name: check whether repo key exists
+  shell: 'gpg --list-secret-keys | grep -q "{{ gpg.secret_key_id }}"'
+  register: gpg_key_exists
+  failed_when: False
+
+- name: copy secret key to host
+  copy: src=blueboxcloud.asc dest=/tmp/blueboxcloud.asc
+  when: gpg_key_exists.rc != 0
+
+- name: gpg import repo key
+  shell: 'gpg --allow-secret-key-import --import /tmp/blueboxcloud.asc'
+  when: gpg_key_exists.rc != 0
+
+- name: remove gpg key
+  file: dest=/tmp/blueboxcloud.asc state=absent
+  when: gpg_key_exists.rc != 0
+
+- name: create default keys file
+  command: creates="/root/.gnupg/trustedkeys.gpg" cp /usr/share/keyrings/ubuntu-archive-keyring.gpg /root/.gnupg/trustedkeys.gpg
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

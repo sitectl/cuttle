@@ -1,0 +1,5 @@
+---
+# SAM009
+- name: install authorization_proxy process check
+  sensu_check_dict: name="check-authorization_proxy-process" check="{{ sensu_checks.sshauthmux.check_authorization_proxy_process }}"
+  notify: restart sensu-client missing ok

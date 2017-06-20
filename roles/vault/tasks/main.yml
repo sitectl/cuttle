@@ -1,0 +1,36 @@
+---
+- name: make vault directories
+  file: dest={{ item }} state=directory owner=root
+  with_items:
+    - "{{ vault.bin_path }}"
+    - "{{ vault.archive_path }}"
+    - "{{ vault.config_path }}"
+
+- name: download vault
+  get_url: url={{ vault.download.url }}
+         dest="{{ vault.archive_path }}/vault-{{ vault.version }}.zip"
+         sha256sum={{ vault.download.sha256sum }}
+
+- stat: path={{ vault.bin_path }}/vault
+  register: vault_binary
+
+- name: unzip vault binary
+  unarchive: src="{{ vault.archive_path }}/vault-{{ vault.version }}.zip" dest={{ vault.bin_path }} copy=no
+  when: vault_binary.stat.exists == False
+
+- name: link vault binary to path
+  file: src={{ vault.bin_path }}/vault dest=/usr/local/bin/vault state=link
+
+- name: configure vault server
+  template: src=etc/vault.hcl dest={{ vault.config_file }}
+  notify: restart vault server
+
+- name: vault service
+  upstart_service: name=vault
+                   cmd={{ vault.bin_path }}/vault
+                   args="server -config={{ vault.config_file }}"
+                   user=root
+  notify: restart vault server
+
+- name: start vault service
+  service: name=vault state=started enabled=yes

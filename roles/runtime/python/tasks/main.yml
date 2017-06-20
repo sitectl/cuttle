@@ -1,0 +1,21 @@
+---
+- name: install python pip system package
+  apt:
+    name: python-pip
+  register: result
+  until: result|succeeded
+  retries: 5
+
+- name: update pip
+  command: "pip install --upgrade pip=={{ python.pip_version }}"
+  register: result
+  until: result|succeeded
+  retries: 5
+  changed_when: "result.stdout.find('Successfully installed')  and result.rc == 0"
+
+- name: update setuptools
+  command: "pip install --upgrade setuptools=={{ python.setuptools_version }}"
+  register: result
+  until: result|succeeded
+  retries: 5
+  changed_when: "result.stdout.find('Successfully installed') and result.rc == 0"

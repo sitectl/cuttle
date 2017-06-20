@@ -1,0 +1,18 @@
+# {{ ansible_managed }}
+---
+output:
+  logstash:
+    hosts:
+      - "{{ logging.forward.host }}:{{ logging.forward.filebeat.port }}"
+{% if logging.forward.tls.enabled|bool and logging.forward.tls.ca_cert %}
+    tls:
+      certificate_authorities:
+        - "/usr/local/share/ca-certificates/logging-forward-ca_cert.crt"
+{% endif %}
+
+filebeat:
+  config_dir: "{{ logging.forward.filebeat.config_dir }}"
+{% if logging.follow.logs | length > 0 %}
+  prospectors:
+    {{ logging.follow.logs | to_yaml( indent=2, default_flow_style=False ) | indent ( width=4 ) }}
+{% endif %}

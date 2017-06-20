@@ -1,0 +1,60 @@
+---
+- name: install dependencies
+  apt:
+    pkg: "{{ item }}"
+  with_items: "{{ yubiauthd.dependencies }}"
+
+- name: install yubiauthd
+  apt:
+    deb: "{{ yubiauthd.package }}"
+
+- name: configure yubiauthd
+  template:
+    src: etc/yubiauthd.conf
+    dest: /etc/yubiauthd.conf
+    owner: root
+    group: root
+    mode: 0640
+
+- name: allow yubiauthd sync traffic
+  ufw:
+    rule: allow
+    to_port: "{{ yubiauthd.sync_port }}"
+    src: "{{ item }}"
+    proto: any
+  with_items: "{{ yubiauthd.firewall.friendly_networks }}"
+  tags:
+    - firewall
+
+- name: configure yubiauthd service
+  template:
+    src: etc/init/yubiauthd.conf
+    dest: /etc/init/yubiauthd.conf
+    mode: 0644
+  notify: restart yubiauthd
+
+- meta: flush_handlers
+
+- name: start yubiauthd service
+  service:
+    name: yubiauthd
+    state: started
+    enabled: yes
+
+# The yubiauthd database gets created upon starting the service
+- name: ensure yubiauthd database has correct perms
+  file:
+    path: /var/lib/yubiauthd.sqlite
+    state: touch
+    owner: root
+    group: root
+    mode: 0600
+
+- name: add or update users in yubiauthd database
+  command: sqlite3 /var/lib/yubiauthd.sqlite
+           "INSERT OR REPLACE INTO identities(public_id, serial_number, username, aes_key, uid)
+           VALUES('{{ item.value.yubikey.public_id }}','{{ item.value.yubikey.serial_number }}',
+           '{{ item.key }}','{{ item.value.yubikey.aes_key }}','{{ item.value.yubikey.private_id }}');"
+  when: item.value.yubikey is defined
+  with_dict: "{{ users_to_add }}"
+  tags: users

@@ -1,0 +1,97 @@
+---
+- name: install kibana
+  apt:
+    name: "kibana={{ kibana.version }}"
+  register: result
+  until: result|succeeded
+  retries: 5
+
+- name: ensure kibana logs directory exists
+  file:
+    dest: /var/log/kibana
+    state: directory
+    owner: kibana
+    mode: 0750
+
+- name: configure kibana
+  template: src=opt/kibana/config/kibana.yml
+            dest="/etc/kibana/kibana.yml"
+  notify: restart kibana
+  tags: kibana-config
+
+- meta: flush_handlers
+
+- name: enable and start kibana service
+  service: name=kibana state=started enabled=yes
+
+- name: allow kibana traffic
+  ufw: rule=allow to_port={{ item.0.port }} src={{ item.1|default('127.0.0.1') }}
+  with_subelements:
+    - "{{ kibana.firewall }}"
+    - src
+  tags:
+    - firewall
+
+- name: wait until kibana is listening
+  wait_for: port=5601
+
+- name: make kibana plugin directory
+  file:
+    dest: /opt/kibana-plugins
+    mode: 0755
+    state: directory
+  tags: kibana-plugins
+
+- name: get list of installed kibana plugins
+  command: /usr/share/kibana/bin/kibana-plugin list
+  register: installed_plugins
+  changed_when: false
+  tags: kibana-plugins
+
+- name: download kibana plugin files via proxy
+  get_url:
+    url: "{{ item.url }}"
+    dest: "/opt/kibana-plugins/{{ item.file }}"
+    mode: 0644
+    sha256sum: "{{ item.sha256sum|default(omit) }}"
+    force: "{{ item.force|default(omit) }}"
+  with_items: "{{ kibana.plugins }}"
+  when:
+    - item.name not in installed_plugins.stdout_lines
+    - item.url is defined
+  tags: kibana-plugins
+  register: result
+  until: result|succeeded
+  retries: 5
+
+- name: install kibana plugins (may take a while)
+  shell: "sudo -u kibana /usr/share/kibana/bin/kibana-plugin install file:///opt/kibana-plugins/{{ item.file }}"
+  with_items: "{{ kibana.plugins }}"
+  when: item.name not in installed_plugins.stdout_lines
+  tags: kibana-plugins
+  notify: restart kibana
+
+- include: config.yml
+  when: kibana.config_in_es|bool
+  tags: kibana-config
+  run_once: true
+
+- name: allow kibana traffic
+  ufw: rule=allow to_port={{ item.0.port }} src={{ item.1|default('127.0.0.1') }}
+  with_subelements:
+    - "{{ kibana.firewall }}"
+    - src
+  tags:
+    - firewall
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

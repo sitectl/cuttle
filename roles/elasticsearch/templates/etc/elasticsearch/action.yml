@@ -1,0 +1,27 @@
+---
+actions:
+  1:
+    action: {{ item.key }}
+    description: {{ item.value.description }}
+{% if item.value.options is defined %}
+    options:
+{% for key,value in item.value.options|dictsort %}
+      {{ key }}: {{ value }}
+{% endfor %}
+{% endif %}
+    filters:
+    - filtertype: pattern
+      kind: prefix
+{% if item.key == 'delete_snapshots' %}
+      value: snapshot-
+{% else %}
+      value: logstash-
+{% endif %}
+      exclude:
+    - filtertype: age
+      source: name
+      direction: older
+      timestring: '%Y.%m.%d'
+      unit: days
+      unit_count: {{ item.value.older }}
+      exclude:

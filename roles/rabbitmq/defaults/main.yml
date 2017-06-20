@@ -1,0 +1,112 @@
+---
+rabbitmq:
+  apt:
+    rabbit_repo: 'http://www.rabbitmq.com/debian/'
+    rabbit_key: 'http://www.rabbitmq.com/rabbitmq-signing-key-public.asc'
+    erlang_repo: 'http://packages.erlang-solutions.com/debian'
+    erlang_key: 'http://packages.erlang-solutions.com/debian/erlang_solutions.asc'
+  cluster: False
+  erlang_cookie: 6IMgelGs3Ygu
+  users:
+    - username: admin
+      password: admin
+      vhost: /
+    - username: rabbit
+      password: rabbit
+      vhost: /rabbit
+  user: guest
+  password: guest
+  nodename: 'rabbit@{{ ansible_hostname }}'
+  ip: '0.0.0.0'
+  port: 5672
+  firewall:
+    - port: 5671
+      src: "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+    - port: 5672
+      src: "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+  management_port: 15672
+  nofile: 10240
+  admin_cli_url: 'http://127.0.0.1:15672/cli/rabbitmqadmin'
+  plugins:
+    - rabbitmq_management
+  sensu_plugins:
+    - name: sensu-plugins-rabbitmq
+      version: 1.3.1
+  logs:
+    # See logging-config/defaults/main.yml for filebeat vs. logstash-forwarder example
+    - paths:
+        - /var/log/rabbitmq/*
+      fields:
+        tags: rabbitmq
+  logging:
+    forwarder: filebeat
+  ssl:
+    enabled: True
+    verify: peer
+    peer_depth: 2
+    no_peer_cert: "true"
+    ca_cert: |
+      -----BEGIN CERTIFICATE-----
+      MIICxDCCAaygAwIBAgIJAICPn230G+UBMA0GCSqGSIb3DQEBBQUAMBIxEDAOBgNV
+      BAMTB1NlbnN1Q0EwHhcNMTUwMTA1MjEzNjIyWhcNMjAwMTA0MjEzNjIyWjASMRAw
+      DgYDVQQDEwdTZW5zdUNBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA
+      yflRHWCINGhh1+dRXTZ9lTAYEyPD953wyXh9MOmR1H5I9vi+So3MhkMUxfor2fXr
+      zSE89b/y5xh5p/ZPWBNPv9AiEh+YdoMxzPtDFVmk/EhzHlvQEnbCh8/E0+1fNK49
+      VoORqgf0TV8dr5mpCAJ0tQWYi81zSCzRoLYlr3MkJ6/UtI3aL+r9wN+JmIJcWTk3
+      rent86iqdlI2nof/ayMm9xrLTC8XRUNjCi9CBc0uYL7hWjPo7wkwd/zxhrd2tgAM
+      ASicsKuh1M0FegUcJZ26/O66MFoKJZtjotP9MWYj6FljrIDBpA4z6pjq0WqSsuQv
+      UjMCZAYA7lyJNuPd3k0IewIDAQABox0wGzAMBgNVHRMEBTADAQH/MAsGA1UdDwQE
+      AwIBBjANBgkqhkiG9w0BAQUFAAOCAQEAX8TZupwRnQkDhV5+FElb+TVLnQNfwyXE
+      cuxBLcPwnQi+0NVZWc6C8I0eVUmF90AqfoIWiiSiMMvuVe+irqBlcrRsU6uNqU8x
+      Ql8dWVjcEMcW21oJydHbxQTuaUqLyjqPcZIVRwA0f2ZefGku6RE3PyZd58mRNGa2
+      3JGPxdRLuNAcUgz8gmOBro7a3xIN3RHISJAW1cHdcdmJzWuSkJzCiyac04AU7LwN
+      jrM71jQ17JwlkfgceZueclE+dwtDlhNRTgc/I6FnLZwDTufPiNyczsGfEX6TiP9c
+      uMqoFYgJqU159bJgNyFcmK73/bE4LSDWFi/cyXSFz0+L0vrDHV1LXA==
+      -----END CERTIFICATE-----
+    cert: |
+      -----BEGIN CERTIFICATE-----
+      MIIC3TCCAcWgAwIBAgIBATANBgkqhkiG9w0BAQUFADASMRAwDgYDVQQDEwdTZW5z
+      dUNBMB4XDTE1MDEwNTIxMzYyMloXDTIwMDEwNDIxMzYyMlowITEOMAwGA1UEAwwF
+      c2Vuc3UxDzANBgNVBAoMBnNlcnZlcjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCC
+      AQoCggEBANz5fCW/+b/wTFnxvtNeErWdec6wK32JLeoFKF7L2JhxxtmvfzyM467F
+      fJYTcrhM4FJi/r0KRK/AFX5j/AZ4mb5GMWGrjh8Z9fX6gctznAmvnGvIBohe0nFd
+      iNVhx/+fuhTf/BTWhpdRbjdq239FINyVZ2+yPRp0/TLHOnxwpONaxj4e7BfUu94B
+      NHn/aO7yQGsGUyCg7SpgQSE9lje3XhyIxYvoXVmGuxxzf+X6PIyt0lfgNcL/JYmr
+      cDmDh6B8pLypYUhovRJOc/+l29ggkn9GjyGwvTUuMk3N0bqhEOanlIstnw/ejBw9
+      T8ZkDqtLQ1V8srR+8Q47PfnBz+JcSyMCAwEAAaMvMC0wCQYDVR0TBAIwADALBgNV
+      HQ8EBAMCBSAwEwYDVR0lBAwwCgYIKwYBBQUHAwEwDQYJKoZIhvcNAQEFBQADggEB
+      ALWNVuVzIVxQzHjpqAapoqP8jxvYePFvlAdc+laEUdud/+4sP5fuXD+wddNMIcmM
+      a8xGyt7QLHxYctvKPvTUvNRNmDlfL7WyMe7VjM51352NJie0pjFGW16cq1stpF15
+      jGatNPXGhfgatEbd/1UTF/h09p57LUk/HwU8z0nkkNmZ23RbEIqqj53zfLd875jm
+      NVevW6c3HCMz0gT06jEG/PZPqe2gS9QiCmsuCbaqZJPx4Ognc5Y686D8ynThROgY
+      PZU6KcOVtFAYyTqSAf9Lso6f1pfDi11hligHXvw+XN7uRN55WjuLgL9nR/dbz6Rh
+      zdU78dRXVkbG/GBIFTt7U80=
+      -----END CERTIFICATE-----
+    key: |
+      -----BEGIN RSA PRIVATE KEY-----
+      MIIEpQIBAAKCAQEA3Pl8Jb/5v/BMWfG+014StZ15zrArfYkt6gUoXsvYmHHG2a9/
+      PIzjrsV8lhNyuEzgUmL+vQpEr8AVfmP8BniZvkYxYauOHxn19fqBy3OcCa+ca8gG
+      iF7ScV2I1WHH/5+6FN/8FNaGl1FuN2rbf0Ug3JVnb7I9GnT9Msc6fHCk41rGPh7s
+      F9S73gE0ef9o7vJAawZTIKDtKmBBIT2WN7deHIjFi+hdWYa7HHN/5fo8jK3SV+A1
+      wv8liatwOYOHoHykvKlhSGi9Ek5z/6Xb2CCSf0aPIbC9NS4yTc3RuqEQ5qeUiy2f
+      D96MHD1PxmQOq0tDVXyytH7xDjs9+cHP4lxLIwIDAQABAoIBAQDGPgB1sXvzCTbG
+      Po3u/GeWjZeYqQ3rSqVpXIUyPnirku9NnhdtEAy3X678yKfT1gwtfWiB2fNzJMVj
+      pXmVqJ5tSHXG5OzU1CqIKdxF1Qr42ZZgT4wkzcTINZyrqlSN7RM45RU28JrAqCpU
+      B0ayMCdiHZs1ZtdQpAH/iyLaPwh+eeeoHwbFNIWxeVfJM/Qce6CNrEnniT9k0cPS
+      e7HoVs5IBp2BJM53aroL6UlgiPWIJVsmmwRvgG0Kr3+FoOo9jlzwEZTlifRpnyqs
+      5aGI9/ZpA8MvUgD/azqwp6va4J3G9clvCiGLn7SyNgbpsgQl3ndVpZp8IsxQHmoO
+      QUsZvrehAoGBAPJuYq4urK9n+3W7rapgcx06lAmePWIijko9TEXutKJiDl5ihp8i
+      Hk3tY/GamKNhUj8IZd/57Z41nu+3V3kU1cWdllmS+AUx1kfYbEFL/J/d8hUAQIHo
+      xBzRCiyoczxVECkF5QEsXowJiHYVJuXrfzlP3mvLmdAAOPD6zvvuf95TAoGBAOlX
+      qdHvvjEj3DXIUCmWZoYEfyjkuLAj7fwUVPx6I62c9knH+YDAuQKoX6Kp7MpPNb/+
+      FfJPIvOP9YUkBW+5Dukx5jWDc46vNpOUnK38ZV3dBQ6lCCq/JgqwjgjmUoYhmM/F
+      PR6NwfspeJATAIiAQB1RofOHlo6l6GAo5zs8fiXxAoGACaPWDLMSbs8lsqLJ3xKC
+      wVDI/jDqo/JX0h/p3oYFbMeVZq9oRv+mUNb1uG+7ThPan2MIGgXoKvha35FcyxXH
+      Alqn1dwAPMSkjqrOczJAU2MR8z/VUNUepz6wtuHj4yxGvjrbxlYrVEo0wO1KZK4e
+      mvrQD11DOoAnw31VqbLsJr0CgYEAsrtiKZtAjHVSXKPVuzUnzKmvGQyw5sJurPKJ
+      8mY/4+DhybvyQgvc6ss7jeYoqQIpQqmF9/dj5zoyrsvbmise38JH+l946ScOX9aq
+      eJ5mqpH8KK6CZfPKWM/Jy8lYFsOvQB5tZXThy9eFMJ5Nf0D1Wz/HFDmcOiGcr+NE
+      0tvQKJECgYEAqwvyJkSVJ7Lp/G7/7pC+U+i6MYsg2YR1XRQgo94lEiorXthLpAT5
+      Dvxd6LpDkJ4/OoofdJ2F9difig4Jf4m6ngrJADvXvBhFjXq0VWtBr1fLcJWTJ/PC
+      ZaGzorSqi2FDrD1TQ36u+OLGppYgVt5y5kJbiFhFNqh5dKlFtuz045w=
+      -----END RSA PRIVATE KEY-----

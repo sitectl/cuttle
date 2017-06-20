@@ -1,0 +1,4 @@
+---
+- name: install pypi_mirror process check
+  sensu_check_dict: name="check-pypi_mirror-process" check="{{ sensu_checks.pypi_mirror.check_pypi_mirror_process }}"
+  notify: restart sensu-client missing ok

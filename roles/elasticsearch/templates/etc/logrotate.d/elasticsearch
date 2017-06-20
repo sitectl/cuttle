@@ -1,0 +1,2 @@
+# Due to limitations of log4j 1.2, files are rotated by elasticsearch
+# but deleted by a cron job. See /etc/cron.daily/elasticsearch

@@ -1,0 +1,9 @@
+default:
+  memory: 512
+  cpus: 1
+
+vms:
+  minibs:
+    ip_address:
+      - 172.16.0.125
+      - 172.16.1.125

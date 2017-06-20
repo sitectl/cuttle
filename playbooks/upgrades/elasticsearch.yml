@@ -1,0 +1,27 @@
+---
+- name: upgrade elasticsearch
+  hosts: elasticsearch
+  serial: 1
+  tasks:
+    # TODO: Make this not insanely fragile
+    - name: disable shard allocation routing
+      uri: "url=http://localhost:9200/_cluster/settings method=PUT
+           body='{ \"transient\" : { \"cluster.routing.allocation.enable\" : \"none\" } }'
+           status_code=200"
+      run_once: true
+
+    - name: install latest elasticsearch
+      apt: pkg=elasticsearch state=latest
+
+    - name: restart elasticsearch
+      service: name=elasticsearch state=restarted
+
+    - name: wait until elasticsearch is listening
+      wait_for: port=9200
+
+    # TODO: Make this not insanely fragile
+    - name: enable shard allocation routing
+      uri: "url=http://localhost:9200/_cluster/settings method=PUT
+           body='{ \"transient\" : { \"cluster.routing.allocation.enable\" : \"all\" } }'
+           status_code=200"
+      run_once: true

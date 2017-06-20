@@ -1,0 +1,19 @@
+---
+- name: try to stop old garbd service
+  service: name=garbd state=stopped enabled=false pattern=/usr/bin/garbd
+  failed_when: False
+
+- name: make garbd log
+  copy: dest=/var/log/garbd.log owner=nobody content='' force=no
+
+# the arbiter node only needs the garbd daemon
+- name: install percona garbd package
+  apt: pkg={{ item }} state=installed
+  with_items:
+    - percona-xtradb-cluster-garbd-3.x
+
+- name: install garbd config
+  template: src=etc/default/garbd dest=/etc/default/garbd mode=0644
+
+- name: ensure garbd running
+  service: name=garbd state=started enabled=on pattern=/usr/bin/garbd

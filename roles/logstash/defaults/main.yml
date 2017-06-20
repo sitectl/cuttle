@@ -1,0 +1,122 @@
+---
+logstash:
+  version: '1:5.4.1-1'
+
+  service:
+    opts: "-w {{ (ansible_processor_cores / 2)|round|int }}"
+    heap: 500m
+    group: logstash
+    open_files: 16384
+
+  firewall:
+    - port: 1514
+      protocol: tcp
+      src:
+        - 127.0.0.1
+        - ::1
+    - port: 1515
+      protocol: tcp
+      src:
+        - 127.0.0.1
+        - ::1
+  inputs:
+    - name: syslog
+      config:
+        port: 1514
+        type: syslog
+    - name: syslog
+      config:
+        port: 1515
+        type: syslog
+    - name: lumberjack
+      config:
+        port: 4560
+        ssl_certificate: '/etc/ssl/certs/logstash.crt'
+        ssl_key: '/etc/ssl/private/logstash.key'
+        type: 'lumberjack'
+    - name: beats
+      config:
+        port: 4561
+        ssl: false
+        ssl_certificate: '/etc/ssl/certs/logstash.crt'
+        ssl_key: '/etc/ssl/private/logstash.key'
+        type: 'beats'
+  filters:
+    - include: filter-drop-empty
+    - include: filter-tags
+    - include: filter-json
+    - include: filter-add-missing-customer_id
+    - include: filter-syslog
+    - include: filter-openstack
+  patterns:
+    - openstack
+  outputs:
+    - name: elasticsearch
+      config:
+        hosts: "127.0.0.1:9200"
+  logs:
+    # See logging-config/defaults/main.yml for filebeat vs. logstash-forwarder example
+    - paths:
+        - /var/log/logstash/logstash.err
+        - /var/log/logstash/logstash.stdout
+      fields:
+        tags: elk,logstash
+  logging:
+    forwarder: filebeat
+  logrotate:
+    frequency: 'daily'
+    rotations: 7
+  ssl:
+    name: logstash
+    intermediate: ~
+    cert: |
+      -----BEGIN CERTIFICATE-----
+      MIIDbjCCAlagAwIBAgIJAM0BGcYd3vMHMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV
+      BAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX
+      aWRnaXRzIFB0eSBMdGQwHhcNMTUwMTE0MTk0NzMxWhcNMTYwMTE0MTk0NzMxWjBF
+      MQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50
+      ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+      CgKCAQEAxRMHhTXHqEnH9mPUtreyJARa7820HOBf9Fe5zZNnIYXIhx7GpaxZp1pV
+      vcg2fB9iSUw81Oz+/Y91cyUJID1TF0RNHap/n7bVEu0kMHBbozScQcsE4/zljgX5
+      gqSECXpCZ9KQAX3WNBbFGHV/QrJTZA1Teb/Ne77vwTcOVLa++1BRyKc88kLeWS11
+      n5IMqWAytLS+1TtvcI+9iMKTb4udKo8UE0ojOMz/xpHbeVBumWBB0Uh8tlv2Bv2r
+      Qeflib9Djdbj5mj5BPyO2cSUy9blg51vK3wg7XImVpqqTaa97w938I9XICNhvxxm
+      iS5u4juu5Xuy0Fy0WBWgnaKC7zAwQQIDAQABo2EwXzAPBgNVHREECDAGhwSsEAAN
+      MB0GA1UdDgQWBBRo6C9RWMTxDhYgBFR701yvGlnw7TAfBgNVHSMEGDAWgBRo6C9R
+      WMTxDhYgBFR701yvGlnw7TAMBgNVHRMEBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IB
+      AQAYiC7dnmG/HloCPvmnqJ8nuGvHjExF1yaSQbbeCdpS3RcfRi4FvhvQsiQoO4aL
+      EYVzTEfamy9xD6GDREcQ0ex6b91b2aS71b46S/snzoEwqyc51Fikf93qUGW8Y5hT
+      /TTsu35mRUkCsOW9JBTE8hHuxaqC4sXvEgVTSQxrfLu9vqQ34c+PWh6sS0nA7aYA
+      8GS4HLwpwQNfhO8feQgyLljFrYMSe0iHiLWg2y8FB2ZjWgC/ZX9lY5YiBIe5K9A2
+      ToXF6Rn3zaU1rZEQ0vZOK+MdAXNoG1L9jqSRgrSoD92VXKsU0WHorFCN5NLknRlh
+      S+3FRsZsB9xRpd7jnrShLnVh
+      -----END CERTIFICATE-----
+    key: |
+      -----BEGIN PRIVATE KEY-----
+      MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDFEweFNceoScf2
+      Y9S2t7IkBFrvzbQc4F/0V7nNk2chhciHHsalrFmnWlW9yDZ8H2JJTDzU7P79j3Vz
+      JQkgPVMXRE0dqn+fttUS7SQwcFujNJxBywTj/OWOBfmCpIQJekJn0pABfdY0FsUY
+      dX9CslNkDVN5v817vu/BNw5Utr77UFHIpzzyQt5ZLXWfkgypYDK0tL7VO29wj72I
+      wpNvi50qjxQTSiM4zP/Gkdt5UG6ZYEHRSHy2W/YG/atB5+WJv0ON1uPmaPkE/I7Z
+      xJTL1uWDnW8rfCDtciZWmqpNpr3vD3fwj1cgI2G/HGaJLm7iO67le7LQXLRYFaCd
+      ooLvMDBBAgMBAAECggEACU9U054uyGxz3dfpfJhA+iKaiSmWkKao4cojJOsJvDOt
+      vXRevgTeV2GVG1oR+NsisYPAe+6WPTRBwCbHv5YmDrtTSUt8q/bfKf257+/e5F7f
+      4tvMZ1jTH1p45wsOkcQMzwrLcsaXD+7jcLxcPrJd7iQTBXViJ65ldSM8shPQAd88
+      GFr2Bb0GS3visBWks8Tl+j2f+n2sak5HaDgQGFblSeKOZ4oDi9ikZ1qY2nfVctGy
+      A28eFtdHmLXzvVLTWdVSBohabOaRy9wDAlEvofnWmYpaeVw9CyZhe/aq4DRtClx2
+      25kSCfK/f72v2hcOSRUojjfuT0sURNyljqppRR4AAQKBgQD/URcXTv2F6RoZ/GKa
+      PNZQNmcQGjdC639YzdMJfolJ777AIKLHrGMopBZxOUTL2sJ7wi7RoZ5gDMFwmdPX
+      YX4O300mbvAyTbdn/3xnTuywXkdTkCPkf1vKwZWeUA/nFPSHLCyd3O7K6HUhRVxH
+      NnR6uAVi1p5LddHrrkaxpX7EwQKBgQDFmgn/Noh8Hd6W2BPuAeesUli+mNABhioM
+      4AYA+lqAJaidM3IuvldMOGToLXd3hx8HH4tR8o9o/xGGdUL3R/N9yh/SM0FRbgZn
+      J/3tuP1X7Qe4Ey6xkN0V7k87DNyGP9oDSLD51vw9/eodl+vsH+rKDv406xNyz6qz
+      Vo4YxMrLgQKBgQCDKaF3M/lCRhJGr0XofsCKzKf9uboSAvGVKYf1JLBa73NLOHjn
+      o0P9qO5ulEEniObItWVgBGtcZLErq5sM1uTvtv/ncq6q6QoDv1ilqgImSQjTgQUv
+      ac46R2EZx3+j8zv8BVGWd92lF+60fPF/FBaaxNbfg+omUgzZyto+gQqzAQKBgFX+
+      gIVBzUn+kcUhyiKVT6Ztu9NOm49ePOSXheVdDo+gU+392p4/FazFCh0E1G3/LuCh
+      uLb0EbdG8fCLDZaiCHRgx1JqHe37LOwtulN/YzmlnOtd5b8+5QhLSs3O/hWqqg0t
+      0F8aUXIFE6LHX9PF3B8NQVH0T+VyPL6JV5Ot6PeBAoGAbG9Jmvo0DrrlqQnVk1qm
+      AKlzUDnHBHlNe+OR73Zm4YIMGC3Z03/xVNMNyakGutVGHSo1rIWbTeoXuIOzMrON
+      WtcIVT6XcZfoqjRi3Fh8d20wUuQnzFwPv8cZhlC8RAodII6dtyQHylAAyZPtXFYa
+      Cw8r6ILGkIHtU/WYRFIChZ4=
+      -----END PRIVATE KEY-----

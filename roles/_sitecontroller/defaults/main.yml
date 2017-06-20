@@ -1,0 +1,10 @@
+---
+sitecontroller:
+  apt:
+    force_cache_update: false
+    do_upgrade: false
+  python:
+    pypi_mirror: ~
+  ruby:
+    gem_sources: ~
+  ubuntu_mirror: ~

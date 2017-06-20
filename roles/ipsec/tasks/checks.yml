@@ -1,0 +1,4 @@
+---
+- name: IPS020 install ipsec process check
+  sensu_check_dict: name="check-ipsec-process" check="{{ sensu_checks.ipsec.check_ipsec_process }}"
+  notify: restart sensu-client missing ok

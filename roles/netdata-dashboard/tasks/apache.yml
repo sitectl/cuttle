@@ -1,0 +1,24 @@
+---
+- name: enable apache mods for file-mirror
+  apache2_module: name={{ item }}
+  with_items:
+    - proxy_http
+    - rewrite
+    - headers
+
+- name: add netdata_dashboard apache vhost
+  template: src=etc/apache2/sites-available/netdata_dashboard
+            dest=/etc/apache2/sites-available/netdata_dashboard.conf
+  notify:
+    - restart apache
+  tags: foo
+
+- name: enable netdata_dashboard vhost
+  apache2_site: state=enabled name=netdata_dashboard
+  notify:
+    - restart apache
+
+- meta: flush_handlers
+
+- name: ensure apache is running
+  service: name=apache2 state=started enabled=yes

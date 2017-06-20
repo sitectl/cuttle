@@ -1,0 +1,3 @@
+# {{ ansible_managed }}
+
+{{ common.ssh.ssh_host_rsa_key.public }}

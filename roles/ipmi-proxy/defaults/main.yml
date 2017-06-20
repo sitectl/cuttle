@@ -1,0 +1,52 @@
+---
+ipmi_proxy:
+  datacenters:
+    - name: lab00
+      data_center_uuid: 0
+      backend_source_ip: 127.0.0.1
+  ip_pool:
+    - 127.0.0.101
+    - 127.0.0.102
+  apache:
+    ip: '*'
+    port: 8091
+    allow_from:
+      - 127.0.0.1
+      - "{{ hostvars[inventory_hostname][private_interface]['ipv4'].network }}/{{ hostvars[inventory_hostname][private_interface]['ipv4'].netmask }}"
+    modules:
+      cgi_path: /usr/lib/apache2/modules/mod_cgi.so
+
+  system_deps:
+    - at
+    - sqlite3
+  git:
+    - name: ipmi-proxy
+      path: /opt/git/ipmi-proxy/master
+      repo: "{{ git_repos.ipmi_proxy }}"
+      rev: master
+      symlink: /opt/git/ipmi-proxy/current
+  virtualenvs:
+    - name: ipmi-proxy-master
+      path: /opt/venv/ipmi-proxy/master
+      # requirements: /opt/git/ipmi-proxy/master/requirements.txt
+  alternatives:
+    - name: ipmi-proxy-tool.py
+      path: /opt/git/ipmi-proxy/current/src/ipmi-proxy-tool.py
+      link: /usr/local/bin/ipmi-proxy-tool.py
+    - name: sync-proxy-cache.py
+      path: /opt/git/ipmi-proxy/current/src/sync-proxy-cache.py
+      link: /usr/local/bin/sync-proxy-cache.py
+
+  logs:
+    # See logging-config/defaults/main.yml for filebeat vs. logstash-forwarder example
+    - paths:
+        - /var/log/apache2/ipmi-proxy_access.log
+      fields:
+        tags: apache_access,ipmi-proxy
+    - paths:
+        - /var/log/apache2/ipmi-proxy_error.log
+      fields:
+        tags: apache_error,ipmi-proxy
+
+  logging:
+    forwarder: filebeat

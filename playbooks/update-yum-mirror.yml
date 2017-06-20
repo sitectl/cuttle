@@ -1,0 +1,34 @@
+# To update all mirrors, run:
+# ursula <env> playbooks/update-yum-mirror.yml
+# ex: ursula ../sitecontroller-envs/control-iad01 playbooks/update-yum-mirror.yml
+#
+# To update individual mirrors, run:
+# ursula <env> playbooks/update-yum-mirror.yml --extra-vars 'repos=<mirror1>,<mirror2>'
+# ex: ursula ../sitecontroller-envs/control-iad01 playbooks/update-yum-mirror.yml --extra-vars 'repos=blueboxcloud_misc'
+
+---
+- name: update yum-mirror
+  hosts: mirror
+  any_errors_fatal: true
+  environment: "{{ env_vars|default({}) }}"
+  tasks:
+    - name: update targeted yum-mirror(s)
+      shell: "/bin/bash /etc/yum/repo-manager/{{ item }}.sh"
+      become: true
+      become_user: yum-mirror
+      with_items:
+        - "{{ (repos|default('')).split(',') |default([]) }}"
+      register: yum_mirror_out
+      when: repos is defined
+
+    - name: update all yum-mirror(s)
+      shell: "/bin/bash /etc/yum/repo-manager/{{ item.key }}.sh"
+      become: true
+      become_user: yum-mirror
+      when: repos is not defined and {{ item.value.enabled }}
+      with_dict: "{{ yum_mirror.repositories }}"
+
+    - debug:
+        msg: "{{ item.stdout }}"
+      when: repos is defined
+      with_items: "{{ yum_mirror_out.results }}"

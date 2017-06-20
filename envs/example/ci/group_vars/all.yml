@@ -1,0 +1,93 @@
+---
+public_interface: ansible_eth1
+private_interface: ansible_eth2
+public_ipv4: "{{ hostvars[inventory_hostname][public_interface]['ipv4'] }}"
+private_ipv4: "{{ hostvars[inventory_hostname][private_interface]['ipv4'] }}"
+
+etc_hosts:
+  - name: jenkins01
+    ip: "{{ hostvars['jenkins01'][private_interface]['ipv4']['address']|default('172.16.0.101') }}"
+
+dnsmasq:
+  enabled: true
+  interface: lo
+  server: 127.0.0.1
+  dns:
+    hosts:
+      - name: jenkins01.example.bbg
+        ip: "{{ hostvars['jenkins01'][public_interface]['ipv4']['address']|default('172.16.0.101') }}"
+  firewall: []
+
+jenkins:
+  admin_username: bluebox-ci-jenkins
+  admin_password: 0e03beb1b3e69a6d2f2ba784ebde417a4ab3cdd7
+  security:
+    github:
+      orgs:
+        - bluebox-ci
+      admins:
+        - bluebox-ci-jenkins
+      client_id: ab79f626fd6e466bdbe9
+      client_secret: 5e9a0cbb9a6659294a507a8f0d5927ec1f0681c3
+  jjb:
+    git:
+      source:
+        repo: https://github.com/blueboxgroup/jenkins-job-builder.git
+        rev: master
+        path: /usr/local/src/jjb
+      jobs:
+        repo: https://github.com/bluebox-ci/jenkins-jobs.git
+        rev: master
+        path: /var/lib/jenkins/jjb-jobs
+
+  # we're not testing the apache role at the moment
+  apache:
+    enabled: false
+
+ci:
+  stackrc:
+    path: ~jenkins/jenkins.stackrc
+    user: jenkins
+    group: jenkins
+
+sensu:
+  client:
+    enable_checks: False
+
+secrets:
+  openstack:
+    os_username: ~
+    os_auth_url: ~
+    os_project_id: ~
+    os_password: ~
+  cd:
+    ssh:
+      private_key: |
+          -----BEGIN RSA PRIVATE KEY-----
+          MIIEowIBAAKCAQEApLGq0EuyeqqbsQTfLSiVsFo9VNvRX6HvfWLqydmB7lvwg2lp
+          SQ1+RuE+BNWLxuGALZrS9BlVr4VI9uPHcq+kqrH8qcdwyd+N3y4a5ThwqXq+675G
+          f3A68TsC30F+7NmqAEK0fvkUMGjNddPuV/tIz8t2wKicu425DEPEgHGqpkNIVn0j
+          PsGwxYteGvp/FS8ofzcbQTaLSOUJ8sNdtfQ/jGRIIQyAHXMPOjKY7hZz8Fnr/kZm
+          RdOG69IGRMe4HsRu6RM/qPoNFurxiX7sTwkhluH9w0Nll2/yuZrxxua1ExlXCdhT
+          ittwxGYrQSjzpaeqaBq/GMrXQNm7TgYlEvtbjQIDAQABAoIBAB2y1CSfod2w6kZv
+          pHcWPHgCrdChmw3tu6wWrFQd3upGtgZcednsjvrlHzPr9jq061JN+wB9mQ//rvqm
+          dI7f0YfedLuA9XvRzlmSjNMM7HQDaG5Gb5wHdvmNNKVhwCuhzKAjZz0GWXepTnOS
+          9gXzkFu4Sv/O6ASCN/5YMhUfajB044UliScjZ+Acx6EL1uLQJd92mMV0tdP2AAvH
+          Cxbl9NGz3ne1lQgGFYnURTxFjX7sjN6MaJ1PzyjiA1cMLc2qxR45kTPNLvHUfpx5
+          R4JBqJw3W+/v+jejeCes0hWyOjdo3X8yG84A+XN1LwvM1aWye/wdd6j7fw9Dl1wC
+          8v3wq5kCgYEAz83nmrP9HfQG7CFeMbU5z8pmJrWN89ze8X6/0T3RMJOJhMA344sC
+          QsgiGyXsNFRYo1c7shzKq8bmQ6U6CJHMk6ubZwWyfqfEu9qGzfI9w63FP/67bsky
+          1dR3mxWYXb3Ux5BgzoWIvLq1lAFZxf4zQqnVP3YRRRadkMzM74DsIBMCgYEAyuQl
+          y4GHHlTRQ4knVGEP+crbm5nLF7t7uCY5YZ+VDKPWpM0CQkAlCO1pSC29/Ms6FfCf
+          BODkMaWRKlxTT2spyqs8VPKCokEmzoI32SQlHWd9ANkcmsBAfyDnVyhwhoU/QVxG
+          dJlBu2/VXJxlDBETPKqdRwBz0Z4nvz5pXRACSd8CgYA8v84gbNPnaMqJR2v5Dijb
+          dSkN0e+wxfYrFUnQSskX8Vm3hFYSYDYF/enyk9CMr8fF4J+j/0TEmP4B8pCXpr/u
+          v7FLmd/HpRYfcNAN7u5dgTRz8+0pgwoodteMb/C+HtvQh4W1elYyDkc9AHQVLK4h
+          o/KifcqorubbSPP0ZHUjHwKBgFmT51f1ZTmwCwB9Yp7vh8UqmlEV0sQ0o4gHYFhI
+          w97jy1XRqcikV3WclFooz/P3qjqblSnrPPTqe7AvOR0cXEQ93BJJTAHlMAQHHC9D
+          tRtJYLhqIyXz8cXvOhSSJzRNSkNKQVUjgREHbDVKW5a7RzoGvg/mFDydTkEyhgRv
+          mAMTAoGBAJgrJugytVGupVbLaiP15cHRWDX5JHPp1YJAgmnUJbe8YBwiElk8QvhR
+          v3PUXTYDaApwuokmSWZ2y+FHNZq8vn8x8LRwWIAwmav8LQkzxE2y7dWNEs96bhqE
+          Ql1IWH4KZ/RTvGieqEpVuHrXEJqY+2a1BaZ6v3N8nFRkMsSewFDU
+          -----END RSA PRIVATE KEY-----
+      public_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCksarQS7J6qpuxBN8tKJWwWj1U29Ffoe99YurJ2YHuW/CDaWlJDX5G4T4E1YvG4YAtmtL0GVWvhUj248dyr6Sqsfypx3DJ343fLhrlOHCper7rvkZ/cDrxOwLfQX7s2aoAQrR++RQwaM110+5X+0jPy3bAqJy7jbkMQ8SAcaqmQ0hWfSM+wbDFi14a+n8VLyh/NxtBNotI5Qnyw1219D+MZEghDIAdcw86MpjuFnPwWev+RmZF04br0gZEx7gexG7pEz+o+g0W6vGJfuxPCSGW4f3DQ2WXb/K5mvHG5rUTGVcJ2FOK23DEZitBKPOlp6poGr8YytdA2btOBiUS+1uN"

@@ -1,0 +1,29 @@
+# {{ ansible_managed }}
+
+# allowed-domains-dst.acl
+#
+# network destinations that are allowed by this cache
+
+# domains from squid.proxy_domains
+{% for domain in squid.proxy_domains %}
+{{ domain }}
+{% endfor %}
+
+# default ubuntu and ubuntu country archive mirrors
+.archive.ubuntu.com
+ports.ubuntu.com
+security.ubuntu.com
+ddebs.ubuntu.com
+mirrors.ubuntu.com
+keyserver.ubuntu.com
+
+#official third party repositories
+.archive.canonical.com
+extras.ubuntu.com
+
+# default changelogs location, this includes changelogs and the meta-release
+# file that has information about new ubuntu versions
+changelogs.ubuntu.com
+
+# additional destinations can be added to the directory:
+# /etc/squid3/mirror-dstdomain.acl.d

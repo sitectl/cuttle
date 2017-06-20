@@ -1,0 +1,21 @@
+# This playbook allows the user to install pxe config files.
+# It is "safe" and minimal in that it only installs/removes pxe config files.
+#
+# It is first recommended that you run the playbook with pxe_files
+# set to false. This will remove existing config files from the pxe
+# server (who knows what someone left there!).
+#
+# $ ursula ../sitecontroller-envs/remote-$DC playbooks/pxe-config.yml -e 'pxe_files=false'
+#
+# Make sure your hosts are in pxe.servers and run the playbook with the
+# flag enabled.
+#
+# $ ursula ../sitecontroller-envs/remote-$DC playbooks/pxe-config.yml -e 'pxe_files=true'
+---
+- name: pxe config
+  hosts: pxe
+  vars:
+    pxe:
+      enable_server: False
+  roles:
+    - role: pxe

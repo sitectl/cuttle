@@ -1,0 +1,29 @@
+---
+consul:
+  version: 0.6.4
+  download:
+    url: https://releases.hashicorp.com/consul/0.6.4/consul_0.6.4_linux_amd64.zip
+    sha256sum: abdf0e1856292468e2c9971420d73b805e93888e006c76324ae39416edcf0627
+  webui:
+    version: 0.5.0
+    download:
+      url: https://dl.bintray.com/mitchellh/consul/0.5.0_web_ui.zip
+      sha256sum: 0081d08be9c0b1172939e92af5a7cf9ba4f90e54fae24a353299503b24bb8be9
+  bind_interface: '{{ private_device_interface }}'
+  bootstrap_expect: 1
+  join_at_start: true
+  disable_remote_exec: true
+  bin_path: /opt/consul/bin
+  archive_path: /opt/consul/archives
+  config_path: /opt/consul/etc
+  config_file: /opt/consul/etc/consul.json
+  data_path: /opt/consul/data
+  domain:
+  is_server: true
+  is_ui: false
+  log_level: "INFO"
+  rejoin_after_leave: true
+  leave_on_terminate: false
+  client_address: "127.0.0.1"
+  node_name: "{{ ansible_nodename }}"
+  datacenter: "default"

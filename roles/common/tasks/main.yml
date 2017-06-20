@@ -1,0 +1,96 @@
+---
+- name: set utc timezone
+  template: src=etc/timezone dest=/etc/timezone owner=root group=root mode=0644
+  notify:
+    - update timezone
+
+- name: add locale
+  locale_gen: name={{ common.locale }} state=present
+  notify:
+    - update locales
+
+- name: set locale
+  command: update-locale LANG={{ common.locale }} LC_ALL={{ common.locale }}
+
+- name: configure /etc/hosts
+  template:
+    src: ../templates/etc/hosts
+    dest: /etc/hosts
+  when: etc_hosts is defined
+  tags: etc_hosts
+
+- name: install common packages
+  apt: pkg={{ item }}
+  with_items: "{{ common.packages }}"
+
+- name: install system-wide python packages
+  pip:
+    name: "{{ item.name }}"
+    version: "{{ item.version|default(omit) }}"
+    state: "{{ item.state|default(omit) }}"
+  with_items: "{{ common.python.packages }}"
+  register: result
+  until: result|succeeded
+  retries: 5
+  tags: python
+
+- name: create generic data directories
+  file: path={{ item.path }} owner={{ item.owner }} group={{ item.group }}
+        state=directory mode=0755
+  with_items: "{{ common.data_dirs }}"
+  when: common.data_dirs|count > 0
+
+- name: create /opt/sitecontroller paths
+  file: dest=/opt/sitecontroller/{{ item }} state=directory
+        recurse=yes
+  with_items:
+    - scripts
+    - sensu-plugins
+  tags: elk-stats
+
+- include: ssh.yml
+  tags: ssh
+
+- include: sudoers.yml
+  tags: sudoers
+
+- include: ufw.yml
+  tags:
+    - firewall
+    - common-ufw
+
+- name: install raid utilities
+  apt: pkg={{ item }}
+  with_items: "{{ common.hwraid.add_clients }}"
+  when: common.hwraid.enabled
+  tags: hwraid
+
+- name: uninstall raid utilities
+  apt: pkg={{ item }} state=absent
+  with_items: "{{ common.hwraid.remove_clients }}"
+  when: common.hwraid.enabled
+  tags: hwraid
+
+- name: install mdns tooling
+  apt: pkg=avahi-daemon
+  when: common.mdns.enabled|bool
+
+- include: ntpd.yml
+  when: common.ntpd.enabled|bool
+  tags: ntpd
+
+- include: shell_customization.yml
+  when: common.shell_customization.enabled|bool
+  tags: shell-customization
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

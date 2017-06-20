@@ -1,0 +1,29 @@
+---
+ttyspy:
+  common:
+    dependencies:
+      - autoconf
+      - libcurl4-openssl-dev
+    ssl:
+      ca_cert: ~
+
+  client:
+    enabled: false
+    package: https://github.com/IBM/ttyspy/releases/download/packages/ttyspy-client_0.0.3_amd64.deb
+    ssl:
+      cert: ~
+      key: ~
+
+  server:
+    enabled: false
+    host: server.test
+    ip: 127.0.0.1
+    port: 8090
+    transcript_path: /opt/ttyspy-server/transcripts
+    transcript_glob: /transcripts/*/*/*/*/*/transcript_*
+    firewall:
+      friendly_networks:
+        - 0.0.0.0/0
+    ssl:
+      cert: ~
+      key: ~

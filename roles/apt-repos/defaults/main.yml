@@ -1,0 +1,5 @@
+---
+apt_repos: {}
+  # add repos specific to your project in your -envs variables
+purge_repos: []
+  # - repo: 'deb https://cb1a8630e683a470ec2db3ff8aac8152d95d6535b9b42b98:@packagecloud.io/blueboxcloud/misc/ubuntu/ trusty main'

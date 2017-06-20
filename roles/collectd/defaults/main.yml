@@ -1,0 +1,21 @@
+---
+collectd:
+  client_name: "{{ ansible_hostname }}"
+  plugin_conf_dir: /etc/collectd/plugins
+  interval: 10
+  timeout: 2
+  threads: 5
+  graphite_prefix: "stats."
+  plugins:
+    amqp:
+      enabled: True
+      verbose: False
+      host: 172.16.0.15
+      port: 5672
+      vhost: /graphite
+      user: graphite
+      pass: graphite
+      exchange: metrics
+    logfile:
+      file: /var/log/collectd.log
+      level: info

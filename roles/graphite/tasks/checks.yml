@@ -1,0 +1,4 @@
+---
+- name: install carbon-cache process check
+  sensu_check_dict: name="check-carbon-cache-process" check="{{ sensu_checks.graphite.check_carbon_cache_process }}"
+  notify: restart sensu-client missing ok

@@ -1,0 +1,8 @@
+{
+  "handlers": {
+      "{{ item.key }}": {
+        "type": "set",
+        "handlers": {{ item.value|to_json }}
+      }
+  }
+}

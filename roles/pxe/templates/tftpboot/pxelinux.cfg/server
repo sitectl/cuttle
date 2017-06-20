@@ -1,0 +1,19 @@
+# {{ ansible_managed }}
+
+# PXE boot options
+serial {{ item.serial_com|default(pxe.serial_com) }} 115200 0
+prompt 0
+default vesamenu.c32
+menu boot options for {{ item.name }}
+timeout {{ item.timeout|default(pxe.timeout) }}
+
+label {{ item.os }}_{{ item.name }}
+menu label install {{ item.os }} on {{ item.name }}
+  kernel {{ item.os }}/linux
+  ipappend 2
+  append initrd={{ item.os }}/initrd.gz vga=normal ramdisk_size=16384 root=/dev/ram rw preseed/url=tftp://{{pxe.tftp_server}}/servers/{{ item.mac | replace(":","-") | lower }}.cfg preseed/interactive={{pxe.interactive}} debian-installer/locale=en_US keyboard-configuration/layoutcode=us localechooser/translation/warn-light=true localechooser/translation/warn-severe=true netcfg/choose_interface={{ item.ks_interface|default(pxe.ks_interface) }} biosdevname=0 netcfg/dhcp_timeout=180 netcfg/get_hostname={{ item.name }} -- {% if item.serial_com is defined or pxe.serial_com is defined %}console=tty0 serial console=ttyS{{ item.serial_com|default(pxe.serial_com) }},115200n8 {% endif %} consoleblank=0 --
+
+# Launch local installation
+label local
+menu label Boot existing OS on {{ item.name }}
+localboot 0

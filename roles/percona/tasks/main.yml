@@ -1,0 +1,25 @@
+---
+- name: install python-pycurl
+  apt: pkg=python-pycurl
+
+- include: server.yml
+  when: inventory_hostname in groups.percona_primary or inventory_hostname in groups.percona_secondary|default('[]')
+
+- include: backup.yml
+  when: inventory_hostname in groups.percona_backup|default('[]')
+
+- include: arbiter.yml
+  when: inventory_hostname in groups.percona_arbiter|default('[]')
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec
+

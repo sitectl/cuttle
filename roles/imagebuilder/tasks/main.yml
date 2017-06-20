@@ -1,0 +1,43 @@
+---
+- name: install disk image builder dependencies
+  apt: pkg="{{ item }}"
+  with_items:
+    - python-pip
+    - curl
+    - qemu-utils
+    - python-dev
+
+- name: install openstack clients and diskimage builder
+  pip: name="{{ item }}"
+  with_items:
+    - pbr
+    - diskimage-builder
+    - python-novaclient
+    - python-glanceclient
+    - python-openstackclient
+
+- name: allow dib user sudo access for running the image refresh script
+  template: src=etc/sudoers.d/dib
+            dest=/etc/sudoers.d/dib
+            mode=0440
+
+- name: install the image refresh script
+  copy: src=usr/local/bin/image-refresh.sh dest=/usr/local/bin/image-refresh.sh mode=0755
+
+- name: image refresh cron
+  template: src=etc/cron.d/dib-image-refresh
+            dest=/etc/cron.d/dib-image-refresh-{{ item.distro }}-{{ item.series }}
+            mode=0640
+  with_items: "{{ imagebuilder.images }}"
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

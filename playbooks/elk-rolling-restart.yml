@@ -1,0 +1,139 @@
+# To do a rolling cluster RESTART of Elasticsearch
+# ursula <env> playbooks/elk-rolling-restart.yml
+# ex: ursula ../sitecontroller-envs/remote-zelda.tor01 playbooks/elk-rolling-restart.yml
+#
+# To do a rolling cluster REBOOT of ELK hosts
+# ursula <env> playbooks/elk-rolling-restart.yml --extra-vars 'reboot=true'
+# ex: ursula ../sitecontroller-envs/remote-zelda.tor01 playbooks/elk-rolling-restart.yml --extra-vars 'reboot=true'
+---
+- name: rolling restart elasticsearch cluster
+  hosts: elasticsearch:logstash:kibana
+  serial: 1
+  vars:
+    reboot: false
+  tasks:
+    # stop ingestion and queries
+    - block:
+      - name: stop logstash
+        service:
+          name: logstash
+          state: stopped
+          must_exist: false
+
+      - name: stop apache
+        service:
+          name: apache2
+          state: stopped
+          must_exist: false
+
+      - name: stop kibana
+        service:
+          name: kibana
+          state: stopped
+          must_exist: false
+
+    # block to make requests but also ignore failures if elasticsearch is not running
+    - block:
+      - name: disable elasticsearch shard allocation
+        uri:
+          url: http://localhost:9200/_cluster/settings
+          method: PUT
+          body: '{ "persistent": { "cluster.routing.allocation.enable": "none" } }'
+          body_format: json
+          return_content: yes
+          status_code: 200
+        register: es_disable_shard_alloc
+        failed_when: false
+        run_once: true
+
+      - name: request a synced flush
+        uri:
+          url: http://localhost:9200/_flush/synced
+          method: POST
+          return_content: yes
+          status_code: 200
+        register: es_sync_flush
+        failed_when: false
+        run_once: true
+
+    - name: safely shutdown local elasticsearch node
+      service:
+        name: elasticsearch
+        state: stopped
+
+    - name: wait for elasticsearch to stop listening on localhost:9200
+      wait_for: port=9200 state=stopped delay=0
+
+
+    - block:
+      - name: reboot
+        command: /sbin/reboot
+
+      - name: waiting for server to come back
+        local_action: wait_for host={{ inventory_hostname }}
+                      state=started
+        sudo: false
+      when: reboot|default("False")|bool
+
+
+    - name: start elasticsearch
+      service:
+        name: elasticsearch
+        state: started
+
+    - name: wait for elasticsearch to start listening on localhost:9200
+      wait_for: port=9200 state=started delay=0
+
+    - name: wait 60 seconds for all shards to recover/cluster status yellow or green, retry 10 times
+      action: uri
+      args:
+        url: http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=60s
+        method: GET
+        status_code: 200
+        timeout: 120
+      register: es_shard_recovery_status
+      until: es_shard_recovery_status.json.status == "yellow" or es_shard_recovery_status.json.status == "green"
+      retries: 10
+      delay: 10
+
+    - name: enable elasticsearch shard allocation (and recovery)
+      uri:
+        url: http://localhost:9200/_cluster/settings
+        method: PUT
+        body: '{ "persistent": { "cluster.routing.allocation.enable" : "all" } }'
+        body_format: json
+        return_content: yes
+        status_code: 200
+        timeout: 30
+      register: es_disable_shard_alloc
+      run_once: true
+
+    - name: wait 60 seconds for all shards to recover/cluster status green, retry 60 times
+      action: uri
+      args:
+        url: http://localhost:9200/_cluster/health?wait_for_status=green&timeout=60s
+        method: GET
+        status_code: 200
+        timeout: 120
+      register: es_shard_recovery_status
+      until: es_shard_recovery_status.json.status == "green"
+      retries: 10
+      delay: 10
+
+      # start ingestion and queries
+    - block:
+      - name: start logstash
+        service:
+          name: logstash
+          state: started
+
+      - name: start kibana since it likely failed in the role or was disabled
+        service:
+          name: kibana
+          state: started
+
+      - name: wait for kibana to start listening on localhost:5601
+        wait_for: port=5601 state=started delay=0
+
+      - name: start apache
+        service: name=apache2 state=started

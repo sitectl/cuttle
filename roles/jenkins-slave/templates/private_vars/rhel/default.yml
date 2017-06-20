@@ -1,0 +1,37 @@
+rhn_subscription:
+  username: {{ secrets.rhn_subscription.username }}
+  password: {{ secrets.rhn_subscription.password }}
+
+keystone:
+  jellyroll: True
+  distro:
+    python_post_dependencies:
+      - name: python-memcached
+      - name: jellyroll
+        version: {{ distro.python_post_dependencies.jellyroll.version }}
+        pip_extra_args: "--extra-index-url {{ pypi_repo.bluebox }}"
+
+neutron:
+  jellyroll: True
+  distro:
+    python_post_dependencies:
+      - name: python-memcached
+      - name: jellyroll
+        version: {{ distro.python_post_dependencies.jellyroll.version }}
+        pip_extra_args: "--extra-index-url {{ pypi_repo.bluebox }}"
+
+heat:
+  distro:
+    python_post_dependencies:
+      - name: semver
+      - name: ibm-sw-orch
+        version: {{ distro.python_post_dependencies.ibm_sw_orch.version }}
+        pip_extra_args: "--extra-index-url {{ pypi_repo.ucd }}"
+
+horizon:
+  customize: True
+  distro:
+    python_post_dependencies:
+      - name: bb-horizon-customization
+        version: {{ distro.python_post_dependencies.bb_horizon_customization.version }}
+        pip_extra_args: "--extra-index-url {{ pypi_repo.bluebox }}"

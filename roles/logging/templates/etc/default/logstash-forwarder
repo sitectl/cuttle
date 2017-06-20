@@ -1,0 +1,8 @@
+# {{ ansible_managed }}
+
+user="{{ logging.service.user }}"
+group="{{ logging.service.group }}"
+chroot="/"
+chdir="{{ logging.service.home }}"
+nice=""
+args=-config\ /etc/logstash-forwarder.d

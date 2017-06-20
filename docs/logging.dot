@@ -1,0 +1,54 @@
+digraph G {
+  label="Site Controller Logging"
+  labelloc="t";
+  rankdir="LR";
+  clusterrank="local";
+  overlap=scale;
+  normalize=true;
+  edge [fontsize=11];
+  nodesep=0.5;
+  ranksep=2;
+  dpi = 128;
+
+  user [label="Support / Engineering User", shape=Mdiamond];
+  pagerduty [label="PagerDuty\n(Unused)", shape=Msquare];
+
+  subgraph cluster_central_controller {
+    label = "Central Site Controller";
+    rank = same;
+
+    cc_apache [label = "BBG Auth Proxy\n(Apache)"];
+  }
+
+  subgraph cluster_site_controller {
+    label = "Remote Site Controller";
+    rank = same;
+
+    sc_apache [label = "Apache"];
+    sc_kibana [label="Kibana"];
+    sc_elasticsearch [label="Elasticsearch"];
+    sc_logstash [label="Logstash"];
+    sc_log_shipper [label="Log Shipper\n(Logstash Forwarder)"];
+
+    sc_apache -> sc_kibana [label="localhost:5601/tcp"];
+    sc_kibana -> sc_elasticsearch [label="localhost:9200/tcp"];
+    sc_logstash -> sc_elasticsearch [label="localhost:9200/tcp"];
+    sc_log_shipper -> sc_logstash [label="TLS logs.$DC.bbg:4560/tcp"];
+  }
+
+  subgraph cluster_openstack {
+    label = "OpenStack";
+    rank = same;
+
+    os_error [label="OpenStack Error", shape=Mdiamond];
+    os_log_shipper [label="Log Shipper\n(Logstash Forwarder)"];
+
+    os_error -> os_log_shipper;
+  }
+
+  os_log_shipper -> sc_logstash [label="TLS logs.$DC.bbg:4560/tcp"];
+
+  cc_apache -> sc_apache [label="VPN: HTTP logs.$DC.bbg:80/tcp"];
+
+  user -> cc_apache [label="Internet: HTTPS control.openstack.blueboxgrid.com:443/tcp"];
+}

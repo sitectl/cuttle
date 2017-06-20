@@ -1,0 +1,5 @@
+---
+# SQD012
+- name: install squid process check
+  sensu_check_dict: name="check-squid-process" check="{{ sensu_checks.squid.check_squid_process }}"
+  notify: restart sensu-client missing ok

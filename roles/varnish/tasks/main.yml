@@ -1,0 +1,32 @@
+---
+- name: install varnish
+  apt: pkg={{ item }}
+  with_items:
+    - varnish
+
+- name: configure varnish defaults
+  template: src=etc/default/varnish dest=/etc/default/varnish
+            owner=root mode=0644
+  notify: restart varnish
+
+- name: configure varnish
+  template: src=etc/varnish/default.vcl dest=/etc/varnish/default.vcl
+            owner=root mode=0644
+  notify: restart varnish
+
+- meta: flush_handlers
+
+- name: ensure varnish is running
+  service: name=varnish state=started enabled=yes
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

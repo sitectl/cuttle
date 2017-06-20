@@ -1,0 +1,5 @@
+---
+- name: install ttyspyd process check
+  sensu_check_dict: name="check-ttyspyd-process"
+                    check="{{ sensu_checks.ttyspyd.check_ttyspyd_process }}"
+  notify: restart sensu-client missing ok

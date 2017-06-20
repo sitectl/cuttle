@@ -1,0 +1,19 @@
+# {{ ansible_managed }}
+
+127.0.0.1   localhost.localdomain localhost
+{% if hostname is defined and domain is defined %}
+127.0.1.1 {{ hostname }}.{{ domain }} {{ hostname.split('.')[0] }} {{ hostname }}
+{% else %}
+127.0.1.1   {{ ansible_fqdn }} {{ ansible_hostname }} {{ ansible_nodename }}
+{% endif %}
+
+# The following lines are desirable for IPv6 capable hosts
+::1     ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+
+{% for entry in etc_hosts -%}
+{{ entry.ip }} {{ entry.name }}
+{% endfor %}

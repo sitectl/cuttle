@@ -1,0 +1,35 @@
+---
+netdata_dashboard:
+  path: /var/www/html/netdata_dashboard
+  title: "Netdata Dashboard"
+  auth: []
+  apache:
+    enabled: true
+    servername: netdata.local
+    serveraliases:
+      - netdata
+    port: 80
+    ip: '*'
+    ssl:
+      enabled: False
+      port: 443
+      ip: '*'
+      name: sitecontroller
+      cert: ~
+      key: ~
+      intermediate: ~
+  firewall:
+    - port: 80
+      protocol: tcp
+      src: 0.0.0.0/0
+  logs:
+    - paths:
+        - /var/log/apache2/netdata_dashboard-access.log
+      fields:
+        tags: mirror,apache_access
+    - paths:
+        - /var/log/apache2/netdata_dashboard-error.log
+      fields:
+        tags: mirror,apache_error
+  logging:
+    forwarder: filebeat

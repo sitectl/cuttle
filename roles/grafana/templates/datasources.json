@@ -1,0 +1,7 @@
+{
+  "name": "{{ item.name }}",
+  "type": "graphite",
+  "url": "http://{{ item.hostname }}:{{ item.port|default('8081') }}",
+  "access": "proxy",
+  "database": ""
+}

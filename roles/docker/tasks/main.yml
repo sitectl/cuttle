@@ -1,0 +1,25 @@
+---
+- name: install docker
+  apt: pkg=docker-engine
+
+- name: add users to docker group
+  user: name={{ item }} groups=docker append=yes
+  with_items: "{{ docker.allow }}"
+
+- name: enable and start the docker daemon
+  service:
+    name: docker
+    enabled: yes
+    state: started
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

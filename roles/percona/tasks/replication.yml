@@ -1,0 +1,45 @@
+---
+- name: are we already already bootstrapped
+  shell: mysql -e "SHOW VARIABLES LIKE 'wsrep_on'" | grep 'ON'
+  register: already_bootstrapped
+  failed_when: False
+
+- name: create state snapshot transfer user from anywhere
+  mysql_user: name={{ percona.sst_auth_user }} host={{ item }}
+              password={{ percona.sst_auth_password }}
+              priv='*.*:RELOAD,LOCK TABLES,REPLICATION CLIENT'
+  with_items:
+    - '%'
+    - 'localhost'
+
+- name: stop all of the mysql processes before we boostrap any replication
+  service: name=mysql state=stopped
+  when: not already_bootstrapped.rc == 0
+
+- name: register replication databases
+  command: echo {% for host in groups['percona_primary']|union(groups['percona_secondary']) %}{% if not loop.last %}{{ hostvars[host][private_interface]['ipv4']['address'] }},{% else %}{{ hostvars[host][private_interface]['ipv4']['address'] }}{% endif %}{% endfor %}
+  register: percona_replication_nodes
+
+- name: configure bootstrap replication
+  template: src=etc/mysql/conf.d/replication.cnf
+            dest=/etc/mysql/conf.d/replication.cnf
+            owner=mysql group=mysql mode=0600
+
+- name: allow replication traffic
+  ufw:
+    rule: allow
+    to_port: "{{ item.0.port }}"
+    src: "{{ item.1 }}"
+  with_subelements:
+    - "{{ percona.firewall }}"
+    - src
+  tags:
+    - firewall
+
+- name: bootstrap the primary node
+  command: /etc/init.d/mysql bootstrap-pxc
+  when: should_bootstrap_as_primary and not already_bootstrapped.rc == 0
+
+- name: bootstrap any secondary nodes
+  service: name=mysql state=started enabled=yes
+  when: not should_bootstrap_as_primary and not already_bootstrapped.rc == 0

@@ -1,0 +1,53 @@
+---
+- name: http firewall rule for jenkins vhost
+  ufw:
+    rule: allow
+    src: "{{ item }}"
+    direction: in
+    interface: "{{ private_device_interface }}"
+    to_port: "{{ jenkins.apache.port }}"
+    proto: tcp
+  with_items: "{{ jenkins.apache.allow_from }}"
+  tags: firewall
+
+- name: https firewall rule for jenkins vhost
+  ufw:
+    rule: allow
+    src: "{{ item }}"
+    direction: in
+    interface: "{{ private_device_interface }}"
+    to_port: "{{ jenkins.apache.ssl.port }}"
+    proto: tcp
+  with_items: "{{ jenkins.apache.allow_from }}"
+  tags: firewall
+
+- name: enable apache mod proxy_http
+  apache2_module: name=proxy_http
+  notify: restart apache
+
+- name: enable apache mod ssl
+  apache2_module: name=ssl
+  notify: restart apache
+
+- name: create basic auth user
+  htpasswd:
+    path: /etc/apache2/htpasswd
+    name: "{{ jenkins.apache.basicauth.username }}"
+    password: "{{ jenkins.apache.basicauth.password }}"
+    owner: root
+    group: www-data
+    mode: 0640
+  when: jenkins.apache.basicauth.enabled|default("False")|bool
+
+- name: jenkins vhosts configuration
+  template: src=etc/apache2/sites-available/jenkins dest=/etc/apache2/sites-available/jenkins.conf
+
+- name: enable jenkins vhost
+  apache2_site: state=enabled name=jenkins
+  notify:
+    - restart apache
+
+- meta: flush_handlers
+
+- name: ensure apache is running
+  service: name=apache2 state=started enabled=yes

@@ -1,0 +1,31 @@
+---
+- name: install sensu plugins
+  gem:
+    name: "{{ item.name }}"
+    version: "{{ item.version|default(omit) }}"
+    executable: /opt/sensu/embedded/bin/gem
+    user_install: no
+  with_items: "{{ elasticsearch.sensu_plugins }}"
+  register: result
+  until: result|succeeded
+  retries: 5
+
+- name: install sensu checks
+  sensu_check_dict: name="{{ item.name }}" check="{{ item.check }}"
+  with_items:
+    - name: check-es-cluster-status
+      check: "{{ sensu_checks.elasticsearch.check_es_cluster_status }}"
+    - name: check-es-node-status
+      check: "{{ sensu_checks.elasticsearch.check_es_node_status }}"
+    - name: check-es-file-descriptors
+      check: "{{ sensu_checks.elasticsearch.check_es_file_descriptors }}"
+    - name: check-es-heap
+      check: "{{ sensu_checks.elasticsearch.check_es_heap }}"
+    - name: check-es-circuit-breakers
+      check: "{{ sensu_checks.elasticsearch.check_es_circuit_breakers }}"
+  notify: restart sensu-client missing ok
+
+# ELS016
+- name: install elasticsearch process check
+  sensu_check_dict: name="check-elasticsearch-process" check="{{ sensu_checks.elasticsearch.check_elasticsearch_process }}"
+  notify: restart sensu-client missing ok

@@ -1,0 +1,6 @@
+# {{ ansible_managed }}
+
+AuthType Basic
+AuthName "Authentication Required"
+AuthUserFile "{{ apt_mirror.path }}/mirror/{{ item.value.path|default(item.value.url|urlparse(1)) }}/.htpasswd"
+Require valid-user

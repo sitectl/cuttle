@@ -1,0 +1,98 @@
+---
+public_interface: ansible_eth1
+private_interface: ansible_eth2
+public_ipv4: "{{ hostvars[inventory_hostname][public_interface]['ipv4'] }}"
+private_ipv4: "{{ hostvars[inventory_hostname][private_interface]['ipv4'] }}"
+
+common:
+  firewall:
+    friendly_networks:
+      - "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+  ssh:
+    allow_from:
+      - "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+
+rabbitmq:
+  host: "{{ hostvars[groups['rabbitmq'][0]][private_interface]['ipv4']['address']|default('172.16.1.103') }}"
+  cluster: False
+  erlang_cookie: E9HGSG7Fs8UmSSQ6
+  users:
+    - username: admin
+      password: w4HLrz8DHtB84shd
+      vhost: /
+    - username: sensu
+      password: m2KNhjrmxgjXB2ue
+      vhost: /sensu
+    - username: graphite
+      password: 6L2wyT9NXC6qZhQH
+      vhost: /graphite
+  firewall:
+    - port: 5671
+      src: "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+    - port: 5672
+      src: "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+
+sensu:
+  host: "{{ hostvars[groups['sensu'][0]][private_interface]['ipv4']['address']|default('172.16.1.103') }}"
+  rabbitmq:
+    host: "{{ rabbitmq.host }}"
+    username: sensu
+    password: m2KNhjrmxgjXB2ue
+    vhost: /sensu
+    hostgroup: sensu
+  dashboard:
+    host: "{{ private_ipv4.address }}"
+    firewall:
+      - port: 80
+        src: "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+      - port: 443
+        src: "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+
+openid_proxy:
+  locations:
+    sensu:
+      proxy: "http://{{ sensu.host }}:3000/"
+      url: "/sensu/"
+    ipmi:
+      proxy: "http://{{ ipmi_proxy.host }}:{{ ipmi_proxy.apache.port }}/ipmi/"
+      url: "/ipmi/"
+      config:
+        - RequestHeader: "set X-Proxy-Remote-User %{REMOTE_USER}e env=REMOTE_USER"
+  firewall:
+    - port: 80
+      protocol: tcp
+      src:
+        - "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+    - port: 443
+      protocol: tcp
+      src:
+        - "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+
+ipmi_proxy:
+  datacenters:
+    - name: dc01
+      data_center_uuid: 7cd69350-35e8-4677-98fe-aad60fc9e191
+      backend_source_ip: 172.16.0.16
+  host: "{{ hostvars[groups['ipmi-proxy'][0]][private_interface]['ipv4']['address']|default('172.16.1.104') }}"
+  ip_pool:
+    - 172.16.1.21
+    - 172.16.1.22
+  apache:
+    port: 80
+    allow_from:
+      - 127.0.0.1
+      - "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+
+monitoring_common:
+  service_owner: development
+
+dnsmasq:
+  interface: lo
+  server: 127.0.0.1
+  dns:
+    hosts:
+      - name: bastion01.example.bbg
+        ip: "{{ hostvars['bastion01']['ipv4']['address']|default('172.16.0.101') }}"
+      - name: monitor01.example.bbg
+        ip: "{{ hostvars['monitor01']['ipv4']['address']|default('172.16.0.103') }}"
+  firewall: []

@@ -1,0 +1,10 @@
+---
+- name: setup graphite database
+  command: "{{ graphite.path.virtualenv }}/bin/python {{ graphite.path.install_root }}/webapp/graphite/manage.py syncdb --noinput"
+  run_once: true
+  notify: restart apache
+
+- name: restart carbon-cache
+  service:
+    name: carbon-cache
+    state: restarted

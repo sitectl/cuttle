@@ -1,0 +1,33 @@
+# Use this playbook if you want to delete certain grafana datasources
+# You must know the names of the datasources before hand
+# ex: ursula ../sitecontroller-envs/control-iad01/ playbooks/remove_grafana_datasources.yml --extra-vars 'datasources_to_remove=["fra02","hkg02","lon02"]'
+
+---
+- name: remove grafana datasources
+  hosts: grafana
+  tasks:
+    - name: check if grafana datasources exist
+      uri:
+        url: http://127.0.0.1:{{ grafana.server.http_port|default("3001") }}/api/datasources
+        method: GET
+        user: "{{ grafana.security.admin_user|default("admin") }}"
+        password: "{{ grafana.security.admin_password|default("admin") }}"
+        force_basic_auth: yes
+        return_content: yes
+      register: grafana_api_datasources
+
+    - name: create list of currently configured datasources
+      set_fact:
+        configured_datasources: "{{ configured_datasources | default({}) | combine({item.name: item.id}) }}"
+      with_items: "{{ grafana_api_datasources.content|from_json }}"
+
+    - name: remove specified grafana datasources
+      uri:
+        url: http://127.0.0.1:{{ grafana.server.http_port|default("3001") }}/api/datasources/{{ configured_datasources[item] }}
+        method: DELETE
+        user: "{{ grafana.security.admin_user }}"
+        password: "{{ grafana.security.admin_password }}"
+        force_basic_auth: yes
+        return_content: yes
+      with_items: "{{ datasources_to_remove }}"
+      when: "{{ item in configured_datasources }}"

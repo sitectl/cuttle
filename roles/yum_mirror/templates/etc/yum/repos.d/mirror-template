@@ -1,0 +1,19 @@
+# {{ ansible_managed }}
+{%- macro yum_repo_config(repo, _arch) %}
+[{{ repo.key }}-{{ (repo.value.release|default('el/7')) | replace('/','')  }}-{{ _arch.arch }}]
+name={{ repo.value.description }} - {{ repo.value.release|default('el/7') }} - {{ _arch.arch }}
+baseurl={{ _arch.url|default(repo.value.url) }}/{{ repo.value.release|default('el/7') }}/{{ _arch.basearch|default(_arch.arch) }}
+enabled={{ repo.value.enabled|default(False)|bool|int }}
+{% if repo.value.key_url is defined %}
+gpgkey={{ repo.value.key_url }}
+{% endif %}
+repo_gpgcheck=0
+gpgcheck={{ repo.value.gpgcheck|default(False)|bool|int }}
+autorefresh=1
+metadata_expire=300
+{%- endmacro %}
+
+{% for _arch in item.value.archs %}
+{{ yum_repo_config(item, _arch) }}
+
+{% endfor %}

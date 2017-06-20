@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+set -e
+
+find '{{ elasticsearch.config['path.logs'] }}' -type f -mtime +30 -name '*.log.*' -delete

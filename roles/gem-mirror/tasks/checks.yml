@@ -1,0 +1,4 @@
+---
+- name: install gem-mirror process check
+  sensu_check_dict: name="check-gem-mirror-process" check="{{ sensu_checks.gem_mirror.check_gem_mirror_process }}"
+  notify: restart sensu-client missing ok

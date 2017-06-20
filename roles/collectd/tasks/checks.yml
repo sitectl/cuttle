@@ -1,0 +1,4 @@
+---
+- name: install sensu check
+  sensu_check_dict: name="check-collectd-process" check="{{ sensu_checks.collectd.check_collectd_process }}"
+  notify: restart sensu-client missing ok

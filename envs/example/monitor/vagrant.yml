@@ -1,0 +1,9 @@
+default:
+  memory: 2048
+  cpus: 2
+
+vms:
+  monitor:
+    ip_address:
+      - 172.16.0.15
+      - 172.16.1.15

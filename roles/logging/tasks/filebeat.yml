@@ -1,0 +1,30 @@
+---
+- name: install filebeat
+  apt:
+    pkg: "filebeat={{ logging.forward.filebeat.version }}"
+  notify: restart filebeat
+
+- name: filebeat config directory
+  file:
+    dest: /etc/filebeat/filebeat.d
+    state: directory
+    mode: 0755
+
+- name: configure filebeat
+  template:
+    src: etc/filebeat/filebeat.yml
+    dest: /etc/filebeat/filebeat.yml
+    mode: 0644
+  notify: restart filebeat
+  when: logging.forward.host
+
+# We create our own index template in roles/logstash
+- name: remove filebeat.template.json
+  file:
+    path: /etc/filebeat/filebeat.template.json
+    state: absent
+
+- meta: flush_handlers
+
+- name: start and enable filebeat service
+  service: name=filebeat state=started enabled=yes

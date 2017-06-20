@@ -1,0 +1,17 @@
+---
+- name: start elasticsearch-if-start-enabled
+  service:
+    name: elasticsearch
+    state: started
+  when: elasticsearch.start_on_config|bool
+
+- name: restart elasticsearch-if-restart-enabled
+  service:
+    name: elasticsearch
+    state: restarted
+  when: elasticsearch.restart_on_config|bool
+
+- name: stop elasticsearch
+  service:
+    name: elasticsearch
+    state: stopped

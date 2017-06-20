@@ -1,0 +1,12 @@
+---
+dependencies:
+  - role: apt-repos
+    repos:
+      - repo: 'deb {{ apt_repos.kibana.repo }} stable main'
+        key_url: '{{ apt_repos.kibana.key_url }}'
+  - role: logging-config
+    service: kibana
+    logdata: "{{ kibana.logs }}"
+    forward_type: "{{ kibana.logging.forwarder }}"
+    when: logging.enabled|default("True")|bool
+  - role: sensu-check

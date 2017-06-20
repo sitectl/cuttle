@@ -1,0 +1,3 @@
+# {{ ansible_managed }}
+
+{{ admin_user }} ALL=(ALL) NOPASSWD:ALL

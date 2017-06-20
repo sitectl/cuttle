@@ -1,0 +1,11 @@
+[jenkins]
+173.247.105.49
+
+[graphite]
+graphite.openstack.blueboxgrid.com
+
+[repo]
+repo.openstack.blueboxgrid.com
+
+[rally]
+rally.openstack.blueboxgrid.com

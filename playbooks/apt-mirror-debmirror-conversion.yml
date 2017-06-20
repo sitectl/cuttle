@@ -1,0 +1,32 @@
+---
+- name: apt-mirror repo move from host/path to key
+  hosts: mirror
+  any_errors_fatal: true
+  environment: "{{ env_vars|default({}) }}"
+  roles:
+    - apt-mirror
+  tasks:
+    - name: find which mirrors exist on disk
+      stat:
+        path: "{{ apt_mirror.path }}/mirror/{{ item.value.host }}/{{ item.value.path }}"
+      with_dict: "{{ apt_mirror.debmirror.repositories|combine(apt_mirror.debmirror.distros) }}"
+      register: reg_mirror_exist
+
+    - debug: var=reg_mirror_exist
+
+    - name: move each repo mirror from hostname/path to key
+      command: "time mv -fn --strip-trailing-slashes {{ apt_mirror.path }}/mirror/{{ item.item.value.host }}/{{ item.item.value.path }} {{ apt_mirror.path }}/mirror/{{ item.item.key }}"
+      with_items: "{{ reg_mirror_exist.results }}"
+      when: item.stat.exists|bool
+      register: reg_move_repo
+    
+    - debug: var=reg_move_repo
+    
+    - name: create per repo mirror directory, set permissions
+      file:
+        dest: "{{ apt_mirror.path }}/mirror/{{ item.key }}"
+        state: directory
+        owner: apt-mirror
+        recurse: true
+      with_dict: "{{ apt_mirror.debmirror.repositories|combine(apt_mirror.debmirror.distros) }}"
+

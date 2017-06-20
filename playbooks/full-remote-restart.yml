@@ -1,0 +1,50 @@
+---
+- name: restart monitor
+  hosts: monitor01
+  serial: 1
+  tasks:
+    - name: reboot
+      command: shutdown -r now
+      async: 0
+      poll: 0
+      failed_when: False
+
+    - name: wait for host to come back
+      local_action: wait_for host={{ inventory_hostname }} state=started
+      sudo: false
+
+- name: restart bootstrap
+  hosts: bootstrap01
+  serial: 1
+  tasks:
+    - name: reboot
+      command: shutdown -r now
+      async: 0
+      poll: 0
+      failed_when: False
+
+    - name: wait for host to come back
+      local_action: wait_for host={{ inventory_hostname }} state=started
+      sudo: false
+
+- name: restart elasticsearch
+  hosts: elasticsearch
+  serial: 1
+  tasks:
+    - name: reboot
+      command: shutdown -r now
+      async: 0
+      poll: 0
+      failed_when: False
+
+    - name: wait for host to come back
+      local_action: wait_for host={{ inventory_hostname }} state=started
+      sudo: false
+
+    - name: wait for elasticsearch to start listening on localhost:9200
+      wait_for: port=9200 state=started delay=5
+
+    - name: wait 60 seconds for all shards to recover/cluster status green, retry 10 times
+      uri: "url=http://localhost:9200/_cluster/health?wait_for_status=green&timeout=60s method=GET
+           status_code=200"
+      retries: 10

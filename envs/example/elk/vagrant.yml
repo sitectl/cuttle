@@ -1,0 +1,18 @@
+default:
+  memory: 2048
+  cpus: 2
+# LULZ WAT?  needed a xenial box that had old style ethernet naming, as the newer predictive network
+# names are affected by the number of networks a person has configured in virtualbox
+# making it inconsistent across development machines.
+  box_url: https://atlas.hashicorp.com/cloudtoad/boxes/xenial_server_base/versions/1.2/providers/virtualbox.box
+  box_name: envimation/ubuntu-xenial
+
+vms:
+  elk01:
+    ip_address:
+      - 172.16.0.13
+      - 172.16.1.13
+  elk02:
+    ip_address:
+      - 172.16.0.14
+      - 172.16.1.14

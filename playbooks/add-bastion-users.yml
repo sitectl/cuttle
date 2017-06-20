@@ -1,0 +1,26 @@
+# Use this playbook as a shortcut to add users to bastion hosts
+#
+# NOTE: Users must still be defined in sitecontroller-envs/bastion-users.yml
+#       before this playbook is executed.
+#
+# ex: ursula ../sitecontroller-envs/control-wdc04 playbooks/add-bastion-users.yml
+#     --ask-vault-pass --ask-su-pass
+#     -e "@../sitecontroller-envs/bastion-users.yml"
+#     -e "usernames=sambol,myles"
+---
+- name: add bastion users
+  hosts: bastion
+  serial: 1
+  vars:
+    users_to_add: {}
+
+  pre_tasks:
+    - name: extract users from users dict
+      set_fact:
+        users_to_add: "{{ users_to_add | combine( {item: users[item]} ) }}"
+      with_items: "{{ usernames.split(',') }}"
+
+  roles:
+    - role: users
+    - role: sshagentmux
+    - role: bastion

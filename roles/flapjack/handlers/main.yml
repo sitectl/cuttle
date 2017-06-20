@@ -1,0 +1,12 @@
+---
+- name: restart flapjack
+  service: name=flapjack state=restarted
+
+- name: reload flapjack
+  service: name=flapjack state=reloaded
+
+- name: restart flapjack-httpbroker
+  service: name=flapjack-httpbroker state=restarted
+
+- name: restart postfix
+  service: name=postfix state=restarted

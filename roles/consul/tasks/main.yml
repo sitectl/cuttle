@@ -1,0 +1,79 @@
+---
+- name: create consul user
+  user: name=consul comment=consul shell=/bin/false
+        system=yes home=/nonexistent
+
+- name: make consul directories
+  file: dest={{ item }} state=directory owner=consul
+  with_items:
+    - "{{ consul.bin_path }}"
+    - "{{ consul.archive_path }}"
+    - "{{ consul.config_path }}"
+    - "{{ consul.config_path }}/conf.d"
+    - "{{ consul.data_path }}"
+
+- name: download consul
+  get_url: url={{ consul.download.url }}
+         dest="{{ consul.archive_path }}/consul-{{ consul.version }}.zip"
+         sha256sum={{ consul.download.sha256sum }}
+
+- stat: path={{ consul.bin_path }}/consul
+  register: consul_binary
+
+- name: unzip consul binary
+  unarchive: src="{{ consul.archive_path }}/consul-{{ consul.version }}.zip" dest={{ consul.bin_path }} copy=no
+  when: consul_binary.stat.exists == False
+
+- name: link consul binary to path
+  file: src={{ consul.bin_path }}/consul dest=/usr/local/bin/consul state=link
+
+- name: configure consul
+  template: src=etc/consul.json dest={{ consul.config_file }} owner=consul
+  notify: restart consul server
+
+- name: allow access to consul tcp ports
+  ufw: rule=allow src={{ hostvars[item.0]['ansible_' + consul.bind_interface].ipv4.address }} to_port={{ item.1 }} proto=tcp
+  with_nested:
+  - "{{ groups.consul }}"
+  - - 8500
+    - 8400
+    - 8301
+    - 8302
+    - 8300
+    - 8600
+  tags:
+    - firewall
+
+- name: allow access to consul udp ports
+  ufw: rule=allow src={{ hostvars[item.0]['ansible_' + consul.bind_interface].ipv4.address }} to_port={{ item.1 }} proto=udp
+  with_nested:
+  - "{{ groups.consul }}"
+  - - 8301
+    - 8302
+    - 8600
+  tags:
+    - firewall
+
+- name: consul service
+  upstart_service: name=consul
+                   cmd={{ consul.bin_path }}/consul
+                   args="agent {% if consul.is_server %}-bootstrap-expect {{ groups.consul_server|length }}{% endif %} -config-dir {{ consul.config_path }}/conf.d -config-file={{ consul.config_file }}"
+                   user=consul
+  notify: restart consul server
+
+- meta: flush_handlers
+
+- name: start consul service
+  service: name=consul state=started enabled=yes
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

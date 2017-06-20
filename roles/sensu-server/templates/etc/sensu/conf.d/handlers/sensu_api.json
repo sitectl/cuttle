@@ -1,0 +1,3 @@
+{
+  "sensu_api": {{ sensu.server.handlers.sensu_api | to_nice_json }}
+}

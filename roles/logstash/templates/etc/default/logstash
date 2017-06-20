@@ -1,0 +1,37 @@
+# {{ ansible_managed }}
+
+###############################
+# Default settings for logstash
+###############################
+
+# Override Java location
+#JAVACMD=/usr/bin/java
+
+# Set a home directory
+#LS_HOME=/var/lib/logstash
+
+# Arguments to pass to logstash agent
+LS_OPTS="{{ logstash.service.opts }}"
+
+# Arguments to pass to java
+LS_HEAP_SIZE="{{ logstash.service.heap }}"
+#LS_JAVA_OPTS="-Djava.io.tmpdir=$HOME"
+
+# pidfiles aren't used for upstart; this is for sysv users.
+#LS_PIDFILE=/var/run/logstash.pid
+
+# user id to be invoked as; for upstart: edit /etc/init/logstash.conf
+LS_GROUP={{ logstash.service.group }}
+
+# logstash logging
+#LS_LOG_FILE=/var/log/logstash/logstash.log
+#LS_USE_GC_LOGGING="true"
+
+# logstash configuration directory
+#LS_CONF_DIR=/etc/logstash/conf.d
+
+# Open file limit; cannot be overridden in upstart
+LS_OPEN_FILES={{ logstash.service.open_files }}
+
+# Nice level
+#LS_NICE=19

@@ -1,0 +1,32 @@
+---
+squid:
+  offline_mode: false
+  port: 3128
+  path:
+    home: /etc/squid3
+    log: /var/log/squid3
+    cache: /data/squid3
+  allowed_networks:
+    - all
+  proxy_domains: []
+  blacklist_packages: []
+  default_deny: True
+  cache_dir:
+    size: 40000
+  upstream_proxy: []
+    # - host: proxy.openstack.bbg
+    #   port: 3128
+    #   type: parent or sibling
+  config:
+    debug_options:
+      - ALL,1
+    cache_mem: 200 MB
+    max_obj_size: 512 MB
+    max_obj_size_in_mem: 10240 KB
+    read_ahead_gap: 128 KB
+    safe_ports_only: True
+    negative_ttl: 600 seconds
+  firewall:
+    - port: 3128
+      protocol: tcp
+      src: 0.0.0.0/0

@@ -1,0 +1,70 @@
+---
+pypi_mirror:
+  offline_mode: false
+  master_url: ~
+  role: auto # default auto, master if others replicate from this pypi-mirror
+  virtualenv: '/opt/pypi_mirror/app'
+  mirror_location: '/opt/pypi_mirror/mirror'
+  htpasswd_location: '/opt/pypi_mirror/etc'
+  cron: true
+  ip: 127.0.0.1
+  port: 4040
+  root_password: lrvgfjrwlekgfejklfw22
+  users:
+    - username: bluebox
+      password: test
+  repos: {}
+    # EXAMPLE
+    #bluebox_private:
+    #  username: bluebox
+    #  password: nopenopenope
+    #  index: private
+    #  mirror:
+    #    url: https://<api_token>:@packagecloud.io/blueboxcloud
+    #    cache_expiry: 300
+    #bluebox_openstack:
+    #  username: bluebox
+    #  index: openstack
+    #  mirror:
+    #    url: https://packagecloud.io/blueboxcloud
+    #    cache_expiry: 300
+  apache:
+    http_redirect: False
+    servername: mirror01.local
+    serveraliases:
+      - mirror01
+    port: 80
+    ip: '*'
+    ssl:
+      enabled: False
+      port: 443
+      ip: '*'
+      servername: mirror01.local
+      serveraliases:
+        - mirror01
+      name: sitecontroller
+      cert: ~
+      key: ~
+      intermediate: ~
+  firewall:
+    - port: 80
+      protocol: tcp
+      src: 0.0.0.0/0
+
+  logs:
+    # See logging-config/defaults/main.yml for filebeat vs. logstash-forwarder example
+    - paths:
+        - /var/log/upstart/pypi_mirror.log
+      fields:
+        tags: mirror,devpi
+    - paths:
+        - /var/log/apache2/pypi_mirror-access.log
+      fields:
+        tags: mirror,apache_access
+    - paths:
+        - /var/log/apache2/pypi_mirror-error.log
+      fields:
+        tags: mirror,apache_error
+
+  logging:
+    forwarder: filebeat

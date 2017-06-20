@@ -1,0 +1,10 @@
+---
+- name: restart dnsmasq
+  service:
+    name: dnsmasq
+    state: restarted
+    must_exist: false
+
+- name: reload ufw
+  ufw:
+    state: enabled

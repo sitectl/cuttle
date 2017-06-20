@@ -1,0 +1,90 @@
+heat_template_version: 2013-05-23
+
+description: HOT template for CI
+
+parameters:
+  image:
+    type: string
+    description: Name of image to use for servers
+    default: ubuntu-14.04
+  flavor:
+    type: string
+    description: Flavor to use for servers
+    default: m1.small
+  net_id:
+    type: string
+    description: ID of Neutron network into which servers get deployed
+    default: ba0fdd03-72b5-41eb-bb67-fef437fd6cb4
+
+resources:
+
+  server_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      description: Security group for SC testing.
+      name: test-security-group
+      rules:
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: tcp
+          port_range_min: 22
+          port_range_max: 22
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: icmp
+
+  sc_ssh_key:
+    type: OS::Nova::KeyPair
+    properties:
+      save_private_key: true
+      name: sitecontroller
+
+  jenkins01:
+    type: OS::Nova::Server
+    properties:
+      name: jenkins01
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_resource: sc_ssh_key }
+      user_data_format: RAW
+      security_groups: [{ get_resource: server_security_group }]
+      networks:
+        - network: { get_param: net_id }
+
+  cdmaster01:
+    type: OS::Nova::Server
+    properties:
+      name: cdmaster01
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_resource: sc_ssh_key }
+      user_data_format: RAW
+      security_groups: [{ get_resource: server_security_group }]
+      networks:
+        - network: { get_param: net_id }
+
+  imagebuilder01:
+    type: OS::Nova::Server
+    properties:
+      name: imagebuilder01
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_resource: sc_ssh_key }
+      user_data_format: RAW
+      security_groups: [{ get_resource: server_security_group }]
+      networks:
+        - network: { get_param: net_id }
+
+
+outputs:
+  jenkins01:
+    description: IP address of jenkins01 in provider network
+    value: { get_attr: [ jenkins01, first_address ] }
+  cdmaster01:
+    description: IP address of cdmaster01 in provider network
+    value: { get_attr: [ cdmaster01, first_address ] }
+  imagebuilder01:
+    description: IP address of imagebuilder01 in provider network
+    value: { get_attr: [ imagebuilder01, first_address ] }
+  private_key:
+    description: Private key
+    value: { get_attr: [ sc_ssh_key, private_key ] }
+

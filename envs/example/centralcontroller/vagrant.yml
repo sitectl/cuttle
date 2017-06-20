@@ -1,0 +1,23 @@
+default:
+  memory: 512
+  cpus: 1
+
+vms:
+  bastion01:
+    ip_address:
+      - 172.16.0.101
+      - 172.16.1.101
+    memory: 1024
+  openid-proxy01:
+    ip_address:
+      - 172.16.0.102
+      - 172.16.1.102
+  monitor01:
+    ip_address:
+      - 172.16.0.103
+      - 172.16.1.103
+    memory: 1536
+  ipmi-proxy01:
+    ip_address:
+      - 172.16.0.104
+      - 172.16.1.104

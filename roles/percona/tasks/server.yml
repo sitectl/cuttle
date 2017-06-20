@@ -1,0 +1,90 @@
+---
+- name: python-mysqldb package
+  apt: pkg=python-mysqldb
+
+- name: create mysql user
+  user: name=mysql comment=mysql shell=/bin/false
+        system=yes home=/nonexistent
+
+- name: mysql log directory
+  file: path=/var/log/mysql state=directory
+        owner=mysql group=mysql mode=0755
+
+- name: create mysql config directory
+  file: path=/etc/mysql/conf.d state=directory
+        owner=mysql group=mysql mode=0755
+
+- name: configure my.cnf
+  template: src=etc/my.cnf dest=/etc/mysql/my.cnf
+            owner=mysql group=mysql mode=0644
+  notify:
+    - restart mysql server
+
+- name: install mysql config files
+  template: src=etc/mysql/conf.d/{{ item }} dest=/etc/mysql/conf.d/{{ item }}
+            owner=mysql group=mysql mode=0644
+  with_items:
+    - bind-inaddr-any.cnf
+    - tuning.cnf
+    - utf8.cnf
+  notify:
+    - restart mysql server
+
+- name: install percona xtradb packages
+  apt: pkg={{ item }} state=installed
+  with_items:
+  - percona-xtradb-cluster-galera-{{ percona.galera_version }}
+  - percona-xtradb-cluster-client-{{ percona.client_version }}
+  - percona-xtradb-cluster-server-{{ percona.server_version }}
+  - percona-xtrabackup
+
+# Workaround for 0.8.6 to 0.9.1 upgrade path
+- name: fix config header in replication.cnf
+  lineinfile: dest=/etc/mysql/conf.d/replication.cnf create=yes
+              regexp="^\[mysqld\]" line="[mysqld]" insertbefore=BOF
+
+- name: adjust various other lines in replication.cnf
+  lineinfile: dest=/etc/mysql/conf.d/replication.cnf create=yes
+              regexp="{{ item.value.regexp }}"
+              line="{{ item.value.line }}"
+  with_dict:
+    dse:
+      regexp: '^default_storage_engine\s*='
+      line: "default_storage_engine = InnoDB"
+    blf:
+      regexp: '^binlog_format\s*='
+      line: "binlog_format = ROW"
+    ilub:
+      regexp: '^innodb_locks_unsafe_for_binlog\s*='
+      line: "innodb_locks_unsafe_for_binlog = 1"
+
+- meta: flush_handlers
+
+- name: start mysql server
+  service: name=mysql state=started enabled=yes
+
+- name: set mysql root password
+  mysql_user: name=root password={{ percona.root_password }}
+
+- name: install root .my.cnf defaults file
+  template: src=root/.my.cnf dest=/root/.my.cnf owner=root group=root mode=0600
+
+- name: mysql error log
+  file: path=/var/lib/mysql/mysql-error.log state=touch
+        owner=mysql group=mysql mode=660
+
+- name: remove mysql test database
+  mysql_db: state=absent name=test
+
+- include: replication.yml
+  when: percona.replication
+  tags:
+    - percona-replication
+
+- name: remove anonymous users
+  mysql_user: name='' host={{ item }} state=absent
+  with_items:
+    - localhost
+    - "{{ ansible_hostname }}"
+
+- include: setup.yml

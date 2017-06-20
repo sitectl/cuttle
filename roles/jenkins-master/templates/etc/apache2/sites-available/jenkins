@@ -1,0 +1,95 @@
+# {{ ansible_managed }}
+
+<VirtualHost {{ jenkins.apache.host }}:{{ jenkins.apache.port }}>
+    ServerName {{ jenkins.apache.servername }}
+    Redirect permanent / https://{{ jenkins.apache.servername }}:{{ jenkins.apache.ssl.port }}
+
+    <Location /github-webhook/>
+      ProxyPass http://{{ jenkins.host }}:{{ jenkins.port }}/github-webhook/
+      ProxyPassReverse http://{{ jenkins.host }}:{{ jenkins.port }}/github-webhook/
+      {% if jenkins.apache.basicauth.enabled %}
+      RequestHeader unset Authorization
+      {% endif %}
+    </Location>
+
+    <Location /ghprbhook/>
+      ProxyPass http://{{ jenkins.host }}:{{ jenkins.port }}/ghprbhook/
+      ProxyPassReverse http://{{ jenkins.host }}:{{ jenkins.port }}/ghprbhook/
+      {% if jenkins.apache.basicauth.enabled %}
+      RequestHeader unset Authorization
+      {% endif %}
+    </Location>
+{% if jenkins.apache.basicauth.enabled %}
+    <Location />
+        AuthType Basic
+        AuthName "Restricted"
+        AuthUserFile /etc/apache2/htpasswd
+        Require valid-user
+      </Location>
+{% endif %}
+</VirtualHost>
+
+<VirtualHost *:{{ jenkins.apache.ssl.port }}>
+
+    ServerName {{ jenkins.apache.servername }}
+    ServerAdmin jenkins
+
+    {{ apache.ssl.settings  }}
+    SSLCertificateFile /etc/ssl/certs/jenkins.crt
+    SSLCertificateKeyFile /etc/ssl/private/jenkins.key
+    {% if jenkins.apache.ssl.intermediate %}
+    SSLCertificateChainFile /etc/ssl/certs/jenkins-intermediate.crt
+    {% endif %}
+
+    DocumentRoot /var/www/html
+    ErrorDocument 404 /index.html
+
+    {% if jenkins.apache.github_hooks_only %}
+      <Location /github-webhook/>
+        ProxyPass http://{{ jenkins.host }}:{{ jenkins.port }}/github-webhook/
+        ProxyPassReverse http://{{ jenkins.host }}:{{ jenkins.port }}/github-webhook/
+        {% if jenkins.apache.basicauth.enabled %}
+        RequestHeader unset Authorization
+        {% endif %}
+      </Location>
+
+      <Location /ghprbhook/>
+        ProxyPass http://{{ jenkins.host }}:{{ jenkins.port }}/ghprbhook/
+        ProxyPassReverse http://{{ jenkins.host }}:{{ jenkins.port }}/ghprbhook/
+        {% if jenkins.apache.basicauth.enabled %}
+        RequestHeader unset Authorization
+        {% endif %}
+      </Location>
+
+      {% if jenkins.apache.basicauth.enabled %}
+      <Location />
+          AuthType Basic
+          AuthName "Restricted"
+          AuthUserFile /etc/apache2/htpasswd
+          Require valid-user
+        </Location>
+      {% endif %}
+
+    {% else %}
+      <Location />
+        ProxyPass http://{{ jenkins.host }}:{{ jenkins.port }}/
+        ProxyPassReverse http://{{ jenkins.host }}:{{ jenkins.port }}/
+      {% if jenkins.apache.basicauth.enabled %}
+        AuthType Basic
+        AuthName "Restricted"
+        AuthUserFile /etc/apache2/htpasswd
+        Require valid-user
+      {% endif %}
+      </Location>
+    {% endif %}
+
+    # Possible values include: debug, info, notice, warn, error, crit,
+    # alert, emerg.
+    LogLevel warn
+
+    CustomLog ${APACHE_LOG_DIR}/jenkins-access.log combined
+    ErrorLog ${APACHE_LOG_DIR}/jenkins-error.log
+
+    RequestHeader set X-Forwarded-Proto "https"
+    RequestHeader set X-Forwarded-Port "443"
+</VirtualHost>

@@ -1,0 +1,6 @@
+---
+- name: restart gem_mirror server
+  service: name=gem_mirror state=restarted
+
+- name: stop gem_mirror server
+  service: name=gem_mirror state=stopped

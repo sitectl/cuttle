@@ -1,0 +1,9 @@
+{
+  "api": {
+    "host": "127.0.0.1",
+    "bind": "{{ sensu.api.bind_ip }}",
+    "port": {{ sensu.api.port }},
+    "user": "{{ sensu.api.username }}",
+    "password": "{{ sensu.api.password }}"
+  }
+}

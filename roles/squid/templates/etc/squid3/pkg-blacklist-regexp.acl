@@ -1,0 +1,11 @@
+# {{ ansible_managed }}
+
+# /etc/squid/pkg-blacklist-regexp.acl
+#
+# packages that should be not allowed for download, one binary packagename
+# per line
+#
+
+{% for package in squid.blacklist_packages %}
+{{ package }}
+{% endfor %}

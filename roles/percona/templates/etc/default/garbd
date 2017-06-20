@@ -1,0 +1,8 @@
+# {{ ansible_managed }}
+
+{% macro garbd_hosts() -%}
+{% for host in groups['db'] -%} {{ private_ipv4['address'] -}}:4567 {% endfor -%}
+{% endmacro -%}
+GALERA_NODES="{{ garbd_hosts() }}"
+GALERA_GROUP="{{ percona.wsrep_cluster_name }}"
+LOG_FILE="/var/log/garbd.log"

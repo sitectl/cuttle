@@ -1,0 +1,3 @@
+{
+  "defaultIndex": "{{ kibana.default_index.name }}"
+}

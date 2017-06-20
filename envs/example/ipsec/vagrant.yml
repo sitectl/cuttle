@@ -1,0 +1,17 @@
+default:
+  memory: 512
+  cpus: 1
+
+vms:
+  ipsec-server:
+    ip_address:
+      - 172.16.0.100
+      - 172.16.10.100
+  ipsec-client:
+    ip_address:
+      - 172.16.0.101
+      - 172.16.20.100
+  test1:
+    ip_address: 172.16.10.200
+  test2:
+    ip_address: 172.16.20.200

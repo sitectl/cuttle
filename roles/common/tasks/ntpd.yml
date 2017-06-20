@@ -1,0 +1,36 @@
+---
+- name: add ntp packages
+  apt: pkg={{ item }} state=present
+  with_items:
+    - ntp
+    - ntpdate
+  register: result
+  until: result|succeeded
+  retries: 5
+  notify:
+    - flush time
+
+- meta: flush_handlers
+
+- name: ntpd configuration
+  template: src=etc/ntp.conf
+            dest=/etc/ntp.conf
+  notify:
+    - restart ntpd service
+
+- name: firewall for ntp tcp
+  ufw: rule=allow to_port=123 proto=tcp src={{ item.ip }}/{{ item.netmask }}
+  with_items: "{{ common.ntpd.clients }}"
+  tags:
+    - firewall
+
+- name: firewall for ntp udp
+  ufw: rule=allow to_port=123 proto=udp src={{ item.ip }}/{{ item.netmask }}
+  with_items: "{{ common.ntpd.clients }}"
+  tags:
+    - firewall
+
+- meta: flush_handlers
+
+- name: ensure ntp service is running
+  service: name=ntp state=started enabled=yes

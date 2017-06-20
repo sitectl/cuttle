@@ -1,0 +1,13 @@
+---
+dependencies:
+  - role: apt-repos
+    repos:
+      - repo: 'deb {{ apt_repos.elasticsearch.repo }} stable main'
+        key_url: '{{ apt_repos.elasticsearch.key_url }}'
+  - role: runtime/java
+  - role: logging-config
+    service: elasticsearch
+    logdata: "{{ elasticsearch.logs }}"
+    forward_type: "{{ elasticsearch.logging.forwarder }}"
+    when: logging.enabled|default("True")|bool
+  - role: sensu-check

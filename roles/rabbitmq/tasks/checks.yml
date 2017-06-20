@@ -1,0 +1,22 @@
+---
+- name: install rabbitmq-server process check
+  sensu_check_dict: name="check-rabbitmq-server-process" check="{{ sensu_checks.rabbitmq.check_rabbitmq_server_process }}"
+  notify: restart sensu-client missing ok
+
+- name: install sensu plugins
+  gem:
+    name: "{{ item.name }}"
+    version: "{{ item.version }}"
+    executable: /opt/sensu/embedded/bin/gem
+    user_install: no
+  with_items: "{{ rabbitmq.sensu_plugins }}"
+  register: result
+  until: result|succeeded
+  retries: 5
+
+- name: install sensu checks
+  sensu_check_dict: name="{{ item.name }}" check="{{ item.check }}"
+  with_items:
+    - name: check-rabbitmq-messages
+      check: "{{ sensu_checks.rabbitmq.check_rabbitmq_messages }}"
+  notify: restart sensu-client missing ok

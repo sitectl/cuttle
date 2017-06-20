@@ -1,0 +1,21 @@
+---
+- name: update timezone
+  command: dpkg-reconfigure --frontend noninteractive tzdata
+
+- name: update locales
+  command: dpkg-reconfigure --frontend noninteractive locales
+
+- name: reload-sshd
+  service: name=ssh state=reloaded
+
+- name: flush time
+  shell: >
+         service ntp stop
+         ntpdate -s {{ common.ntpd.servers[0]|quote }}
+         service ntp start
+
+- name: restart ntpd service
+  service: name=ntp state=restarted
+
+- name: update apt index
+  apt: update_cache=yes

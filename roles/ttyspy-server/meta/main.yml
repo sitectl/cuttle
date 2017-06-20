@@ -1,0 +1,4 @@
+---
+dependencies:
+  - role: ttyspy-common
+  - role: sensu-check

@@ -1,0 +1,50 @@
+---
+- name: install java
+  apt:
+    name: openjdk-8-jre
+  when: ansible_distribution_version == "16.04"
+  register: result
+  until: result|succeeded
+  retries: 5
+
+- block: # when trusty
+  - apt_repository:
+      repo: 'ppa:webupd8team/java'
+
+  - name: install debconf so we can sign oracle license
+    apt:
+      name: software-properties-common
+    register: result
+    until: result|succeeded
+    retries: 5
+
+  - name: sign oracle java license agreement
+    debconf:
+      name: 'oracle-java8-installer'
+      question: 'shared/accepted-oracle-license-v1-1'
+      value: 'true'
+      vtype: 'select'
+
+  - name: install java
+    apt:
+      name: "{{ item }}"
+    with_items:
+      - oracle-java8-installer
+      - ca-certificates
+      - oracle-java8-set-default
+    register: result
+    until: result|succeeded
+    retries: 5
+  when: ansible_distribution_version == "14.04"
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

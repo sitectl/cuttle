@@ -1,0 +1,14 @@
+---
+dependencies:
+  - role: apt-repos
+    repos:
+      - repo: 'deb {{ apt_repos.erlang.repo }} {{ ansible_lsb.codename }} contrib'
+        key_url: '{{ apt_repos.erlang.key_url }}'
+      - repo: 'deb {{ apt_repos.rabbitmq.repo }} testing main'
+        key_url: '{{ apt_repos.rabbitmq.key_url }}'
+  - role: logging-config
+    service: rabbitmq
+    logdata: "{{ rabbitmq.logs }}"
+    forward_type: "{{ rabbitmq.logging.forwarder }}"
+    when: logging.enabled|default("True")|bool
+  - role: sensu-check

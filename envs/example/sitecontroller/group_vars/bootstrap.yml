@@ -1,0 +1,211 @@
+---
+apache:
+  listen:
+    - 80
+    - 443
+    - 81
+    - 444
+    - 82
+    - 445
+    - 83
+    - 446
+
+apt_mirror:
+  debmirror:
+
+    repositories:
+      ddebs:
+        host: ddebs.ubuntu.com
+        path: /
+        method: http
+        exclude_regex: '.'
+        include_regex: 'linux/linux-image-.*generic-dbgsym'
+        arch: amd64,i386
+        distributions: 'trusty,trusty-security,trusty-updates'
+        sections: 'main,restricted,universe,multiverse'
+        key_url: http://ddebs.ubuntu.com/dbgsym-release-key.asc
+      ceph:
+        host: download.ceph.com
+        path: ceph/debian-hammer
+        method: rsync
+        arch: amd64,i386
+        distributions: trusty,precise
+        sections: main
+        key_url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xE84AC2C0460F3994
+      mongodb:
+        host: repo.mongodb.org
+        path: apt/ubuntu
+        method: http
+        arch: amd64,i386
+        distributions: trusty/mongodb-org
+        sections: 3.0/multiverse
+        ignore_missing_release: true
+        download_files:
+          - dists/trusty/mongodb-org/3.0/Release
+          - dists/trusty/mongodb-org/3.0/Release.gpg
+
+    distros:
+      trusty:
+        enabled: True
+        host: us.archive.ubuntu.com
+        path: ubuntu
+        method: rsync
+        arch: amd64,i386
+        distributions: trusty,trusty-security,trusty-updates,trusty-backports
+        sections: main,main/debian-installer,restricted,restricted/debian-installer,universe,universe/debian-installer,multiverse,multiverse/debian-installer
+      precise:
+        enabled: True
+        host: us.archive.ubuntu.com
+        path: ubuntu
+        method: rsync
+        arch: amd64,i386
+        distributions: precise,precise-security,precise-updates,precise-backports
+        sections: main,main/debian-installer,restricted,restricted/debian-installer,universe,universe/debian-installer,multiverse,multiverse/debian-installer
+      power8_trusty:
+        enabled: False
+        host: ports.ubuntu.com
+        path: ubuntu-ports
+        method: rsync
+        arch: ppc64el
+        distributions: trusty,trusty-security,trusty-updates,trusty-backports
+        sections: main,main/debian-installer,restricted,restricted/debian-installer,universe,universe/debian-installer,multiverse,multiverse/debian-installer
+        aliases:
+          - /power8_trusty/ubuntu
+      armhf_xenial:
+        enabled: False
+        host: ports.ubuntu.com
+        path: ubuntu-ports
+        method: rsync
+        arch: armhf
+        distributions: xenial,xenial-security,xenial-updates,xenial-backports
+        sections: main,main/debian-installer,restricted,restricted/debian-installer,universe,universe/debian-installer,multiverse,multiverse/debian-installer
+
+  apache:
+    port: 80
+    ssl:
+      enabled: True
+      port: 443
+  firewall:
+    - port: 80
+      protocol: tcp
+      src: 0.0.0.0/0
+    - port: 443
+      protocol: tcp
+      src: 0.0.0.0/0
+
+yum_mirror:
+  repositories:
+    elastic:
+      description: elastic
+      enabled: True
+      url: https://artifacts.elastic.co/packages/5.x/yum
+      key_url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+      archs:
+        - arch: x86_64
+#   sensu:
+#     description: sensu
+#     enabled: True
+#     gpgcheck: False
+#     archs:
+#       - arch: x86_64
+#         url: http://sensu.global.ssl.fastly.net/yum/el/7/x86_64/
+#   chef:
+#     description: chef
+#     enabled: True
+#     key_url: https://downloads.chef.io/packages-chef-io-public.key
+#     archs:
+#       - arch: x86_64
+#         url: https://packages.chef.io/repos/yum/stable/el/7/x86_64/
+
+pypi_mirror:
+  repos:
+    bluebox_private:
+      username: bluebox
+      password: nopenopenope
+      index: private
+      mirror:
+        url: https://fdec6132ec19dc59011548774d514af7005c494495107ff9:@packagecloud.io/blueboxcloud
+        cache_expiry: 300
+    bluebox_openstack:
+      username: bluebox
+      index: openstack
+      mirror:
+        url: https://packagecloud.io/blueboxcloud
+        cache_expiry: 300
+  apache:
+    port: 81
+    ssl:
+      enabled: False
+      port: 444
+  firewall:
+    - port: 81
+      protocol: tcp
+      src: 0.0.0.0/0
+    - port: 444
+      protocol: tcp
+      src: 0.0.0.0/0
+
+gem_mirror:
+  ip: 127.0.0.1
+  port: 9292
+  apache:
+    enabled: true
+    servername: mirror01.local
+    port: 82
+    ssl:
+      enabled: True
+      port: 445
+  firewall:
+    - port: 82
+      protocol: tcp
+      src: 0.0.0.0/0
+    - port: 445
+      protocol: tcp
+      src: 0.0.0.0/0
+
+squid:
+  port: 3128
+  allowed_networks:
+    - 127.0.0.1/32
+    - "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+  proxy_domains:
+    - github.com
+    - codeload.github.com
+    - .openstack.blueboxgrid.com
+  blacklist_packages: []
+  cache_dir:
+    size: 40000
+
+file_mirror:
+  files:
+    - name: bluebox.ico
+      path: horizon-branding
+      url: http://file-mirror.openstack.blueboxgrid.com/horizon-branding/bluebox.ico
+      sha256sum: 72e0318a9806300478c6dddc2591f7cab04c54957b9424d2a11eb08156820c38
+  auth:
+    - path: ubuntu
+      username: ubuntu
+      password: ubuntu
+  apache:
+    enabled: true
+    servername: mirror01.local
+    port: 83
+    ssl:
+      enabled: True
+      port: 446
+  firewall:
+    - port: 83
+      protocol: tcp
+      src: 0.0.0.0/0
+    - port: 446
+      protocol: tcp
+      src: 0.0.0.0/0
+
+pxe:
+  os:
+    - name: trusty
+      kernel: http://archive.ubuntu.com/ubuntu/dists/trusty-updates/main/installer-amd64/current/images/netboot/ubuntu-installer/amd64/linux
+      bootloader: http://archive.ubuntu.com/ubuntu/dists/trusty-updates/main/installer-amd64/current/images/netboot/ubuntu-installer/amd64/initrd.gz
+      root_password: password
+      kernel_image:
+      ntp_server:

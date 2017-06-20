@@ -1,0 +1,7 @@
+---
+dependencies:
+  - role: apt-repos
+    repos:
+      - repo: 'deb {{ apt_repos.flapjack.repo }} trusty main'
+        key_url: '{{ apt_repos.flapjack.key_url }}'
+  - role: sensu-check

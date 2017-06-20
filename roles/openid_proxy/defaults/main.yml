@@ -1,0 +1,92 @@
+---
+openid_proxy:
+  apache:
+    state: present
+    servername: "elk-local"
+    serveraliases: []
+    serveradmin: "hostmaster@blueboxgrid.com"
+    ssl:
+      enabled: false
+      name: openid_proxy
+      intermediate: ~
+      cert: ~
+      key: ~
+    redirects: []
+    #  - name: openid_proxy
+    #    state: present
+    #    type: temp # or permanent
+    #    redirect_url: "https://127.0.0.1/"
+  version: "1.8.10.1"
+  download:
+    url: https://github.com/pingidentity/mod_auth_openidc/releases/download/v1.8.10.1/libapache2-mod-auth-openidc_1.8.10.1-1ubuntu1.trusty.1_amd64.deb
+  log_level: "warn"
+  http_redirect: false
+  apache_status: true
+  root: "/var/www/html"
+  vhost_name: "openid_proxy"
+
+  admin:
+    apache:
+      state: present
+    users:
+      - username: admin
+        password: admin
+  # Only use when reverse proxying to an HTTPS secured endpoint
+  sslproxy:
+    enabled: false
+  locations: []
+  remote_locations: []
+  listen:
+    ip: "*"
+    port: 80
+    port_ssl: 443
+    admin_ip: "*"
+    admin_port: 1080
+    admin_port_ssl: 10443
+  firewall:
+    - port: 80
+      protocol: tcp
+      src:
+        - 0.0.0.0/0
+    - port: 443
+      protocol: tcp
+      src:
+        - 0.0.0.0/0
+    - port: 1080
+      protocol: tcp
+      src:
+        - 0.0.0.0/0
+    - port: 10443
+      protocol: tcp
+      src:
+        - 0.0.0.0/0
+  oidc:
+    enabled: false
+    id: ""
+    secret: ""
+    passphrase: ""
+    issuer: auth.bluebox.net
+    auth_endpoint: https://auth.bluebox.net/oauth/authorize
+    token_endpoint: https://auth.bluebox.net/oauth/token
+    info_endpoint: https://auth.bluebox.net/oauth/userinfo
+
+  logs:
+    # See logging-config/defaults/main.yml for filebeat vs. logstash-forwarder example
+    - paths:
+        - "/var/log/apache2/openid-*-access.log"
+      fields:
+        tags: openid_proxy,apache_access
+    - paths:
+        - "/var/log/apache2/openid-*-error.log"
+      fields:
+        tags: openid_proxy,apache_error
+    - paths:
+        - "/var/log/apache2/admin-*-access.log"
+      fields:
+        tags: admin_proxy,apache_access
+    - paths:
+        - "/var/log/apache2/admin-*-error.log"
+      fields:
+        tags: admin_proxy,apache_error
+  logging:
+    forwarder: filebeat

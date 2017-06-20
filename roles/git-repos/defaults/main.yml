@@ -1,0 +1,4 @@
+---
+git_repos:
+  ursula: git@github.com:blueboxgroup/ursula.git
+  ursula_cli: git@github.com:blueboxgroup/ursula-cli.git

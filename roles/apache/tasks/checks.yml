@@ -1,0 +1,4 @@
+---
+- name: install apache process check
+  sensu_check_dict: name="check-apache-process" check="{{ sensu_checks.apache.check_apache_process }}"
+  notify: restart sensu-client missing ok

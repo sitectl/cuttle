@@ -1,0 +1,41 @@
+# Use this playbook to delete elasticsearch indices older than a specified value
+#
+# ex: ursula ../sitecontroller-envs/remote-sjc01 playbooks/elk-curator.yml -e "older_than=60"
+---
+- name: elk curator
+  hosts: elasticsearch
+  run_once: true
+  tasks:
+
+    - fail:
+        msg: "Please specify older_than with -e"
+      when: older_than is undefined
+
+    - name: warn user
+      run_once: true
+      pause:
+        prompt: "Warning: This action is destructive. Type 'dangerous' to continue"
+      register: warning
+
+    - name: fail if user does not accept warning
+      fail:
+        msg: Play cancelled
+      when: warning.user_input != "dangerous"
+
+    - name: install curator action file
+      template:
+        src: templates/delete_indices.yml
+        dest: /tmp/delete_indices.yml
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: remove old indices
+      command: "curator --config /etc/elasticsearch/curator.yml /tmp/delete_indices.yml"
+      environment:
+        MASTER_ONLY: False
+
+    - name: remove curator action file
+      file:
+        path: /tmp/delete_indices.yml
+        state: absent

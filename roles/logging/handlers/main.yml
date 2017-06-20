@@ -1,0 +1,21 @@
+---
+- name: refresh cert auths
+  command: update-ca-certificates
+
+- name: restart logstash-forwarder
+  service: name=logstash-forwarder state=restarted
+
+- name: stop logstash-forwarder
+  service: name=logstash-forwarder state=stopped
+
+- name: stop and disable logstash-forwarder
+  service: name=logstash-forwarder state=stopped enabled=no
+
+- name: restart filebeat
+  service: name=filbeat state=restarted
+
+- name: stop filebeat
+  service: name=filebeat state=stopped
+
+- name: stop and disable filebeat
+  service: name=filebeat state=stopped enabled=no

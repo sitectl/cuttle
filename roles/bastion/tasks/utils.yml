@@ -1,0 +1,19 @@
+---
+- name: install dependencies
+  apt:
+    pkg: "{{ item }}"
+  with_items: "{{ yama_utils.dependencies }}"
+
+- name: install yama-utils
+  copy:
+    src: utils/ssh-ip-check
+    dest: /usr/bin/ssh-ip-check
+    mode: 0755
+
+- name: configure ssh-ip-check
+  template:
+    src: etc/ssh-ip-check.conf
+    dest: /etc/ssh-ip-check.conf
+    owner: root
+    group: root
+    mode: 0644

@@ -1,0 +1,6 @@
+# {{ ansible_managed }}
+
+AuthType Basic
+AuthName "Authentication Required"
+AuthUserFile "{{ netdata_dashboard.mirror_location }}/{{ item.path }}/.htpasswd"
+Require valid-user

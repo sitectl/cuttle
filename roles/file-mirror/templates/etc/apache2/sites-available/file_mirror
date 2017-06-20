@@ -1,0 +1,48 @@
+# {{ ansible_managed }}
+
+{% macro virtualhost() %}
+    ServerAdmin openstack@bluebox.net
+    ServerName {{ file_mirror.apache.servername }}
+    ServerAlias {{ file_mirror.apache.serveraliases|join(" ") }}
+    DocumentRoot {{ file_mirror.mirror_location }}
+    ErrorLog ${APACHE_LOG_DIR}/file_mirror-error.log
+    CustomLog ${APACHE_LOG_DIR}/file_mirror-access.log combined
+    FileETag MTime Size
+    Header set Cache-Control public
+    RewriteEngine On
+    RewriteCond {{ file_mirror.mirror_location }}/%{REQUEST_FILENAME} !-f
+    RewriteCond {{ file_mirror.mirror_location }}/%{REQUEST_FILENAME} !-d
+  <Directory {{ file_mirror.mirror_location }}>
+    Options Indexes
+    AllowOverride All
+    Require all granted
+  </Directory>
+{% endmacro %}
+
+{% if file_mirror.apache.ssl.enabled|bool and file_mirror.apache.http_redirect|bool %}
+<VirtualHost {{ file_mirror.apache.ip }}:{{ file_mirror.apache.port }}>
+    ServerName {{ file_mirror.apache.servername }}
+    ServerAlias {{ file_mirror.apache.serveraliases|join(" ") }}
+    RewriteEngine on
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}:{{ file_mirror.apache.ssl.port }}$1 [R=301,L]
+</VirtualHost>
+{% else %}
+<VirtualHost {{ file_mirror.apache.ip }}:{{ file_mirror.apache.port }}>
+{{ virtualhost() }}
+</VirtualHost>
+{% endif %}
+
+{% if file_mirror.apache.ssl.enabled|bool %}
+<VirtualHost {{ file_mirror.apache.ssl.ip }}:{{ file_mirror.apache.ssl.port }}>
+    {{ apache.ssl.settings }}
+    SSLCertificateFile /etc/ssl/certs/{{ file_mirror.apache.ssl.name|default('sitecontroller') }}.crt
+    SSLCertificateKeyFile /etc/ssl/private/{{ file_mirror.apache.ssl.name|default('sitecontroller') }}.key
+{% if bbg_ssl.intermediate or file_mirror.apache.ssl.intermediate %}
+    SSLCertificateChainFile /etc/ssl/certs/{{ file_mirror.apache.ssl.name|default('sitecontroller') }}-intermediate.crt
+{% endif %}
+{% else %}
+<VirtualHost {{ file_mirror.apache.ip }}:{{ file_mirror.apache.port }}>
+{% endif %}
+{{ virtualhost() }}
+</VirtualHost>

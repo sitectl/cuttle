@@ -1,0 +1,15 @@
+---
+imagebuilder:
+  # sensible defaults for ci images
+  build_user: dib
+  cron: '0 0 * * *'
+  images:
+    - distro: ubuntu
+      series: trusty
+      name: ci-trusty
+  openstack:
+    # taken from the defaults used for allinone local deployments
+    os_username: admin
+    os_password: asdf
+    os_project_id: ~
+    os_auth_url: https://openstack.example.org:5000/v2.0

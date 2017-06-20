@@ -1,0 +1,4 @@
+---
+- name: install varnish process check
+  sensu_check_dict: name="check-varnish-process" check="{{ sensu_checks.varnish.check_varnish_process }}"
+  notify: restart sensu-client missing ok

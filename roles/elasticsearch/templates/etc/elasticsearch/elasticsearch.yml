@@ -1,0 +1,10 @@
+# {{ ansible_managed }}
+
+##################### ElasticSearch Configuration #####################
+
+{{ elasticsearch.config | to_yaml(default_flow_style=False) }}
+
+{% for plugin in elasticsearch.plugins %}{% if plugin.config is defined %}
+# ElasticSearch Plugin {{ plugin.name }} Config
+{{ plugin.config | to_yaml(default_flow_style=False) }}
+{% endif %}{% endfor %}

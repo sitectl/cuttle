@@ -1,0 +1,84 @@
+---
+- name: "{{ source_install.name }} system deps"
+  apt:
+    pkg: "{{ item }}"
+  with_items: "{{ source_install.system_deps }}"
+
+- name: "create {{ source_install.name }} git repo path"
+  file:
+    dest: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner|default('root') }}"
+  with_items: "{{ source_install.git }}"
+
+- name: "fetch {{ source_install.name }} repo"
+  git:
+    repo: "{{ item.repo }}"
+    dest: "{{ item.path }}"
+    version: "{{ item.rev }}"
+    update: yes
+    force: yes
+    accept_hostkey: True
+  with_items: "{{ source_install.git }}"
+
+- name: "symlink for {{ source_install.name }} git repo"
+  file:
+    dest: "{{ item.symlink }}"
+    src: "{{ item.path }}"
+    state: link
+  when: item.symlink is defined
+  with_items: "{{ source_install.git }}"
+
+- name: "create {{ source_install.name }} virtualenvs"
+  file:
+    dest: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner|default('root') }}"
+  when: item.path is defined
+  with_items: "{{ source_install.virtualenvs }}"
+
+- name: "create dedicated virtualenv for {{ source_install.name }} for pip packages"
+  command: virtualenv --no-site-packages --no-wheel "{{ item.path }}"
+  args:
+    creates: "{{ item.path }}/bin/activate"
+  when: item.path is defined
+  with_items: "{{ source_install.virtualenvs }}"
+
+- name: "install {{ source_install.name }} requirements"
+  pip:
+    requirements: "{{ item.requirements }}"
+    virtualenv: "{{ item.path }}"
+  when: item.path is defined and item.requirements is defined
+  with_items: "{{ source_install.virtualenvs }}"
+
+- name: "install {{ source_install.name }} pips with venvs"
+  pip:
+    name: "{{ item }}"
+    virtualenv: "{{ source_install.pip_virtualenv | default(omit) }}"
+    extra_args: "--extra-index-url {{ source_install.pip_extra_index | default(omit) }}"
+  with_items: "{{ source_install.pip_packages }}"
+
+- name: "{{ source_install.name }} update-alternatives"
+  alternatives:
+    name: "{{ item.name }}"
+    path: "{{ item.path }}"
+    link: "{{ item.link }}"
+  with_items: "{{ source_install.alternatives }}"
+
+- name: "cleanup {{ source_install.name }}"
+  file:
+    dest: "{{ item }}"
+    state: absent
+  with_items: "{{ source_install.cleanup }}"
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

@@ -1,0 +1,3 @@
+# .bashrc is only read by a shell that's both interactive and non-login
+# let's fix that by _always_ reading bashrc
+[[ -r ~/.bashrc ]] && . ~/.bashrc

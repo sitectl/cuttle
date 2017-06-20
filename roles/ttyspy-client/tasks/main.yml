@@ -1,0 +1,62 @@
+---
+- name: install ttyspy client
+  apt:
+    deb: "{{ ttyspy.client.package }}"
+
+- name: configure ttyspy
+  template:
+    src: etc/ttyspy.conf
+    dest: /etc/ttyspy.conf
+    owner: ttyspy
+    group: ttyspy
+    mode: 0644
+
+- name: ttyspy client directory
+  file:
+    path: /etc/ttyspy/client
+    owner: ttyspy
+    group: ttyspy
+    state: directory
+    mode: 0750
+
+- name: install client certs & key
+  template:
+    src: "{{ item }}"
+    dest: /etc/ttyspy/client
+    owner: ttyspy
+    group: ttyspy
+    mode: 0640
+  with_fileglob: ../templates/etc/ttyspy/client/*
+
+# TLS doesn't play nicely with IPs
+- name: configure ttyspy server IP & hostname in /etc/hosts
+  lineinfile:
+    dest: "/etc/hosts"
+    line: "{{ ttyspy.server.ip }} {{ ttyspy.server.host }}"
+
+- name: configure ttyspyd service
+  template:
+    src: etc/init/ttyspyd.conf
+    dest: /etc/init/ttyspyd.conf
+    mode: 0644
+  notify: restart ttyspyd
+
+- meta: flush_handlers
+
+- name: start ttyspyd service
+  service:
+    name: ttyspyd
+    state: started
+    enabled: yes
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

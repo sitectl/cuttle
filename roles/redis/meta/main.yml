@@ -1,0 +1,8 @@
+---
+dependencies:
+  - role: logging-config
+    service: redis
+    logdata: "{{ redis.logs }}"
+    forward_type: "{{ redis.logging.forwarder }}"
+    when: logging.enabled|default("True")|bool
+  - role: sensu-check

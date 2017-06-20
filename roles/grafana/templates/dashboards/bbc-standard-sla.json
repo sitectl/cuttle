@@ -1,0 +1,389 @@
+{
+  "id": 21,
+  "title": "API SLA Dashboard",
+  "originalTitle": "API SLA Dashboard",
+  "tags": [],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "hideControls": false,
+  "sharedCrosshair": false,
+  "rows": [
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftYAxisLabel": "percent",
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 22,
+          "isNew": true,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": true,
+          "decimals": 0,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [
+            {
+              "alias": "one",
+              "yaxis": 1
+            }
+          ],
+          "span": 12,
+          "stack": false,
+          "steppedLine": true,
+          "targets": [
+            {
+              "refId": "A",
+              "target": "aliasSub(summarize(scale(stats.bbc.$cloud_instance.$node_name.*.status, 100), '$interval', 'avg', false), '.*\\.(\\w+)\\.(\\w+)\\.status,.*', '\\1.\\2')"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Uptime Percent for $cloud_instance.$node_name (interval: $interval)",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "percent",
+            "short"
+          ]
+        }
+      ],
+      "title": "New Row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftYAxisLabel": "seconds",
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 23,
+          "isNew": true,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "decimals": 3,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [
+            {
+              "alias": "one",
+              "yaxis": 1
+            }
+          ],
+          "span": 12,
+          "stack": false,
+          "steppedLine": true,
+          "targets": [
+            {
+              "refId": "A",
+              "target": "aliasSub(stats.bbc.$cloud_instance.$node_name.*.time, '.*\\.(\\w+)\\.(\\w+)\\.time$', '\\1.\\2')"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Response time for $cloud_instance.$node_name",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "s",
+            "short"
+          ]
+        }
+      ],
+      "title": "New Row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": 600,
+            "leftMin": 110,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+            },
+            "id": 24,
+            "isNew": true,
+            "legend": {
+              "avg": false,
+              "current": false,
+              "max": false,
+              "min": false,
+              "show": true,
+              "total": false,
+              "values": false
+            },
+            "lines": true,
+            "linewidth": 2,
+            "links": [],
+            "nullPointMode": "connected",
+            "percentage": false,
+            "decimals": 0,
+            "pointradius": 5,
+            "points": false,
+            "renderer": "flot",
+            "seriesOverrides": [
+              {
+                "alias": "one",
+                "yaxis": 1
+              }
+            ],
+            "span": 12,
+            "stack": false,
+            "steppedLine": true,
+            "targets": [
+              {
+                "refId": "A",
+                "target": "aliasSub(stats.bbc.$cloud_instance.$node_name.*.code, '.*\\.(\\w+)\\.(\\w+)\\.code$', '\\1.\\2')"
+
+              }
+            ],
+            "timeFrom": null,
+            "timeShift": null,
+            "title": "HTTP status code (200: OK, Greater than 3xx: Error)",
+            "tooltip": {
+              "shared": true,
+              "value_type": "cumulative"
+            },
+            "type": "graph",
+            "x-axis": true,
+            "y-axis": true,
+            "y_formats": [
+              "short",
+              "short"
+            ]
+          }
+        ],
+        "title": "New Row"
+      }
+    ],
+    "time": {
+      "from": "now-2d",
+      "to": "now"
+    },
+    "nav": [
+      {
+      "collapse": false,
+      "enable": true,
+      "notice": false,
+      "now": true,
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "status": "Stable",
+      "time_options": [
+        "5m",
+        "15m",
+        "1h",
+        "6h",
+        "12h",
+        "24h",
+        "2d",
+        "7d",
+        "30d"
+      ],
+      "type": "timepicker"
+      }
+    ],
+    "time": {
+    "from": "now-2d",
+    "to": "now"
+    },
+    "templating": {
+      "list": [
+        {
+          "allFormat": "wildcard",
+          "current": {
+            "text": "stack",
+            "value": "stack"
+          },
+          "datasource": null,
+          "includeAll": false,
+          "multi": false,
+          "multiFormat": "wildcard",
+          "name": "cloud_instance",
+          "options": [
+            {
+              "text": "stack",
+              "value": "stack"
+            }
+          ],
+          "query": "stats.bbc.*",
+          "refresh": true,
+          "type": "query"
+        },
+        {
+          "allFormat": "wildcard",
+          "current": {
+            "text": "node",
+            "value": "node"
+          },
+          "datasource": null,
+          "includeAll": true,
+          "multi": false,
+          "multiFormat": "wildcard",
+          "name": "node_name",
+          "options": [
+            {
+              "text": "node",
+              "value": "node"
+            }
+          ],
+          "query": "stats.bbc.$cloud_instance.*",
+          "refresh": true,
+          "type": "query"
+        },
+        {
+          "type": "interval",
+          "name": "interval",
+          "options": [
+              {
+                "text": "5 minutes",
+                "value": "5m"
+              },
+              {
+                "text": "15 minutes",
+                "value": "15m"
+              },
+              {
+                "text": "30 minutes",
+                "value": "30m"
+              },
+              {
+                "text": "1 hour",
+                "value": "1h"
+              },
+              {
+                "text": "6 hours",
+                "value": "6h"
+              },
+              {
+                "text": "12 hours",
+                "value": "12h"
+              },
+              {
+                "text": "1 day",
+                "value": "1d"
+              },
+              {
+                "text": "1 week",
+                "value": "1w"
+              },
+              {
+                "text": "1 month",
+                "value": "1month"
+              }
+          ],
+          "includeAll": false,
+          "auto": true,
+          "auto_count": 50,
+          "current": {
+            "text": "auto",
+            "value": "$__auto_interval"
+          }
+        }
+      ]
+    },
+    "annotations": {
+      "list": []
+    },
+    "refresh": false,
+    "schemaVersion": 6,
+    "version": 1
+}

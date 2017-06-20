@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<com.tikal.jenkins.plugins.multijob.PhaseJobsConfig_-DescriptorImpl plugin="jenkins-multijob-plugin@1.23">
+  <parsingRulesGlobal>
+    {% for rule in jenkins.multijob.retry.rules %}
+    <com.tikal.jenkins.plugins.multijob.ParserRuleFile>
+      <name>{{ rule.name }}</name>
+      <path>{{ rule.path }}</path>
+    </com.tikal.jenkins.plugins.multijob.ParserRuleFile>
+    {% endfor %}
+  </parsingRulesGlobal>
+</com.tikal.jenkins.plugins.multijob.PhaseJobsConfig_-DescriptorImpl>

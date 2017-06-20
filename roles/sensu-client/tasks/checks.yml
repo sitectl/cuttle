@@ -1,0 +1,6 @@
+---
+- name: serverspec check
+  sensu_check_dict: name="check-serverspec" check="{{ sensu_checks.sensu_client.check_serverspec }}"
+  notify: restart sensu-client
+  when: sensu.client.serverspec.enabled|bool
+

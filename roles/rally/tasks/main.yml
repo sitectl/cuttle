@@ -1,0 +1,66 @@
+---
+- name: install rally required packages
+  apt: name={{ item }}
+  with_items:
+    - build-essential
+    - libssl-dev
+    - libffi-dev
+    - python-dev
+    - libxml2-dev
+    - libxslt1-dev
+    - libpq-dev
+
+- name: get rally source repo
+  git: repo={{ rally.git_mirror }}/rally.git
+       dest=/opt/stack/rally
+       version={{ rally.rev }}
+       update={{ rally.git_update }}
+  register: result
+  until: result|success
+  retries: 3
+  delay: 60
+  notify:
+    - install rally venv
+
+- meta: flush_handlers
+
+- name: rally dirs
+  file: dest={{ item }} state=directory
+  with_items:
+    - /etc/rally
+    - /var/log/rally
+    - /opt/bbc/rally-tests
+    - /opt/bbc/rally-public
+
+- name: rally config
+  template: dest=/etc/rally/rally.conf src=etc/rally/rally.conf
+
+  # use copy to keep ansible from trying to render the template
+- name: rally tests
+  copy: src={{ item }} dest=/opt/bbc/rally-tests mode=0644
+  with_fileglob: ../templates/opt/bbc/rally-tests/*
+
+- name: rally deployment definition example
+  template: src=etc/rally/rally-deployment-example.conf
+            dest=/etc/rally/rally-deployment-example.conf
+
+- name: add rally public apache vhost
+  template: src=etc/apache2/sites-available/rally.conf
+            dest=/etc/apache2/sites-available/rally.conf
+
+- name: enable rally vhost
+  apache2_site: state=enabled name=rally
+  notify:
+    - reload apache
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

@@ -1,0 +1,54 @@
+---
+users: {}
+
+  # EXAMPLE
+  #
+  # blueboxadmin:
+  #   bastion_user: false
+  #   primary_group: blueboxadmin
+  #   groups:
+  #     - admin
+  #   home: /home/blueboxadmin
+  #   createhome: yes
+  #   shell: /bin/bash
+  #   public_keys:
+  #     - ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA4rAIuN7EoPdU8iDPnp27zd+hXsbTE1NEIAQFblG0IywG2B522pivpxE/v1BmtaIVas1APRFDsn5SMGrDOiVNZGz/MdIdJOPjza29WyXgb5w9I329I/XKF5/NEkXDajqzHQheHZ0NSQFFqrlW+N7t6KdKkFP0heAnOLtXJIXrJso04Ew/o/NX6qJFvDY8pVMUeQVloX5zFuHwq+N2JjJIEDS89mmNfqThoAR0KZ/jKQnjNhCdKVurS20Sxft4HI6Zjm7YZMXJO5a+TL+nYEq+JEzLL+PdKcBf4BVpr6MLO/R3d5nxGAtdhgXUSvEDT2bCFWc66KBzNtJTzDKcVn2KcQ== blueboxadmin@yama-1.blueboxgrid.com
+  #
+  # exampleuser:
+  #   bastion_user: true
+  #   primary_group: sitecontroller
+  #   home: /home/bastionuser
+  #   createhome: yes
+  #   shell: /bin/bash
+  #   uid: 1999
+  #   yubikey:
+  #     public_id: 111
+  #     serial_number: 111
+  #     aes_key: 111
+  #     private_id: 111
+  #   public_keys:
+  #     - ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA4rAIuN7EoPdU8iDPnp27zd+hXsbTE1NEIAQFblG0IywG2B522pivpxE/v1BmtaIVas1APRFDsn5SMGrDOiVNZGz/MdIdJOPjza29WyXgb5w9I329I/XKF5/NEkXDajqzHQheHZ0NSQFFqrlW+N7t6KdKkFP0heAnOLtXJIXrJso04Ew/o/NX6qJFvDY8pVMUeQVloX5zFuHwq+N2JjJIEDS89mmNfqThoAR0KZ/jKQnjNhCdKVurS20Sxft4HI6Zjm7YZMXJO5a+TL+nYEq+JEzLL+PdKcBf4BVpr6MLO/R3d5nxGAtdhgXUSvEDT2bCFWc66KBzNtJTzDKcVn2KcQ== blueboxadmin@yama-1.blueboxgrid.com
+
+user_groups: {}
+
+  # EXAMPLE
+  #
+  # admin:
+  #   system: yes
+  # blueboxadmin:
+  #   system: yes
+  #   ssh_keys:
+  #     enable_passphrase: false
+  #     fingerprint: ~
+  #     private: ~
+  #     public: ~
+  # sitecontroller:
+  #   system: no
+  #   ssh_keys:
+  #     enable_passphrase: false
+  #     fingerprint: ~
+  #     private: ~
+  #     public: ~
+
+_users:
+  manage_authorized_keys: False

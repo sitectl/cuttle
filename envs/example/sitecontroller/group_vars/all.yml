@@ -1,0 +1,218 @@
+---
+public_interface: ansible_eth1
+private_interface: ansible_eth2
+public_ipv4: "{{ hostvars[inventory_hostname][public_interface]['ipv4'] }}"
+private_ipv4: "{{ hostvars[inventory_hostname][private_interface]['ipv4'] }}"
+
+etc_hosts:
+  - name: bastion01
+    ip: "{{ hostvars['bastion01'][private_interface]['ipv4']['address']|default('172.16.0.101') }}"
+  - name: bootstrap01
+    ip: "{{ hostvars['bootstrap01'][private_interface]['ipv4']['address']|default('172.16.0.102') }}"
+  - name: monitor01
+    ip: "{{ hostvars['monitor01'][private_interface]['ipv4']['address']|default('172.16.0.103') }}"
+  - name: elk01
+    ip: "{{ hostvars['elk01'][private_interface]['ipv4']['address']|default('172.16.0.104') }}"
+
+sitecontroller:
+  python:
+    pypi_mirror: https://pypi-mirror.openstack.blueboxgrid.com/root/pypi
+    trusted_host: pypi-mirror.openstack.blueboxgrid.com
+  ruby:
+    gem_sources:
+      - https://gem-mirror.openstack.blueboxgrid.com
+  ubuntu_mirror: https://apt-mirror.openstack.blueboxgrid.com/trusty/ubuntu
+
+common:
+  sysdig:
+    enabled: False
+  firewall:
+    friendly_networks:
+      - "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+  ssh:
+    ghe_authorized_keys:
+      enabled: False
+      api_url: ~ # ex: https://github.ghe.com/api/v3
+      api_user: ~ # ex: username
+      api_pass: ~ # ex: password
+    allow_from:
+      - "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+  ntpd:
+    servers:
+      - 0.pool.ntp.org
+      - 1.pool.ntp.org
+      - 3.pool.ntp.org
+      - 4.pool.ntp.org
+    peers:
+      - "{{ hostvars['bastion01'][private_interface]['ipv4']['address']|default('172.16.0.101') }}"
+      - "{{ hostvars['bootstrap01'][private_interface]['ipv4']['address']|default('172.16.0.102') }}"
+      - "{{ hostvars['monitor01'][private_interface]['ipv4']['address']|default('172.16.0.103') }}"
+      - "{{ hostvars['elk01'][private_interface]['ipv4']['address']|default('172.16.0.104') }}"
+    clients:
+      - ip: 172.16.0.0
+        netmask: 255.255.225.0
+      - ip: 172.16.1.0
+        netmask: 255.255.225.0
+  sudoers:
+    - name: blueboxadmin
+      args:
+        - "ALL=NOPASSWD: /usr/sbin/tcpdump"
+
+users:
+  blueboxadmin:
+    primary_group: blueboxadmin
+    groups:
+      - admin
+    home: /home/blueboxadmin
+    createhome: yes
+    shell: /bin/bash
+    public_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA4rAIuN7EoPdU8iDPnp27zd+hXsbTE1NEIAQFblG0IywG2B522pivpxE/v1BmtaIVas1APRFDsn5SMGrDOiVNZGz/MdIdJOPjza29WyXgb5w9I329I/XKF5/NEkXDajqzHQheHZ0NSQFFqrlW+N7t6KdKkFP0heAnOLtXJIXrJso04Ew/o/NX6qJFvDY8pVMUeQVloX5zFuHwq+N2JjJIEDS89mmNfqThoAR0KZ/jKQnjNhCdKVurS20Sxft4HI6Zjm7YZMXJO5a+TL+nYEq+JEzLL+PdKcBf4BVpr6MLO/R3d5nxGAtdhgXUSvEDT2bCFWc66KBzNtJTzDKcVn2KcQ== demokey
+
+user_groups:
+  admin:
+    system: yes
+  blueboxadmin:
+    system: yes
+    ssh_keys:
+      enable_passphrase: false
+      fingerprint: "64:f3:60:f0:33:ed:8b:a3:af:33:c3:c1:e6:c8:41:bf"
+      private: |
+        -----BEGIN RSA PRIVATE KEY-----
+        MIIEowIBAAKCAQEA34Tz/TDvjmcZkDiWmbm6Zz4jx1bl4rcEiSpbxYRqyXvxbGkG
+        e+YoDyy5s+M/tKaP+kAYDbXwJM6NnLq8q4YsEeqszjDE3+qgH54TE8EoT1VoPDkl
+        iUiE3a0d1DLZT8oX7x8y+q+39qQFN2sjTf39VgMpbWy6zOH7Ok9hpJXMItezuX9B
+        sMOfHE3TgZdYnRlc9tRmI58+igw1E2reNqHBxWu2c4FdydoakTXgUmcLLheKW0xC
+        m0NG9Cy5oAdq79ZJruuQQxTy9W71xm6W4EreDMCZrR3JWBvH2Ahv2JcDdj8BEB2g
+        iYzwzSqM4D3l44jza2BULgoXf58JS/8B7LkryQIDAQABAoIBAE6ba1M3yofCKnNV
+        82DMuIlmiR6pqN86jhXPF8c28nc5Z4ZAyU75ek0b5ZMl8FmP2kKgF9V6jqHjIlpk
+        McYAwa7rYSqCbDpzQSzdYsgnvg1oc+f6EQFex5tOLpdZ6qLs583oov0WnxPWSx9a
+        Rmg/UsDVC9S30FoNf1TaZfSD2e7GVOCohXSXheQnRs5AkovlieoBy8NbaRj9+ey3
+        hTsbtAsMk7WiazHpP/Fl7LwAXSHRgtFl+s1dbSYbpBLWdabB54j7m75x/hJRWzlW
+        zgmTdGSpLOnPeKe9TJtIkWzkqx0+XMbk1D4FUZVpo2D8whpHJxZNUdzY1UpqTu6M
+        frGsQIECgYEA8vqxh7Pw3S32TyMmkpL6oNziccyKe7U+xurulmccrPD6dhpMjOXR
+        0ErPBIklxiUsAEZNIdBP4G2Of1xU0OWnWH9Xpk69FI7K7/XPmOoNeC3lYp08IUtb
+        jvs2C7F6ir+cSpEjU1PrT9hIKTk6XO13Nx291pd6xxUz1UUfdyxv220CgYEA639M
+        jEH9BsFSghYHM41GCMp2/+xfLLN9sTdPB7b8ElsOMD2Xne1QJ9uHfXyDi5Ba07aI
+        GbxgIoKcVlxIf/JJFdomeiXzf3PjDOTE8Pv/wMVhjQsfkCfgEunqVKF9amLTeTbl
+        Ype2modJXe+yuo4AqN8inz3CvTsP15rfZRh9XE0CgYA6xnOdPOS9y/lx6THScOVZ
+        djT8jBrPk+csnPW7whOIrf4YBYKQ7qLTPNVY5ogRpzo+ksLjtA0uX7IBkucdZQAX
+        Ay7DlvZb+7KRWyeteKhrcsazFQ/PifgK3S+Uooje+TyoOPWPmZQpS0shVauNgQ++
+        cF5Ug236rGFObJsQ69ne/QKBgAaxxLRL/+xcPIM0Kxo9DtubHczipEX6CD2sa9O1
+        UO8YpYubhJ7Zqyim5fAcRQUHon1YOAA7SaRRgC44S1tPwOIdJHDeeVCLM84fBrYv
+        A7MwKTjAMzJ+37DJ835aZN1MV+SfOeAWnftAk0ZXVQZWmRAz36EVOV71udqQLX+L
+        Na0VAoGBAOyAT/XPSDjMaWMxkf0/cuGrPDotG/2qlPkFzykTurYRXfB+gs/0wM9q
+        V64jR8VQpxfyljtdEEIbNnYiiHcu3WGDK6zu0w3LzYFdKawKxJezL7vbC3X4qgil
+        3KsipSty93s+kZ265SMqby2itnryoMSURt5PniUFlBq5BBrzeZde
+        -----END RSA PRIVATE KEY-----
+      public: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDfhPP9MO+OZxmQOJaZubpnPiPHVuXitwSJKlvFhGrJe/FsaQZ75igPLLmz4z+0po/6QBgNtfAkzo2curyrhiwR6qzOMMTf6qAfnhMTwShPVWg8OSWJSITdrR3UMtlPyhfvHzL6r7f2pAU3ayNN/f1WAyltbLrM4fs6T2Gklcwi17O5f0Gww58cTdOBl1idGVz21GYjnz6KDDUTat42ocHFa7ZzgV3J2hqRNeBSZwsuF4pbTEKbQ0b0LLmgB2rv1kmu65BDFPL1bvXGbpbgSt4MwJmtHclYG8fYCG/YlwN2PwEQHaCJjPDNKozgPeXjiPNrYFQuChd/nwlL/wHsuSvJ dummmy-key-2
+
+monitoring_common:
+  service_owner: development
+
+dnsmasq:
+  enabled: true
+  interface: lo
+  server: 127.0.0.1
+  dns:
+    hosts:
+      - name: bastion01.example.bbg
+        ip: "{{ hostvars['bastion01'][public_interface]['ipv4']['address']|default('172.16.0.101') }}"
+      - name: bootstrap01.example.bbg
+        ip: "{{ hostvars['bootstrap01'][public_interface]['ipv4']['address']|default('172.16.0.102') }}"
+      - name: monitor01.example.bbg
+        ip: "{{ hostvars['monitor01'][public_interface]['ipv4']['address']|default('172.16.0.103') }}"
+  firewall: []
+
+sensu:
+  enabled: true
+  host: monitor01
+  client:
+    rabbitmq:
+      host: monitor01
+      username: sensu
+      password: m2KNhjrmxgjXB2ue
+      vhost: /sensu
+      hostgroup: sensu
+  server:
+    instances: 0
+    rabbitmq:
+      host: monitor01
+      username: sensu
+      password: m2KNhjrmxgjXB2ue
+      vhost: /sensu
+      hostgroup: sensu
+    handlers:
+      default:
+        - flapjack_http
+      flapjack:
+        enabled: False
+        host: 127.0.0.1
+        port: 6380
+      flapjack_http:
+        enabled: True
+        uri: http://127.0.0.1:3090
+        ttl: -1 # -1 disables, otherwise httpbroker re-sends last received state until ttl expires
+        service_owner: development
+  dashboard:
+    host: "{{ private_ipv4.address }}"
+    firewall:
+      - port: 80
+        src: "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+      - port: 443
+        src: "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+
+rabbitmq:
+  host: monitor01
+  cluster: False
+  erlang_cookie: E9HGSG7Fs8UmSSQ6
+  users:
+    - username: admin
+      password: "{{ secrets.sensu.server.rabbitmq.admin }}"
+      vhost: /
+    - username: sensu
+      password: m2KNhjrmxgjXB2ue
+      vhost: /sensu
+    - username: graphite
+      password: 6L2wyT9NXC6qZhQH
+      vhost: /graphite
+  firewall:
+    - port: 5671
+      src: "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+    - port: 5672
+      src: "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+
+consul:
+  bind_interface: eth0
+
+logging:
+  enabled: true
+  forward:
+    host: "{{ hostvars['elk01'][private_interface]['ipv4']['address']|default('172.16.0.104') }}"
+    logstash_forwarder:
+      enabled: true
+    filebeat:
+      enabled: true
+    tls:
+      ca_cert: |
+        -----BEGIN CERTIFICATE-----
+        MIIDbjCCAlagAwIBAgIJAM0BGcYd3vMHMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV
+        BAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX
+        aWRnaXRzIFB0eSBMdGQwHhcNMTUwMTE0MTk0NzMxWhcNMTYwMTE0MTk0NzMxWjBF
+        MQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50
+        ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+        CgKCAQEAxRMHhTXHqEnH9mPUtreyJARa7820HOBf9Fe5zZNnIYXIhx7GpaxZp1pV
+        vcg2fB9iSUw81Oz+/Y91cyUJID1TF0RNHap/n7bVEu0kMHBbozScQcsE4/zljgX5
+        gqSECXpCZ9KQAX3WNBbFGHV/QrJTZA1Teb/Ne77vwTcOVLa++1BRyKc88kLeWS11
+        n5IMqWAytLS+1TtvcI+9iMKTb4udKo8UE0ojOMz/xpHbeVBumWBB0Uh8tlv2Bv2r
+        Qeflib9Djdbj5mj5BPyO2cSUy9blg51vK3wg7XImVpqqTaa97w938I9XICNhvxxm
+        iS5u4juu5Xuy0Fy0WBWgnaKC7zAwQQIDAQABo2EwXzAPBgNVHREECDAGhwSsEAAN
+        MB0GA1UdDgQWBBRo6C9RWMTxDhYgBFR701yvGlnw7TAfBgNVHSMEGDAWgBRo6C9R
+        WMTxDhYgBFR701yvGlnw7TAMBgNVHRMEBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IB
+        AQAYiC7dnmG/HloCPvmnqJ8nuGvHjExF1yaSQbbeCdpS3RcfRi4FvhvQsiQoO4aL
+        EYVzTEfamy9xD6GDREcQ0ex6b91b2aS71b46S/snzoEwqyc51Fikf93qUGW8Y5hT
+        /TTsu35mRUkCsOW9JBTE8hHuxaqC4sXvEgVTSQxrfLu9vqQ34c+PWh6sS0nA7aYA
+        8GS4HLwpwQNfhO8feQgyLljFrYMSe0iHiLWg2y8FB2ZjWgC/ZX9lY5YiBIe5K9A2
+        ToXF6Rn3zaU1rZEQ0vZOK+MdAXNoG1L9jqSRgrSoD92VXKsU0WHorFCN5NLknRlh
+        S+3FRsZsB9xRpd7jnrShLnVh
+        -----END CERTIFICATE-----

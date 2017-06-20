@@ -1,0 +1,17 @@
+---
+dependencies:
+  - role: bbg-ssl
+    name: "{{ apt_mirror.apache.ssl.name }}"
+    ssl_cert: "{{ apt_mirror.apache.ssl.cert }}"
+    ssl_key: "{{ apt_mirror.apache.ssl.key }}"
+    ssl_intermediate: "{{ apt_mirror.apache.ssl.intermediate }}"
+    ssl_ca_cert: ~
+    when: apt_mirror.apache.ssl.enabled
+    tags: ['bbg-ssl']
+  - role: apache
+  - role: logging-config
+    service: apt_mirror
+    logdata: "{{ apt_mirror.logs }}"
+    forward_type: "{{ apt_mirror.logging.forwarder }}"
+    when: logging.enabled|default("True")|bool
+  - role: sensu-check

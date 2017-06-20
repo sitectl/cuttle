@@ -1,0 +1,50 @@
+default:
+  memory: 512
+  cpus: 1
+
+vms:
+  bastion:
+    ip_address: 172.16.0.2
+  allinone:
+    ip_address: 172.16.0.10
+    memory: 4096
+    cpus: 2
+  aptly:
+    ip_address: 172.16.0.12
+  rally:
+    ip_address: 172.16.0.14
+  monitor:
+    ip_address: 172.16.0.15
+  squid:
+    ip_address: 172.16.0.16
+  percona:
+    ip_address: 172.16.0.17
+    memory: 1024
+  mirror:
+    ip_address: 172.16.0.18
+  pxe:
+    ip_address: 172.16.0.19
+  netman:
+    ip_address: 172.16.0.20
+
+ansible:
+  groups:
+    aptly: ["allinone", "aptly"]
+    squid: ["allinone", "squid"]
+    graphite: ["allinone", "monitor"]
+    sensu: ["allinone", "monitor"]
+    rabbitmq: ["allinone", "monitor"]
+    percona_primary: ["allinone", "percona"]
+    percona_secondary: []
+    percona_arbiter: []
+    percona_backup: ["allinone", "percona"]
+    percona:children: ["percona_primary", "percona_secondary"]
+    rally: ["rally"]
+    elasticsearch: ["elk"]
+    logstash: ["elk"]
+    kibana: ["elk"]
+    mirror: ["pypi_mirror", "apt_mirror", "aptly"]
+    consul: ["consul", "consul2"]
+    pxe: ["pxe"]
+    bastion: ["bastion"]
+    netman: []

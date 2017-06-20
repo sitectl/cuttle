@@ -1,0 +1,20 @@
+---
+dependencies:
+  - role: bbg-ssl
+    name: "{{ gem_mirror.apache.ssl.name }}"
+    ssl_cert: "{{ gem_mirror.apache.ssl.cert }}"
+    ssl_key: "{{ gem_mirror.apache.ssl.key }}"
+    ssl_intermediate: "{{ gem_mirror.apache.ssl.intermediate }}"
+    ssl_ca_cert: ~
+    when: gem_mirror.apache.ssl.enabled
+    tags: ['bbg-ssl']
+  - role: apache
+  - role: logging-config
+    service: gem_mirror
+    logdata: "{{ gem_mirror.logs }}"
+    forward_type: "{{ gem_mirror.logging.forwarder }}"
+    when: logging.enabled|default("True")|bool
+  - role: varnish
+    tags: ['gem-mirror', 'varnish']
+    when: varnish.enabled|default('True')|bool
+  - role: sensu-check

@@ -1,0 +1,48 @@
+---
+- name: build list of ipmi hosts
+  hosts: pxe
+  become: false
+  sudo: false
+  gather_facts: false
+  tasks:
+    - name: load all known ipmi devices into ipmi group
+      add_host:
+        name: "ipmi-{{ item.name }}"
+        ip: "{{ item.ipmi }}"
+        user: admin
+        pass: admin
+        groups: ipmi
+      when: "{{ item.ipmi is defined }}"
+      with_items: "{{ pxe.servers }}"
+      delegate_to: localhost
+
+    - debug:
+        var: groups.ipmi
+      delegate_to: localhost
+
+#- name: check ucs ipmi
+#  hosts: localhost
+#  connection: local
+#  gather_facts: false
+#  environment:
+#    TERM: vt102
+#  tasks:
+#    - name: verify ucs cimc settings
+#      command: /home/blueboxadmin/watson-wuwp5C/sitecontroller/playbooks/ucs-bmc-verify.py -i {{ hostvars[item].ip }} -u {{ hostvars[item].user }} -p {{ hostvars[item].pass }}
+#      register: cimc_settings
+#      with_items: groups.ipmi
+#
+#    - name: print results from settings check
+#      debug:
+#        var: "{{ item }}"
+#      with_items: cimc_settings.results | failed
+
+- name: check ucs ipmi
+  hosts: ipmi
+  gather_facts: false
+  environment:
+    TERM: vt102
+  tasks:
+    - name: verify ucs cimc settings
+      local_action: command /home/blueboxadmin/watson-wuwp5C/sitecontroller/playbooks/ucs-bmc-verify.py -i {{ hostvars[inventory_hostname].ip }} -u {{ hostvars[inventory_hostname].user }} -p {{ hostvars[inventory_hostname].pass }}
+      register: cimc_settings

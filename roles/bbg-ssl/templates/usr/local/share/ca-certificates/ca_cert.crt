@@ -1,0 +1,3 @@
+# {{ ansible_managed }}
+
+{% if ssl_ca_cert %}{{ ssl_ca_cert }}{% else %}{{ bbg_ssl.ca_cert }}{% endif %}

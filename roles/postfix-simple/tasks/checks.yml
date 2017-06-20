@@ -1,0 +1,4 @@
+---
+- name: install postfix process check
+  sensu_check_dict: name="check-postfix-process" check="{{ sensu_checks.postfix.check_postfix_process }}"
+  notify: restart sensu-client missing ok

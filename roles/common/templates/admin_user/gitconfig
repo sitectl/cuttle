@@ -1,0 +1,5 @@
+[user]
+        email = sitecontroller@bluebox.net
+        name = Bastion {{ datacenter }}
+[merge]
+        tool = vimdiff

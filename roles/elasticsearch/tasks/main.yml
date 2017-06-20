@@ -1,0 +1,142 @@
+---
+- name: install elasticsearch
+  apt:
+    pkg: "elasticsearch={{ elasticsearch.version }}"
+  register: result
+  until: result|succeeded
+  retries: 5
+  notify:
+    - restart elasticsearch-if-restart-enabled
+
+- name: install supporting pip packages
+  pip:
+    name: pyes
+  register: result
+  until: result|succeeded
+  retries: 5
+
+- name: Configuring open file limits
+  lineinfile: dest=/etc/security/limits.conf regexp='^elasticsearch     -    nofile    {{ elasticsearch.max_open_files }}' insertafter=EOF line='elasticsearch     -    nofile    {{ elasticsearch.max_open_files }}'
+  when: elasticsearch.max_open_files is defined
+- lineinfile: dest=/etc/security/limits.conf regexp='^elasticsearch     -    memlock   {{ elasticsearch.max_locked_memory }}' insertafter=EOF line='elasticsearch     -    memlock   {{ elasticsearch.max_locked_memory }}'
+  when: elasticsearch.max_locked_memory is defined
+- lineinfile: dest=/etc/pam.d/su regexp='^session    required   pam_limits.so' insertafter=EOF line='session    required   pam_limits.so'
+- lineinfile: dest=/etc/pam.d/common-session regexp='^session    required   pam_limits.so' insertafter=EOF line='session    required   pam_limits.so'
+- lineinfile: dest=/etc/pam.d/common-session-noninteractive regexp='^session    required   pam_limits.so' insertafter=EOF line='session    required   pam_limits.so'
+- lineinfile: dest=/etc/pam.d/sudo regexp='^session    required   pam_limits.so' insertafter=EOF line='session    required   pam_limits.so'
+
+#- name: install elasticsearch service
+#  template:
+#    src: etc/init.d/elasticsearch
+#    dest: /etc/init.d/elasticsearch
+#    mode: 0755
+#  notify:
+#    - restart elasticsearch-if-restart-enabled
+
+- name: configure elasticsearch
+  template: src={{ item }}
+            dest=/{{ item }} mode=0644
+  with_items:
+    - etc/elasticsearch/elasticsearch.yml
+    - etc/default/elasticsearch
+  notify:
+    - restart elasticsearch-if-restart-enabled
+
+- name: create elasticsearch data path
+  file:
+    path: "{{ elasticsearch.config['path.data'] }}"
+    owner: elasticsearch
+    group: elasticsearch
+    state: directory
+    mode: 0700
+  when: elasticsearch.config['path.data'] is string
+
+- name: create elasticsearch data paths (from list)
+  file:
+    dest: "{{ item }}"
+    owner: elasticsearch
+    group: elasticsearch
+    state: directory
+    mode: 0700
+  with_items: "{{ elasticsearch.config['path.data'] }}"
+  when: not elasticsearch.config['path.data'] is string
+
+- name: make elasticsearch plugin directory
+  file:
+    dest: /opt/elasticsearch-plugins
+    mode: 0755
+    state: directory
+  tags: elasticsearch-plugins
+
+- name: get list of installed elasticsearch plugins
+  command: /usr/share/elasticsearch/bin/elasticsearch-plugin list
+  register: installed_plugins
+  changed_when: false
+  tags: elasticsearch-plugins
+
+- name: download elasticsearch plugin files via proxy
+  get_url:
+    url: "{{ item.url }}"
+    dest: "/opt/elasticsearch-plugins/{{ item.file }}"
+    mode: 0644
+    sha256sum: "{{ item.sha256sum|default(omit) }}"
+    force: "{{ item.force|default(omit) }}"
+  with_items: "{{ elasticsearch.plugins }}"
+  register: result
+  until: result|succeeded
+  retries: 5
+  when:
+    - item.name not in installed_plugins.stdout_lines
+    - item.url is defined
+  tags: elasticsearch-plugins
+
+- name: install elasticsearch plugins
+  shell: "yes | /usr/share/elasticsearch/bin/elasticsearch-plugin -s install file:///opt/elasticsearch-plugins/{{ item.file }}"
+  with_items: "{{ elasticsearch.plugins }}"
+  when: item.name not in installed_plugins.stdout_lines
+  tags: elasticsearch-plugins
+  notify:
+    - restart elasticsearch-if-restart-enabled
+
+- name: log rotation hint
+  template: src=etc/logrotate.d/elasticsearch dest=/etc/logrotate.d/elasticsearch mode=0644
+
+- name: cron to delete logs rotated by elasticsearch
+  template: src=etc/cron.daily/elasticsearch dest=/etc/cron.daily/elasticsearch mode=0755
+
+- name: allow elasticsearch traffic
+  ufw: rule=allow to_port={{ item.0.port }} src={{ item.1|default('127.0.0.1') }}
+  with_subelements:
+    - "{{ elasticsearch.firewall }}"
+    - src
+  tags:
+    - firewall
+
+- name: start elasticsearch
+  service:
+    name: elasticsearch
+    enabled: yes
+  notify: start elasticsearch-if-start-enabled
+
+- meta: flush_handlers
+
+- name: wait until elasticsearch is listening
+  wait_for: port=9200
+  when: elasticsearch.wait_for_listening|bool
+
+- include: curator.yml
+  tags: curator
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec
+
+- meta: flush_handlers

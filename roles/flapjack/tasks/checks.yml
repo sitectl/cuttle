@@ -1,0 +1,9 @@
+---
+- name: install flapjack process check
+  sensu_check_dict: name="check-flapjack-process" check="{{ sensu_checks.flapjack.check_flapjack_process }}"
+  notify: restart sensu-client missing ok
+
+- name: install flapjack process check
+  sensu_check_dict: name="check-flapjack-httpbroker-process" check="{{ sensu_checks.flapjack.check_flapjack_httpbroker_process }}"
+  notify: restart sensu-client missing ok
+  when: flapjack.receivers.httpbroker.enabled|bool

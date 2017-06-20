@@ -1,0 +1,42 @@
+---
+- name: remove deprecated apt repos
+  apt_repository: repo="{{ item.repo }}" state=absent update_cache=yes
+  with_items: "{{ purge_repos }}"
+  when: purge_repos is defined
+
+- name: add any dependent repository keys from url
+  apt_key: url="{{ item.key_url }}"
+  with_items: "{{ repos }}"
+  register: result
+  until: result|succeeded
+  retries: 5
+  when: repos is defined and item.key_url is defined
+
+# things like keyrings may come as packages vs. keys
+- name: add any dependent repository key packages
+  apt: pkg="{{ item.key_package }}"
+  with_items: "{{ repos }}"
+  register: result
+  until: result|succeeded
+  retries: 5
+  when: repos is defined and item.key_package is defined
+
+- name: add any dependent repositories
+  apt_repository: repo="{{ item.repo }}" update_cache=yes mode=0644
+  with_items: "{{ repos }}"
+  register: result
+  until: result|succeeded
+  retries: 5
+  when: repos is defined
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

@@ -1,0 +1,167 @@
+---
+common:
+  locale: en_US.UTF-8
+  packages:
+    - ack-grep
+    - acl
+    - apt-transport-https
+    - build-essential
+    - cdpr
+    - curl
+    - dnsutils
+    - dstat
+    - ethtool
+    - git
+    - htop
+    - ifenslave
+    - iotop
+    - iperf
+    - libffi-dev
+    - libssl-dev
+    - logrotate
+    - ltrace
+    - lvm2
+    - mtr
+    - netcat
+    - ntp
+    - pstack
+    - pv
+    - python2.7
+    - python2.7-dev
+    - python-httplib2
+    - python-jinja2
+    - python-mysqldb
+    - python-pip
+    - python-software-properties
+    - smem
+    - socat
+    - sshpass
+    - sysstat
+    - tcpdump
+    - tmux
+    - tree
+    - unzip
+    - vim
+    - whois
+
+  python:
+    packages:
+#      - name: pip
+#        state: latest
+#      - name: setuptools
+#        state: latest
+      - name: pytz
+        version: 2016.6.1
+      - name: pyparsing
+        version: 2.1.10
+      - name: six
+        version: 1.10.0
+      - name: pyopenssl
+        version: 16.2.0
+      - name: cryptography
+      - name: idna
+      - name: certifi
+      - name: pyasn1
+      - name: ndg-httpsclient
+      - name: virtualenv
+      - name: "urllib3>=1.19"
+      - name: "requests[security]"
+        skip_serverspec: True
+  ntpd:
+    enabled: True
+    servers:
+      - 0.ubuntu.pool.ntp.org
+      - 1.ubuntu.pool.ntp.org
+      - 2.ubuntu.pool.ntp.org
+      - 3.ubuntu.pool.ntp.org
+      - ntp.ubuntu.com
+    peers: []
+    clients:
+      - ip: 172.16.1.115
+        netmask: 255.255.255.0
+
+  firewall:
+    forwarding: False
+    friendly_networks: []
+
+  mdns:
+    enabled: False
+
+  ssh:
+    allow_from:
+      - "{{ ansible_default_ipv4.network }}/{{ ansible_default_ipv4.netmask }}"
+    disable_dns: True
+    max_sessions: 25
+
+    client_alive:
+      interval: 120
+      countmax: 15
+
+    private_keys: []
+    ssh_host_rsa_key:
+      public: ~
+      private: ~
+    ghe_authorized_keys:
+      enabled: False
+      api_url: ~ # ex: https://api.github.com
+      api_user: ~
+      api_pass: ~
+
+  sysdig:
+    enabled: True
+
+  hwraid:
+    enabled: True
+    add_clients:
+      - tw-cli
+      - megacli
+    remove_clients: []
+
+  logs:
+    # FILEBEAT
+    - paths:
+        - /var/log/syslog
+      document_type: syslog
+      fields:
+        tags: syslog
+    - paths:
+        - /var/log/apt/history.log
+      fields:
+        tags: apt
+    - paths:
+        - /var/log/auth.log
+      document_type: syslog
+      fields:
+        tags: auth,audit,archive
+    # LOGSTASH FORWARDER
+    #- paths:
+    #    - /var/log/syslog
+    #  fields:
+    #    type: syslog
+    #    tags: syslog
+
+  logging:
+    forwarder: filebeat # or 'logstash-forwarder'
+
+  sudoers:
+    - name: blueboxadmin
+      args:
+        - "ALL=NOPASSWD: /usr/sbin/tcpdump"
+
+  shell_customization:
+    enabled: true
+    git_prompt: true
+    tmux_fix_ssh: true
+
+  data_dirs:
+    - path: /data
+      owner: root
+      group: root
+
+bastion:
+  backdoor_user: sitecontroller
+  ssh_port: 22
+  force_commands: []
+    #- /usr/bin/ttyspy
+    #- /usr/bin/ssh-ip-check
+    #- /usr/bin/ssh-mosh-filter

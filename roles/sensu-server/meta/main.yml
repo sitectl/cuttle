@@ -1,0 +1,6 @@
+---
+dependencies:
+  - role: rabbitmq
+  - role: redis
+  - role: sensu-common
+  - role: sensu-check

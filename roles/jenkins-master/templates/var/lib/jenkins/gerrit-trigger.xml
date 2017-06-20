@@ -1,0 +1,77 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl plugin="gerrit-trigger@2.21.1">
+  <servers class="java.util.concurrent.CopyOnWriteArrayList">
+    {% for server in jenkins.gerrit_servers %}
+    <com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer>
+      <name>{{ server.name }}</name>
+      <noConnectionOnStartup>false</noConnectionOnStartup>
+      <config class="com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config">
+        <gerritHostName>{{ server.host }}</gerritHostName>
+        <gerritSshPort>{{ server.port }}</gerritSshPort>
+        <gerritProxy></gerritProxy>
+        <gerritUserName>{{ server.username }}</gerritUserName>
+        <gerritEMail></gerritEMail>
+        <gerritAuthKeyFile>{{ server.ssh.key }}</gerritAuthKeyFile>
+        <gerritAuthKeyFilePassword>{{ server.ssh.password }}</gerritAuthKeyFilePassword>
+        <useRestApi>false</useRestApi>
+        <restCodeReview>false</restCodeReview>
+        <restVerified>false</restVerified>
+        <gerritVerifiedCmdBuildSuccessful>{{ server.messages.successful }}</gerritVerifiedCmdBuildSuccessful>
+        <gerritVerifiedCmdBuildUnstable>{{ server.messages.unstable }}</gerritVerifiedCmdBuildUnstable>
+        <gerritVerifiedCmdBuildFailed>{{ server.messages.failed }}</gerritVerifiedCmdBuildFailed>
+        <gerritVerifiedCmdBuildStarted>{{ server.messages.started }}</gerritVerifiedCmdBuildStarted>
+        <gerritVerifiedCmdBuildNotBuilt>{{ server.messages.notbuilt }}</gerritVerifiedCmdBuildNotBuilt>
+        <gerritFrontEndUrl>{{ server.url }}</gerritFrontEndUrl>
+        <gerritBuildStartedVerifiedValue>{{ server.voting.verify.started }}</gerritBuildStartedVerifiedValue>
+        <gerritBuildSuccessfulVerifiedValue>{{ server.voting.verify.successful }}</gerritBuildSuccessfulVerifiedValue>
+        <gerritBuildFailedVerifiedValue>{{ server.voting.verify.failed }}</gerritBuildFailedVerifiedValue>
+        <gerritBuildUnstableVerifiedValue>{{ server.voting.verify.unstable }}</gerritBuildUnstableVerifiedValue>
+        <gerritBuildNotBuiltVerifiedValue>{{ server.voting.verify.notbuilt }}</gerritBuildNotBuiltVerifiedValue>
+        <gerritBuildStartedCodeReviewValue>{{ server.voting.codereview.started }}</gerritBuildStartedCodeReviewValue>
+        <gerritBuildSuccessfulCodeReviewValue>{{ server.voting.codereview.successful }}</gerritBuildSuccessfulCodeReviewValue>
+        <gerritBuildFailedCodeReviewValue>{{ server.voting.codereview.failed }}</gerritBuildFailedCodeReviewValue>
+        <gerritBuildUnstableCodeReviewValue>{{ server.voting.codereview.unstable }}</gerritBuildUnstableCodeReviewValue>
+        <gerritBuildNotBuiltCodeReviewValue>{{ server.voting.codereview.notbuilt }}</gerritBuildNotBuiltCodeReviewValue>
+        <enableManualTrigger>true</enableManualTrigger>
+        <enablePluginMessages>true</enablePluginMessages>
+        <buildScheduleDelay>3</buildScheduleDelay>
+        <dynamicConfigRefreshInterval>30</dynamicConfigRefreshInterval>
+        <enableProjectAutoCompletion>true</enableProjectAutoCompletion>
+        <projectListRefreshInterval>3600</projectListRefreshInterval>
+        <projectListFetchDelay>0</projectListFetchDelay>
+        <categories class="linked-list">
+          <com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory>
+            <verdictValue>Code-Review</verdictValue>
+            <verdictDescription>Code Review</verdictDescription>
+          </com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory>
+          <com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory>
+            <verdictValue>Verified</verdictValue>
+            <verdictDescription>Verified</verdictDescription>
+          </com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory>
+        </categories>
+        <replicationConfig>
+          <enableReplication>false</enableReplication>
+          <slaves class="linked-list"/>
+          <enableSlaveSelectionInJobs>false</enableSlaveSelectionInJobs>
+        </replicationConfig>
+        <watchdogTimeoutMinutes>0</watchdogTimeoutMinutes>
+        <watchTimeExceptionData>
+          <daysOfWeek/>
+          <timesOfDay class="linked-list"/>
+        </watchTimeExceptionData>
+        <notificationLevel>ALL</notificationLevel>
+        <buildCurrentPatchesOnly>
+          <enabled>false</enabled>
+          <abortNewPatchsets>false</abortNewPatchsets>
+          <abortManualPatchsets>false</abortManualPatchsets>
+        </buildCurrentPatchesOnly>
+      </config>
+    </com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer>
+    {% endfor %}
+  </servers>
+  <pluginConfig>
+    <numberOfReceivingWorkerThreads>3</numberOfReceivingWorkerThreads>
+    <numberOfSendingWorkerThreads>1</numberOfSendingWorkerThreads>
+    <replicationCacheExpirationInMinutes>360</replicationCacheExpirationInMinutes>
+  </pluginConfig>
+</com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl>

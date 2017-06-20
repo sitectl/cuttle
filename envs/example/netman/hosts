@@ -1,0 +1,11 @@
+[harden]
+netman-01
+
+[postfix-simple]
+netman-01
+
+[packagecloud]
+netman-01
+
+[netman]
+netman-01

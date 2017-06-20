@@ -1,0 +1,75 @@
+---
+elasticsearch:
+  version: 5.4.1
+  wait_for_listening: true # sometimes need to skip, like upgrades
+  start_on_config: true # sane defaults to avoid blowing up the cluster in prod
+  restart_on_config: false # sane defaults to avoid blowing up the cluster in prod
+  config:
+    cluster.name: elasticsearch
+    node.name: "{{ ansible_hostname }}"
+    path.logs: /var/log/elasticsearch
+    path.data: /var/lib/elasticsearch
+    path.conf: /etc/elasticsearch
+    cluster.routing.allocation.disk.watermark.low: 100gb
+    cluster.routing.allocation.disk.watermark.high: 25gb
+    http.max_header_size: 64kb
+  firewall: []
+  max_open_files: 65536
+  heap_size: 512m
+  home_dir: /usr/share/elasticsearch
+  plugin_dir: /usr/share/elasticsearch/plugins
+  plugins:
+    - name: x-pack
+      file: x-pack-5.4.1.zip
+      url: http://artifacts.elastic.co/downloads/packs/x-pack/x-pack-5.4.1.zip
+      sha256sum: 7a93565b8d4af2d7d4dc804245543a4f38b2b31f8d0395dad792b7ea05d0088c
+      config:
+        xpack.security.enabled: false
+  sensu_plugins:
+    - name: elasticsearch
+      version: 1.0.18
+    - name: elasticsearch
+      version: 2.0
+    - name: sensu-plugins-elasticsearch
+      version: 1.0.0
+  curator:
+    actions:
+      delete_indices:
+        enabled: True
+        description: "Delete indices older than specified number of days."
+        older: 90
+        hour: 2
+        minute: 0
+      forcemerge:
+        enabled: True
+        description: "Force Merge indices older than days specified to max_num_seg. per shard."
+        options:
+          max_num_segments: 1
+        older: 2
+        hour: 3
+        minute: 0
+      delete_snapshots:
+        enabled: False
+        description: "Delete snapshots from the repository older than specified number of days."
+        options:
+          repository: logstash
+        older: 90
+        hour: 4
+        minute: 0
+      snapshot:
+        enabled: False
+        description: "Snapshot selected indices to specified repository."
+        options:
+          repository: logstash
+          wait_for_completion: False
+        older: 1
+        hour: 5
+        minute: 0
+  logs:
+    # See logging-config/defaults/main.yml for filebeat vs. logstash-forwarder example
+    - paths:
+        - /var/log/elasticsearch/*.log
+      fields:
+        tags: elk,elasticsearch
+  logging:
+    forwarder: filebeat

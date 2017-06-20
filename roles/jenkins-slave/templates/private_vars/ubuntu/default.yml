@@ -1,0 +1,4 @@
+apt_repos:
+  blueboxcloud_giftwrap:
+    repo: {{ apt_repos.openstack_packages.repo }}
+    key_url: {{ apt_repos.openstack_packages.key_url }}

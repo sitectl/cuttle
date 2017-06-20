@@ -1,0 +1,98 @@
+digraph G {
+  label="Site Controller Monitoring"
+  labelloc="t";
+  rankdir="LR";
+  clusterrank="local";
+  overlap=scale;
+  normalize=true;
+  edge [fontsize=10];
+  nodesep=0.5
+  ranksep=2;
+  dpi=128;
+
+
+  user [label="Support / Engineering User", shape=Mdiamond];
+  pagerduty [label="PagerDuty", shape=Msquare];
+
+  subgraph cluster_legend {
+    label="Legend";
+    node [shape=plaintext]
+    key [label=<<table border="0" cellpadding="2" cellspacing="0" cellborder="0">
+      <tr><td align="right" port="i1">Encrypted (TLS, HTTPS)</td></tr>
+      <tr><td align="right" port="i2">VPN</td></tr>
+      <tr><td align="right" port="i3">Encrypted over VPN</td></tr>
+      <tr><td align="right" port="i4">Unencrpted</td></tr>
+      <tr><td align="right" port="i5">Socket / In-Process</td></tr>
+      </table>>]
+    key2 [label=<<table border="0" cellpadding="2" cellspacing="0" cellborder="0">
+      <tr><td port="i1">&nbsp;</td></tr>
+      <tr><td port="i2">&nbsp;</td></tr>
+      <tr><td port="i3">&nbsp;</td></tr>
+      <tr><td port="i4">&nbsp;</td></tr>
+      <tr><td port="i5">&nbsp;</td></tr>
+      </table>>]
+    key:i1:e -> key2:i1:w [style=solid , color=green]
+    key:i2:e -> key2:i2:w [style=dashed             ]
+    key:i3:e -> key2:i3:w [style=dashed, color=green]
+    key:i4:e -> key2:i4:w [style=solid , color=black]
+    key:i5:e -> key2:i5:w [style=dotted, color=black]
+  }
+
+  subgraph cluster_central_controller {
+    label="Central Site Controller";
+
+    cc_apache [label="BBG Auth Proxy\n(Apache)"];
+    cc_sensu [label="Sensu"];
+    cc_sensu_client [label="Sensu Client"];
+    cc_uchiwa [label="Uchiwa"];
+    cc_alert [label="Central Controller Alert", shape=Mdiamond];
+    cc_flapjack [label="Flapjack"];
+
+    cc_apache -> cc_uchiwa [label="HTTP localhost:3000/tcp"];
+    cc_uchiwa -> cc_sensu [label="HTTP localhost:4567/tcp"];
+    cc_alert -> cc_sensu_client [style=dotted]
+  }
+
+  subgraph cluster_site_controller {
+    label="Remote Site Controller";
+
+    sc_apache [label="Apache"];
+    sc_uchiwa [label="Uchiwa"];
+    sc_sensu [label="Sensu"];
+    sc_alert [label="Remote Controller Alert", shape=Mdiamond];
+    sc_sensu_client [label="Sensu Client"];
+
+    sc_apache -> sc_uchiwa [label="HTTP localhost:3000/tcp"];
+    sc_uchiwa -> sc_sensu [label="HTTP localhost:4567/tcp"];
+    sc_alert -> sc_sensu_client [style=dotted]
+  }
+
+  subgraph cluster_openstack {
+    label="OpenStack";
+
+    os_alert [label="OpenStack Alert", shape=Mdiamond];
+    os_sensu_client [label="Sensu Client"];
+
+    os_alert -> os_sensu_client [style=dotted]
+  }
+
+  user -> cc_apache [label="HTTPS control.openstack.blueboxgrid.com:443/tcp", color="green"];
+
+  cc_apache -> sc_apache [xlabel="HTTP 80/tcp", style="dashed"];
+  cc_uchiwa -> sc_sensu [labeldistance=6, headlabel="sensu-api:4567/tcp", style="dashed"];
+
+  sc_sensu -> cc_flapjack [labeldistance=7, headlabel="flapjack_http 3090/tcp", style="dashed"];
+  cc_sensu -> cc_flapjack
+  cc_flapjack -> pagerduty [label="HTTPS 443/tcp", color="green"];
+
+  os_sensu_client -> sc_sensu [label="RabbitMQ 5671/tcp", style="dashed", color="green"];
+  sc_sensu_client -> cc_sensu [label="RabbitMQ 5671/tcp", style="dashed", color="green"];
+  cc_sensu_client -> cc_sensu [label="RabbitMQ 5671/tcp", color="green"];
+
+  // Legend placement hacks
+  user_hidden [style=invis]
+  internet_hidden [style=invis]
+  user_hidden -> internet_hidden -> cc_alert [style=invis]
+  { rank=same user_hidden user}
+  key2:i5:w -> os_alert [style=invis]
+}

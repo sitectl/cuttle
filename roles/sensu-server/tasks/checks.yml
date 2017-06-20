@@ -1,0 +1,42 @@
+---
+- name: copy sensu-client plugins
+  copy:
+    src: "{{ item }}"
+    dest: /opt/sitecontroller/sensu-plugins/
+    mode: 0755
+  with_fileglob: opt/sitecontroller/sensu-plugins/*
+  notify: restart sensu-client
+
+# FIXME: this is a really bad spot for this check to live
+- name: install elk-stats checks
+  sensu_check:
+    name: "elk-stats-check_{{ item.key }}"
+    plugin: check-graphite-stats.rb
+    args: "-h 127.0.0.1:8081 -p -12hrs -t stats.sc.{{ item.key|replace('.', '_') }}.*.elasticsearch.days_remaining -w 20 -c 10 -r true"
+    interval: 21600
+    service_owner: "{{ monitoring_common.service_owner }}"
+  when: deploy_type == "control"
+  with_dict: "{{ openid_proxy.remote_locations }}"
+  tags: elk-stats
+
+- name: install sensu-server process check
+  sensu_process_check: service=sensu-server
+  notify: restart sensu-client missing ok
+
+- name: install sensu-api process check
+  sensu_process_check: service=sensu-api
+  notify: restart sensu-client missing ok
+
+- name: install uchiwa process check
+  sensu_process_check: service=uchiwa
+  notify: restart sensu-client missing ok
+
+- name: install sensu-api health check
+  sensu_check_dict:
+    name: check-sensu-api-health
+    check: "{{ sensu_checks.sensu_api.check_sensu_api_health }}"
+
+- name: install uchiwa health check
+  sensu_check_dict:
+    name: check-uchiwa-health
+    check: "{{ sensu_checks.uchiwa.check_uchiwa_health }}"

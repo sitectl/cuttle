@@ -1,0 +1,13 @@
+# {{ ansible_managed }}
+
+# allowed-networks-src.acl
+#
+# network sources that you want to allow access to the cache
+
+# private networks
+{% for network in squid.allowed_networks %}
+{{ network }}
+{% endfor %}
+
+# additional non-private networks can be added to the directory:
+# /etc/squid3/allowed-networks-src.acl.d

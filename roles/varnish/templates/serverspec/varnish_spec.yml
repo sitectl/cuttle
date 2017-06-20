@@ -1,0 +1,11 @@
+# {{ ansible_managed }}
+
+require 'spec_helper'
+
+describe package('varnish') do
+  it { should be_installed }
+end
+
+describe service('varnish') do
+  it { should be_enabled }
+end

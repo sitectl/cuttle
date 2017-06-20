@@ -1,0 +1,42 @@
+# {{ ansible_managed }}
+
+[mysqld]
+
+wsrep_provider = /usr/lib/libgalera_smm.so
+
+# Empty gcomm address is being used when cluster is getting bootstrapped
+{% if percona_replication_nodes is defined -%}
+wsrep_provider_options = "base_port=4010; gmcast.listen_addr=tcp://{{ percona.ip }}:4010; "
+wsrep_cluster_address = gcomm://{{ percona_replication_nodes.stdout }}
+{% endif -%}
+
+wsrep_slave_threads = 4
+
+#
+# wsrep_sst_method={xtrabackup|mysqldum|rsync|custom_script}
+#
+# The downside of mysqldump and rsync is that the donor node becomes READ-ONLY while
+# data is being copied from one node to another (SST applies FLUSH TABLES WITH READ LOCK command).
+# Xtrabackup SST does not require READ LOCK for the entire syncing process, only for syncing the MySQL system
+# tables and writing the information about the binlog, galera and slave information (same as the regular
+# XtraBackup backup).
+#
+wsrep_sst_method = xtrabackup-v2
+wsrep_sst_auth = "{{ percona.sst_auth_user }}:{{ percona.sst_auth_password }}"
+
+# Cluster name
+wsrep_cluster_name = "{{ percona.wsrep_cluster_name }}"
+
+# This Node's address
+wsrep_node_address = {{ percona.ip }}
+
+# MyISAM storage engine replication has only experimental support in Galera
+default_storage_engine = InnoDB
+
+# README-wsrep indicates the follow three options are mandatory:
+# In order for Galera to work correctly binlog format should be ROW
+binlog_format = ROW
+# This changes how InnoDB autoincrement locks are managed and is a requirement for Galera
+innodb_autoinc_lock_mode = 2
+# This is a recommended tuning variable for performance (required for parallel applying)
+innodb_locks_unsafe_for_binlog = 1

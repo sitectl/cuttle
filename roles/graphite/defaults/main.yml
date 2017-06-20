@@ -1,0 +1,96 @@
+---
+graphite:
+  path:
+    home: /opt/graphite
+    data: /data/graphite
+    virtualenv: /opt/graphite
+    install_root: /opt/graphite
+  system_deps:
+    - python-cairo
+    - sqlite3
+    - libmysqlclient-dev
+  pip_packages:
+    - 'pyparsing<2.1.10'
+    - 'graphite-web<1.0'
+    - 'carbon<1.0'
+    - 'whisper<1.0'
+    - mysql-python
+    - 'Twisted<12.0'
+    - 'django<1.6'
+    - 'django-tagging<0.4'
+  alternatives: []
+    #  - name: graphite
+    #    path: /opt/git/ipmi-proxy/current/src/ipmi-proxy-tool.py
+    #    link: /usr/local/bin/ipmi-proxy-tool.py
+    #  - name: sync-proxy-cache.py
+    #    path: /opt/git/ipmi-proxy/current/src/sync-proxy-cache.py
+    #    link: /usr/local/bin/sync-proxy-cache.py
+  cleanup: []
+
+  remote_poll:
+    enabled: True
+    port: 8081
+    allowed_networks:
+      - 127.0.0.1/32
+  mysql:
+    enabled: True
+    host: "{{ database.host }}"
+    port: "{{ database.port }}"
+    database: "{{ database.users.graphite.database|default('graphite') }}"
+    username: "{{ database.users.graphite.username|default('graphite') }}"
+    password: "{{ database.users.graphite.password|default('graphite') }}"
+  secret_key: SECRETKEY
+  amqp:
+    enabled: False
+    verbose: False
+    host: localhost
+    port: 5672
+    vhost: /graphite
+    user: graphite
+    password: graphite
+    exchange: metrics
+    metric_name_in_body: True
+  storage_schemas:
+    tap:
+      name: tap
+      comment: "1min for 7days"
+      pattern: 'tap.*'
+      retentions: "60s:7d"
+    carbon:
+      name: carbon
+      comment: internal carbon stats
+      pattern: '^carbon\.'
+      retentions: "60s:90d"
+    default:
+      name: default
+      comment: "1min for 90days, 5min for1year"
+      pattern: '.*'
+      retentions: "60s:90d,300s:365d"
+
+  logs:
+    # See logging-config/defaults/main.yml for filebeat vs. logstash-forwarder example
+    - paths:
+        - /var/log/graphite/carbon-cache-a.log
+      fields:
+        tags: graphite,carbon-cache
+    - paths:
+        - /var/log/graphite/webapp/info.log
+        - /var/log/graphite/webapp/exception.log
+      fields:
+        tags: graphite,webapp
+    - paths:
+        - /var/log/apache2/graphite_access.log
+      fields:
+        tags: apache_access,graphite
+    - paths:
+        - /var/log/apache2/graphite_error.log
+      fields:
+        tags: apache_error,graphite
+
+  logging:
+    forwarder: filebeat
+
+  logrotate:
+    frequency: 'daily'
+    rotations: 7
+    size: '1G'

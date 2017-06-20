@@ -1,0 +1,77 @@
+---
+- name: install apache package
+  apt:
+    pkg: apache2
+  register: result
+  until: result|succeeded
+  retries: 5
+
+- name: install www-browser
+  apt:
+    pkg: lynx-cur
+  register: result
+  until: result|succeeded
+  retries: 5
+
+- name: install apache module packages
+  apt:
+    pkg: "{{ item }}"
+  register: result
+  until: result|succeeded
+  retries: 5
+  with_items: "{{ apache.modules }}"
+
+- name: enable apache modules
+  apache2_module:
+    name: "{{ item }}"
+  with_items:
+    - headers
+    - ssl
+    - rewrite
+  notify: reload apache
+
+- name: install passlib pip module
+  pip:
+    name: passlib
+  register: result
+  until: result|succeeded
+  retries: 5
+
+- name: disable default vhost
+  file: dest=/etc/apache2/sites-enabled/{{ item }}
+        state=absent
+  with_items:
+    - 000-default
+    - 000-default.conf
+    - default
+    - default.conf
+  notify: stop apache
+
+- name: configure apache listen ports
+  template: src=etc/apache2/ports.conf
+            dest=/etc/apache2/ports.conf
+  notify: reload apache
+
+- name: include ports.conf
+  lineinfile: dest=/etc/apache2/apache2.conf
+              line="Include ports.conf"
+              regexp="^Include\sports\.conf$"
+              state=present
+  notify: reload apache
+
+- meta: flush_handlers
+
+- name: ensure apache is running
+  service: name=apache2 state=started enabled=yes
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

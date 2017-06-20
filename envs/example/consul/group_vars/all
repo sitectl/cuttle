@@ -1,0 +1,4 @@
+consul:
+  bind_interface: "{{ public_interface }}"
+  bootstrap_expect: 3
+  client_address: "0.0.0.0"

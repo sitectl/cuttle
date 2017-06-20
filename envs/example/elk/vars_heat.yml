@@ -1,0 +1,22 @@
+---
+datacenter: ci
+public_interface: ansible_eth0
+private_interface: ansible_eth0
+public_ipv4: "{{ hostvars[inventory_hostname][public_interface]['ipv4'] }}"
+private_ipv4: "{{ hostvars[inventory_hostname][private_interface]['ipv4'] }}"
+admin_user: blueboxadmin
+
+common:
+  users:
+    - name: blueboxadmin
+      #pass:
+      public_keys:
+        - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCsHndVMf3mu6THq7Fde7TC2SjfRlfPpBfQbMwA4HS44NljWOBuFGUyE3roRxSvGxEamPH79TXKURegLZEuh1l92ADrDEU4SpcHgUjIfyQwH5SP0Y2/uKRKpj26MbCx8yCyV9ra7YpLYvIFzxiLtp7xN2zu53mvhxHzj1SK7YkkAvmYa7At2yTBsyBu7+MTGtYCpPC1YsP7IZbc900HwwffBJo011puySHxV4xWi8lxqG43lqx0d1BILITMPXXR6QzOciB5wfsTHMTf6o4/Hzk4URjKLIbEfr1lby8rE+aKWEN2GuSuwrw7XERQuSr1PRi5pJWvLNfbyOT9TzO8DOkf
+  sysdig:
+    enabled: False
+  firewall:
+    friendly_networks: []
+  ssh:
+    allow_from:
+      - "0.0.0.0/0"
+    disable_dns: True

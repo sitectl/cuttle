@@ -1,0 +1,50 @@
+---
+- name: create pxelinux.cfg directory
+  file:
+    path: "{{ pxe.tftpboot_path }}/pxelinux.cfg"
+    state: directory
+    mode: 0755
+
+- name: create server preseeds directory
+  file:
+    path: "{{ pxe.tftpboot_path }}/servers"
+    state: directory
+    mode: 0755
+
+- name: create default tftp boot file
+  template:
+    src: tftpboot/pxelinux.cfg/default
+    dest: "{{ pxe.tftpboot_path }}/pxelinux.cfg/default"
+
+- name: create per machine tftp boot files
+  template:
+    src: tftpboot/pxelinux.cfg/server
+    dest: "{{ pxe.tftpboot_path }}/pxelinux.cfg/01-{{ item.mac | replace(':','-') | lower }}"
+  with_items: "{{ pxe.servers }}"
+
+- name: create per machine preseeds
+  template:
+    src: "tftpboot/os/{{ item.preseed|default('default_preseed.cfg') }}"
+    dest: "{{ pxe.tftpboot_path }}/servers/{{ item.mac | replace(':','-') | lower }}.cfg"
+  with_items: "{{ pxe.servers }}"
+
+- name: create default post-install script
+  template:
+    src: tftpboot/post_install.sh
+    dest: "{{ pxe.tftpboot_path }}/servers/default_post.sh"
+  with_items:
+    - none
+
+- name: create per machine post-install scripts
+  template:
+    src: "tftpboot/post_install.sh"
+    dest: "{{ pxe.tftpboot_path }}/servers/{{ item.mac | replace(':','-') | lower }}_post.sh"
+  with_items: "{{ pxe.servers }}"
+
+- name: create tftp config
+  template:
+    src: etc/dnsmasq.d/pxeboot.conf
+    dest: /etc/dnsmasq.d/pxeboot.conf
+
+- command: /bin/true
+  notify: restart dnsmasq

@@ -1,0 +1,97 @@
+---
+- name: create mirror user
+  user: name=mirror comment=mirror shell=/bin/false
+        system=yes home=/nonexistent
+
+- name: enable apache mods for pypi-mirror
+  apache2_module: name={{ item }}
+  with_items:
+    - proxy_http
+    - rewrite
+    - headers
+
+- name: install virtualenv
+  apt: pkg=python-virtualenv
+
+- name: install devpi
+  pip: name=devpi virtualenv="{{ pypi_mirror.virtualenv }}"
+  notify:
+    - initialize pypi-mirror server
+
+- name: devpi update-alternatives
+  alternatives: name=devpi
+                path={{ pypi_mirror.virtualenv }}/bin/devpi
+                link=/usr/local/bin/devpi
+
+- name: create pypi mirror location
+  file: name="{{ pypi_mirror.mirror_location }}" state=directory
+        owner=mirror
+
+- name: create pypi htpasswd location
+  file: name="{{ pypi_mirror.htpasswd_location }}" state=directory
+        owner=mirror
+
+- name: pypi_mirror service
+  upstart_service: name=pypi_mirror
+                   cmd={{ pypi_mirror.virtualenv }}/bin/devpi-server
+                   args="--port {{ pypi_mirror.port }} --host {{ pypi_mirror.ip }} --serverdir {{ pypi_mirror.mirror_location }} --restrict-modify=root --role {{ pypi_mirror.role }} {% if pypi_mirror.master_url %}--master {{ pypi_mirror.master_url }}{% endif %} {% if pypi_mirror.offline_mode|bool %}--offline-mode{% endif %}"
+                   user=mirror
+  notify: restart pypi_mirror server
+
+- name: add pypy_mirror apache vhost
+  template: src=etc/apache2/sites-available/pypi_mirror
+            dest=/etc/apache2/sites-available/pypi_mirror.conf
+  notify:
+    - restart apache
+
+- name: enable pypy_mirror vhost
+  apache2_site: state=enabled name=pypi_mirror
+  notify:
+    - restart apache
+
+- meta: flush_handlers
+
+- name: ensure apache is running
+  service: name=apache2 state=started enabled=yes
+
+- name: ensure pypi is running
+  service: name=pypi_mirror state=started enabled=yes
+
+- name: ensure devpi is available
+  wait_for:
+    port: 4040
+    delay: 0
+    timeout: 300
+
+- name: wait for devpi replication to finish
+  uri:
+    url: "http://{{ pypi_mirror.ip }}:{{ pypi_mirror.port }}/+status"
+    method: GET
+  when: pypi_mirror.master_url
+  register: pypi_mirror_replication_status
+  until: pypi_mirror_replication_status.status == 200 and pypi_mirror_replication_status.json.result['serial'] == pypi_mirror_replication_status.json.result['master-serial']
+  retries: 60
+  delay: 10
+
+- include: users.yml
+
+- name: allow apt-mirror traffic
+  ufw: rule=allow
+       to_port={{ item.port }}
+       src={{ item.src }}
+       proto={{ item.protocol }}
+  with_items: "{{ pypi_mirror.firewall }}"
+  tags:
+    - firewall
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

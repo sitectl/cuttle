@@ -1,0 +1,12 @@
+---
+- name: install sensu metrics checks
+  sensu_metrics_check:
+    name: "{{ item.name }}"
+    plugin: "{{ item.plugin }}"
+    interval: "{{ item.interval|default(60) }}"
+    args: "{{ item.args|default('') }} --user {{ rabbitmq.users[0].username }}  --password {{ rabbitmq.users[0].password }} --scheme {{ monitoring_common.graphite.host_prefix }}.rabbitmq"
+    service_owner: "{{ monitoring_common.service_owner }}"
+  with_items:
+    - name: metrics-rabbitmq-overview
+      plugin: metrics-rabbitmq-overview.rb
+  notify: restart sensu-client missing ok

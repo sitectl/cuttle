@@ -1,0 +1,81 @@
+heat_template_version: 2013-05-23
+
+description: HOT template for sitecontroller mirror server
+
+parameters:
+  image:
+    type: string
+    description: Name of image to use for servers
+    default: ubuntu-14.04
+  flavor:
+    type: string
+    description: Flavor to use for servers
+    default: m1.xlarge
+  net_id:
+    type: string
+    description: ID of Neutron network into which servers get deployed
+    default: ba0fdd03-72b5-41eb-bb67-fef437fd6cb4
+  floating_ip_pool:
+    type: string
+    description: name of floating ip pool to use
+    default: external
+
+resources:
+
+  server_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      description: Security group for SC Registry
+      name: sc-mirror
+      rules:
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: tcp
+          port_range_min: 22
+          port_range_max: 22
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: tcp
+          port_range_min: 80
+          port_range_max: 80
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: tcp
+          port_range_min: 81
+          port_range_max: 81
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: icmp
+
+  sc_ssh_key:
+    type: OS::Nova::KeyPair
+    properties:
+      save_private_key: true
+      name: sc-mirror
+
+  mirror01_floating_ip:
+     type: OS::Nova::FloatingIP
+     properties:
+       pool: { get_param: floating_ip_pool }
+
+  mirror01:
+    type: OS::Nova::Server
+    properties:
+      name: mirror01
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_resource: sc_ssh_key }
+      user_data_format: RAW
+      security_groups: [{ get_resource: server_security_group }]
+      networks:
+        - network: { get_param: net_id }
+
+  mirror01_fip_association:
+     type: OS::Nova::FloatingIPAssociation
+     properties:
+       floating_ip: { get_resource: mirror01_floating_ip }
+       server_id: { get_resource: mirror01 }
+
+outputs:
+  mirror01:
+    description: IP address of mirror01 in provider network
+    value: { get_attr: [ mirror01_floating_ip, ip ] }
+  private_key:
+    description: Private key
+    value: { get_attr: [ sc_ssh_key, private_key ] }

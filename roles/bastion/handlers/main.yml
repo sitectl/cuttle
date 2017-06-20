@@ -1,0 +1,5 @@
+---
+- name: restart yubiauthd
+  service:
+    name: yubiauthd
+    state: restarted

@@ -1,0 +1,24 @@
+---
+- name: write ipsec-notify.sh
+  template: src=etc/ipsec.d/ipsec-notify.sh dest=/etc/ipsec.d/ipsec-notify.sh
+            owner=root group=root mode=0755
+  notify:
+    - restart {{ ipsec.implementation.service }}
+
+- name: avoid strongswan adjusting routes 
+  lineinfile: dest=/etc/strongswan.d/charon.conf regexp="^    \# install_routes"
+              line="    install_routes = no"
+  notify:
+    - restart {{ ipsec.implementation.service }}
+
+- name: set config_file for strongswan
+  lineinfile: dest=/etc/strongswan.d/starter.conf regexp="^  config_file"
+              insertbefore="^}" line="  config_file = /etc/ipsec.conf"
+  notify:
+    - restart {{ ipsec.implementation.service }}
+
+- name: adjust sysctls
+  sysctl: name={{ item.name }} value={{ item.value }} reload=yes
+  with_items:
+    - {name: "net.ipv4.conf.{{ ipsec.vti_interface }}.rp_filter", value: 0}
+    - {name: "net.ipv4.conf.{{ ipsec.vti_interface }}.disable_policy", value: 1}

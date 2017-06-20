@@ -1,0 +1,36 @@
+---
+ipsec:
+  implementation:
+    package: strongswan
+    service: strongswan
+  nat_enabled: False
+  config:
+    nat_traversal: "yes"
+    virtual_private: "%v4:10.0.0.0/8,%v4:192.168.0.0/16,%v4:172.16.0.0/12,%v4:!{{ hostvars['ipsec-client'][private_interface]['ipv4']['network'] }}/{{ hostvars['ipsec-client'][private_interface]['ipv4']['netmask'] }}"
+  connections:
+    example:
+      authby: "secret"
+      auto: "start"
+      compress: "no"
+      dpdaction: restart
+      dpddelay: 30
+      dpdtimeout: 120
+      esp: "aes256-sha256-modp2048"
+      forceencaps: "yes"
+      ike: "aes256-sha256-modp2048"
+      ikelifetime: 86400s
+      keyingtries: "%forever"
+      keylife: 3600s
+      leftupdown: "/etc/ipsec.d/ipsec-notify.sh"
+      mark: 500
+      type: "tunnel"
+      rekeymargin: 540s
+      rekey: "yes"
+      left: "{{ hostvars['ipsec-server'][public_interface]['ipv4']['address'] }}"
+      leftsubnet: "{{ hostvars['ipsec-server'][private_interface]['ipv4']['network'] }}/{{ hostvars['ipsec-server'][private_interface]['ipv4']['netmask'] }}"
+      right: "{{ hostvars['ipsec-client'][public_interface]['ipv4']['address'] }}"
+      rightsubnet: "{{ hostvars['ipsec-client'][private_interface]['ipv4']['network'] }}/{{ hostvars['ipsec-client'][private_interface]['ipv4']['netmask'] }}"
+  sharedkeys:
+    example:
+      remote_ip:  "{{ hostvars['ipsec-client'][public_interface]['ipv4']['address'] }}"
+      key: "dfgffk4ltjk3jkl234t234t"

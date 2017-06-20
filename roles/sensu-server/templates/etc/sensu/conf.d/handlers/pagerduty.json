@@ -1,0 +1,24 @@
+{
+  "handlers": {
+    "pagerduty": {
+      "type": "pipe",
+      "command": "/etc/sensu-server/handlers/pagerduty.rb",
+      "severities": [
+        "ok",
+        "critical"
+      ]
+    }
+  },
+  "pagerduty": {
+    "api_key_default": "{{ sensu.server.handlers.pagerduty.api_key_default }}",
+    "api_keys": {
+{% for item in sensu.server.handlers.pagerduty.api_keys -%}
+  {% if loop.last %}
+        "{{ item['name'] }}": "{{ item['api_key'] }}"
+  {% else %}
+        "{{ item['name'] }}": "{{ item['api_key'] }}",
+  {% endif %}
+{% endfor -%}
+    }
+  }
+}

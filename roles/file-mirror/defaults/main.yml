@@ -1,0 +1,61 @@
+---
+file_mirror:
+  mirror_location: '/opt/file_mirror/files'
+
+# Files to mirror
+  files: []
+
+# Files/Directories to remove
+# should be relative path from `mirror_location`
+  remove: []
+
+# Swift files to mirror
+# ENV vars to push to swift
+  swift:
+    clouds: {}
+#      softlayer:
+#        ST_AUTH: https://dal05.objectstorage.softlayer.net/auth/v1.0/
+#        ST_USER: dsr235r3jdk32rtf23
+#        ST_KEY: cfgfrfjkj4lk2gt423
+# Swift objects to donwload
+    objects: []
+#     - file: secfixdb.Ubuntu14.04
+#       container: lssecfix
+#       cloud: softlayer
+  auth: []
+  apache:
+    enabled: true
+    http_redirect: False
+    servername: mirror01.local
+    serveraliases:
+      - mirror01
+    port: 80
+    ip: '*'
+    ssl:
+      enabled: False
+      port: 443
+      ip: '*'
+      name: sitecontroller
+      cert: ~
+      key: ~
+      intermediate: ~
+  firewall:
+    - port: 80
+      protocol: tcp
+      src: 0.0.0.0/0
+  logs:
+    # See logging-config/defaults/main.yml for filebeat vs. logstash-forwarder example
+    - paths:
+        - /var/log/upstart/file_mirror.log
+      fields:
+        tags: mirror,file-mirror
+    - paths:
+        - /var/log/apache2/file_mirror-access.log
+      fields:
+        tags: mirror,apache_access
+    - paths:
+        - /var/log/apache2/file_mirror-error.log
+      fields:
+        tags: mirror,apache_error
+  logging:
+    forwarder: filebeat

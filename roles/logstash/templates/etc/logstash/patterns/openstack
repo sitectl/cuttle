@@ -1,0 +1,3 @@
+# {{ ansible_managed }}
+
+OPENSTACK_DATE %{YEAR}-%{MONTHNUM}-%{MONTHDAY} %{HOUR}:?%{MINUTE}(?::?%{SECOND})

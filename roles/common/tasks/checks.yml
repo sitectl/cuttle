@@ -1,0 +1,58 @@
+---
+- name: install ssh process check
+  sensu_check_dict: name="check-sshd-process" check="{{ sensu_checks.common.check_sshd_process }}"
+  notify: restart sensu-client missing ok
+
+- name: install ntp process check
+  sensu_check_dict: name="check-ntp-process" check="{{ sensu_checks.common.check_ntp_process }}"
+  notify: restart sensu-client missing ok
+  when: common.ntpd.enabled|bool
+
+- name: install disk space check
+  sensu_check_dict: name=check-disk-space check="{{ sensu_checks.common.check_disk_space }}"
+  notify: restart sensu-client missing ok
+
+# below needs dictifying
+
+- name: cpu check
+  sensu_check: name=cpu plugin=check-cpu.rb args='-w 80 -c 90' service_owner={{ monitoring_common.service_owner }}
+  notify: restart sensu-client missing ok
+
+- name: disk check
+  sensu_check: name=disk plugin=check-disk.rb service_owner={{ monitoring_common.service_owner }}
+  notify: restart sensu-client missing ok
+
+- name: ntp-offset check
+  sensu_check: name=ntp-offset plugin=check-ntp.rb service_owner={{ monitoring_common.service_owner }}
+  notify: restart sensu-client missing ok
+
+- name: syslog check
+  sensu_check: name=syslog-socket plugin=check-syslog-socket.rb
+               service_owner={{ monitoring_common.service_owner }}
+  notify: restart sensu-client missing ok
+
+- name: memory check
+  sensu_check: name=memory plugin=check-mem.sh
+               args="-w {{ monitoring_common.checks.memory.warning }} -c {{ monitoring_common.checks.memory.critical }}"
+               service_owner={{ monitoring_common.service_owner }}
+  notify: restart sensu-client missing ok
+
+- name: add sensu to adm group so it can read log files
+  user: name=sensu groups=adm append=yes
+
+- name: log files greater than 1gb check
+  sensu_check: name=log_file_size plugin=check-for-large-files.sh
+               args='-d /var/log -s 1G' use_sudo=true
+               service_owner={{ monitoring_common.service_owner }}
+  notify: restart sensu-client missing ok
+
+- name: raid check
+  sensu_check: name=check-raid plugin=check-raid.sh interval=300 occurrences=1
+               args="-z {{ monitoring_common.checks.raid.severity }}"
+               service_owner={{ monitoring_common.service_owner }}
+  notify: restart sensu-client missing ok
+
+- name: kernel-options
+  sensu_check: name=kernel-options plugin=check-kernel-options.rb state=absent
+               service_owner={{ monitoring_common.service_owner }}
+  notify: restart sensu-client missing ok

@@ -1,0 +1,117 @@
+heat_template_version: 2013-05-23
+
+description: HOT template for ELK Nodes
+
+parameters:
+  image:
+    type: string
+    description: Name of image to use for servers
+    default: ubuntu-14.04
+  flavor:
+    type: string
+    description: Flavor to use for servers
+    default: m1.medium
+  net_id:
+    type: string
+    description: ID of Neutron network into which servers get deployed
+    default: 54992b8d-6d53-4f90-9956-78cea7c01003
+  floating_ip_pool:
+    type: string
+    description: name of floating ip pool to use
+    default: external
+
+resources:
+
+  server_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      description: Security group for SC testing.
+      name: test-security-group
+      rules:
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: tcp
+          port_range_min: 22
+          port_range_max: 22
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: icmp
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: tcp
+          port_range_min: 80
+          port_range_max: 80
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: tcp
+          port_range_min: 443
+          port_range_max: 443
+        - remote_ip_prefix: 192.168.0.0/22
+          protocol: icmp
+        - remote_ip_prefix: 192.168.0.0/22
+          protocol: tcp
+          port_range_min: 1
+          port_range_max: 65535
+        - remote_ip_prefix: 192.168.0.0/22
+          protocol: udp
+          port_range_min: 1
+          port_range_max: 65535
+
+  sc_ssh_key:
+    type: OS::Nova::KeyPair
+    properties:
+      save_private_key: true
+      name: sitecontroller
+
+  elk01:
+    type: OS::Nova::Server
+    properties:
+      name: elk01
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_resource: sc_ssh_key }
+      user_data_format: RAW
+      security_groups: [{ get_resource: server_security_group }]
+      networks:
+        - network: { get_param: net_id }
+
+  elk01_floating_ip:
+     type: OS::Nova::FloatingIP
+     properties:
+       pool: { get_param: floating_ip_pool }
+
+  elk01_fip_association:
+     type: OS::Nova::FloatingIPAssociation
+     properties:
+       floating_ip: { get_resource: elk01_floating_ip }
+       server_id: { get_resource: elk01 }
+
+  elk02:
+    type: OS::Nova::Server
+    properties:
+      name: elk02
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_resource: sc_ssh_key }
+      user_data_format: RAW
+      security_groups: [{ get_resource: server_security_group }]
+      networks:
+        - network: { get_param: net_id }
+
+  elk02_floating_ip:
+     type: OS::Nova::FloatingIP
+     properties:
+       pool: { get_param: floating_ip_pool }
+
+  elk02_fip_association:
+     type: OS::Nova::FloatingIPAssociation
+     properties:
+       floating_ip: { get_resource: elk02_floating_ip }
+       server_id: { get_resource: elk02 }
+
+outputs:
+  elk01:
+    description: IP address of elk01 in provider network
+    value: { get_attr: [ elk01_floating_ip, ip ] }
+  elk02:
+    description: IP address of elk02 in provider network
+    value: { get_attr: [ elk02_floating_ip, ip ] }
+  private_key:
+    description: Private key
+    value: { get_attr: [ sc_ssh_key, private_key ] }

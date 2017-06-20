@@ -1,0 +1,36 @@
+{
+{% if consul.join_at_start is defined and consul.join_at_start %}
+  "start_join": {{ hostvars|consul_server_ips(groups)|to_nice_json }},
+{% endif %}
+{% if consul.disable_remote_exec is defined and consul.disable_remote_exec %}
+  "disable_remote_exec": {{ "true" if consul.disable_remote_exec else "false" }},
+{% endif %}
+  "domain": "{{ consul.domain }}",
+  "data_dir": "{{ consul.data_path }}",
+  "log_level": "{{ consul.log_level }}",
+  "node_name": "{{ consul.node_name }}",
+  "server": {{ "true" if consul.is_server else "false" }},
+  "client_addr": "{{ consul.client_address }}",
+  "bind_addr":   "{{ hostvars[inventory_hostname]['ansible_' + consul.bind_interface]['ipv4']['address'] }}",
+{% if consul.advertise_address is defined %}
+  "advertise_addr": "{{ consul.advertise_address }}",
+{% endif %}
+  "datacenter": "{{ consul.datacenter }}",
+{% if consul.is_server and consul.bootstrap is defined %}
+  "bootstrap": {{ "true" if consul.bootstrap else "false" }},
+{% endif %}
+{% if consul.is_server and consul.bootstrap_expect is defined %}
+  "bootstrap_expect": {{ consul.bootstrap_expect }},
+{% endif %}
+{% if consul.encrypt_key is defined %}
+  "encrypt": "{{ consul.encrypt_key }}",
+{% endif %}
+{% if consul.watches is defined %}
+  "watches": {{ consul.watches|to_nice_json }},
+{% endif %}
+{% if consul.encrypt is defined %}
+  "encrypt": "{{ consul.encrypt }}",
+{% endif %}
+  "rejoin_after_leave": {{ "true" if consul.rejoin_after_leave else "false" }},
+  "leave_on_terminate": {{ "true" if consul.leave_on_terminate else "false" }}
+}

@@ -1,0 +1,54 @@
+---
+- name: lay down elk-stats prediction files
+  template: src=opt/sitecontroller/{{ item }}
+            dest=/opt/sitecontroller/{{ item }}
+            mode=0775 owner=root group=sensu
+  with_items:
+    - scripts/elk-stats-collection.py
+    - scripts/elk-stats.py
+    - sensu-plugins/elk-stats-metrics.rb
+  tags: elk-stats
+
+- name: designate folder for elk stat file collection
+  file: 
+    dest: /opt/sitecontroller/elk-stats-output 
+    owner: root
+    group: sensu
+    state: directory
+    mode: 0775
+    recurse: yes
+  tags: elk-stats
+ 
+- name: setup cronjob for elk-stats-collection
+  cron:
+    name: elk-stats-collection
+    job: '/usr/bin/python /opt/sitecontroller/scripts/elk-stats-collection.py'
+    minute: "0"
+    hour: "0,6,12,18"
+  tags: elk-stats
+
+- name: install sensu metrics checks
+  sensu_metrics_check: name="{{ item.name }}" plugin="{{ item.plugin }}"
+                       interval="{{ item.interval|default(60) }}" args="{{ item.args|default('') }}
+                       --scheme {{ monitoring_common.graphite.host_prefix }}.elasticsearch"
+                       service_owner={{ monitoring_common.service_owner }}
+  with_items:
+    - name: metrics-es-cluster
+      plugin: metrics-es-cluster.rb
+    - name: metrics-es-node-graphite
+      plugin: metrics-es-node-graphite.rb
+    - name: elk-stats-metrics
+      plugin: /opt/sitecontroller/sensu-plugins/elk-stats-metrics.rb
+      interval: 21600
+      args: "--retention {{ elasticsearch.curator.actions.delete_indices.older }}"
+  notify: restart sensu-client missing ok
+  tags : elk-stats
+
+- name: set up log rotation for elk-stats
+  logrotate: name=elk-stats path=/opt/sitecontroller/elk-stats-output/stats-summary*
+  args:
+    options:
+      - maxage 90
+      - "rotate 0"
+      - missingok
+  tags: elk-stats

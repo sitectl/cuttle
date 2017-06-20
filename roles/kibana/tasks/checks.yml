@@ -1,0 +1,4 @@
+---
+- name: KIB010 install kibana process check
+  sensu_check_dict: name="check-kibana-process" check="{{ sensu_checks.kibana.check_kibana_process }}"
+  notify: restart sensu-client missing ok

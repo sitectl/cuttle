@@ -1,0 +1,19 @@
+---
+- name: assure connectivity to all nodes
+  hosts: vyatta-sitecontroller
+  gather_facts: false
+  tasks:
+    - action: ping
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true
+  max_fail_percentage: 0
+
+- name: update authorized_keys 
+  hosts: vyatta-sitecontroller
+  gather_facts: false
+  tasks:
+    - name: run script to set ssh keys
+      script: vyatta-add-ssh-keys.sh
+  any_errors_fatal: true
+  max_fail_percentage: 0
+

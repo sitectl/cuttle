@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<github-plugin-configuration plugin="github@1.13.3">
+  <configs>
+    {% for server in jenkins.github_servers %}
+    <github-server-config>
+      <apiUrl>{{ server.api_url }}</apiUrl>
+      <manageHooks>{{ server.manage_hooks|default('true') }}</manageHooks>
+      <credentialsId>{{ server.credentials_id }}</credentialsId>
+    </github-server-config>
+    {% endfor %}
+  </configs>
+</github-plugin-configuration>

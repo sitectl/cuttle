@@ -1,0 +1,12 @@
+*.pyc
+*.vdi
+.vagrant
+.tox
+build
+*.DS_Store
+*-openrc.sh
+*.retry
+ursula.log
+elk-stats
+.ssh_config
+*.log

@@ -1,0 +1,25 @@
+---
+- set_fact:
+    current_user: "{{ item }}"
+
+- name: determine existing users
+  command: sqlite3 {{ sshagentmux.auth_db }}
+           "SELECT username, GROUP_CONCAT(identity_id) FROM authorizations
+            GROUP BY username ORDER BY username"
+  register: existing_authorizations
+
+# combine() below creates a dict with the username as the key with associated identity_ids as a list for value
+- name: sort existing users
+  set_fact:
+    sorted_authorizations: "{{ sorted_authorizations|default({}) | combine({item.split('|')[0]: item.split('|')[1].split(',')}) }}"
+  with_items: "{{ existing_authorizations.stdout_lines }}"
+
+- name: add users to authorizations
+  command: sqlite3 {{ sshagentmux.auth_db }}
+           "INSERT INTO authorizations
+           VALUES ('{{ current_user.key }}', (SELECT rowid FROM identities WHERE name='{{ item }}'));"
+  when: user_groups[item] is defined and
+        user_groups[item].ssh_keys is defined and
+        (current_user.key not in sorted_authorizations or sorted_identities[item]['rowid'] not in sorted_authorizations[current_user.key])
+  with_items: "{{ (current_user.value.groups | default([])) | union([current_user.value.primary_group]) | unique }}"
+  notify: reload authorization_proxy

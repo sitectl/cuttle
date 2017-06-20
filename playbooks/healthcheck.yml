@@ -1,0 +1,22 @@
+---
+- name: force gather facts for tagged, or limit runs
+  hosts: all
+  gather_facts: force
+  tags: ['always']
+
+- name: network tests 
+  hosts: all
+  tasks:
+    - name: check default route exists
+      shell: ip route | grep default
+
+    - name: check dns resolution
+      command: host mirror.openstack.bbg
+
+    - name: check network mtu 1410 - no fragementation
+      command: ping -M do -s 1410 -c 3 -t 5 mirror.openstack.bbg
+
+    - name: check network mtu fragmentation - yes fragmentation
+      command: ping -M want -s 8992 -c 3 -t 5 mirror.openstack.bbg
+  environment: "{{ env_vars|default({}) }}"
+

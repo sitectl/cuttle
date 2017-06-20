@@ -1,0 +1,4 @@
+---
+- name: install consul process check
+  sensu_check_dict: name="check-consul-process" check="{{ sensu_checks.consul.check_consul_process }}"
+  notify: restart sensu-client missing ok

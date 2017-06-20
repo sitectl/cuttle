@@ -1,0 +1,4 @@
+---
+- name: install dnsmasq process check
+  sensu_check_dict: name="check-dnsmasq-process" check="{{ sensu_checks.dnsmasq.check_dnsmasq_process }}"
+  notify: restart sensu-client missing ok

@@ -1,0 +1,6 @@
+---
+- name: restart vault server
+  service: name=vault state=restarted
+
+- name: stop vault server
+  service: name=vault state=stopped

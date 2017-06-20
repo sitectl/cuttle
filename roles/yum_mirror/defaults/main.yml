@@ -1,0 +1,58 @@
+---
+yum_mirror:
+  enabled: True
+  pull_files: False
+  cron: 0 6 * * *
+  apache:
+    http_redirect: False
+    servername: mirror01.local
+    serveraliases:
+      - mirror01
+    port: 80
+    ip: '*'
+    ssl:
+      enabled: False
+      port: 443
+      ip: '*'
+      name: sitecontroller
+      cert: ~
+      key: ~
+      intermediate: ~
+  firewall:
+    - port: 80
+      protocol: tcp
+      src: 0.0.0.0/0
+    - port: 443
+      protocol: tcp
+      src: 0.0.0.0/0
+  path: /opt/yum-mirror
+  htpasswd_location: /opt/yum-mirror/etc
+  repositories: {}
+  # EXAMPLE
+  # elastic:
+  #   description: elastic
+  #   enabled: True
+  #   url: http://sensu.global.ssl.fastly.net/yum/$basearch/
+  #   key_url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+  #   archs:
+  #     - arch: x86_64
+  #     - arch: i686
+  # sensu:
+  #   description: sensu
+  #   enabled: True
+  #   gpgcheck: False
+  #   archs:
+  #     - arch: x86_64
+  #       url: http://sensu.global.ssl.fastly.net/yum/el/7/x86_64/
+  logs:
+    # See logging-config/defaults/main.yml for filebeat vs. logstash-forwarder example
+    - paths:
+        - /var/log/apache2/yum_mirror-access.log
+      fields:
+        tags: mirror,apache_access
+    - paths:
+        - /var/log/apache2/yum_mirror-error.log
+      fields:
+        tags: mirror,apache_error
+  logging:
+    forwarder: filebeat

@@ -1,0 +1,6 @@
+---
+dependencies:
+  - role: apt-repos
+    repos:
+      - repo: 'deb {{ apt_repos.docker.repo }} ubuntu-trusty main'
+        key_url: '{{ apt_repos.docker.key_url }}'

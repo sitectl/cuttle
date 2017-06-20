@@ -1,0 +1,52 @@
+---
+- name: "create /root/.ssh path"
+  file:
+    dest: /root/.ssh
+    state: directory
+    owner: root
+
+- name: write public keys to system
+  copy:
+    content: "{{ item.value.ssh_keys.public }}"
+    dest: /root/.ssh/{{ item.key }}-id_rsa.pub
+  when: item.value.ssh_keys is defined and
+        item.value.ssh_keys.private is defined and
+        item.value.ssh_keys.public is defined
+  with_dict: "{{ user_groups }}"
+
+- name: write private keys to system
+  copy:
+    content: "{{ item.value.ssh_keys.private }}"
+    dest: /root/.ssh/{{ item.key }}-id_rsa
+    mode: 0400
+  when: item.value.ssh_keys is defined and
+        item.value.ssh_keys.private is defined
+  with_dict: "{{ user_groups }}"
+
+- include: ssh_agent.yml
+  with_dict: "{{ user_groups }}"
+  tags: ['ssh-agent']
+
+- name: determine existing keys
+  command: sqlite3 {{ sshagentmux.auth_db }}
+           "SELECT name, rowid, key_digest FROM identities
+            ORDER BY name"
+  register: existing_identities
+
+- name: sort existing keys
+  set_fact:
+    sorted_identities: "{{ sorted_identities|default({}) | combine({item.split('|')[0]: {'rowid': item.split('|')[1], 'key_digest': item.split('|')[2]}}) }}"
+  with_items: "{{ existing_identities.stdout_lines }}"
+
+- name: add ssh key fingerprints to identities
+  command: sqlite3 {{ sshagentmux.auth_db }}
+           "INSERT OR REPLACE INTO identities
+           VALUES ('{{ item.value.ssh_keys.fingerprint }}', '{{ item.key }}');"
+  when: item.value.ssh_keys is defined and
+        item.value.ssh_keys.fingerprint is defined and
+        (item.key not in sorted_identities or sorted_identities[item.key]['key_digest'] != item.value.ssh_keys.fingerprint)
+  with_dict: "{{ user_groups }}"
+  notify: reload authorization_proxy
+
+- include: authorizations.yml
+  with_dict: "{{ users_to_add }}"

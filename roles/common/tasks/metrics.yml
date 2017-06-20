@@ -1,0 +1,30 @@
+---
+- name: vmstat metrics check
+  sensu_metrics_check: name=vmstat-metrics plugin=vmstat-metrics.rb
+                       args='--scheme {{ monitoring_common.graphite.host_prefix }}.system.vmstat'
+  notify: restart sensu-client missing ok
+
+- name: load metrics check
+  sensu_metrics_check: name=load-metrics plugin=load-metrics.rb
+                       args='--scheme {{ monitoring_common.graphite.host_prefix }}.system.load'
+  notify: restart sensu-client missing ok
+
+- name: memory metrics check
+  sensu_metrics_check: name=memory-metrics plugin=memory-metrics.rb
+                       args='--scheme {{ monitoring_common.graphite.host_prefix }}.system.memory'
+  notify: restart sensu-client missing ok
+
+- name: network metrics check
+  sensu_metrics_check: name=network-metrics plugin=metrics-net.rb
+                       args='--scheme {{ monitoring_common.graphite.host_prefix }}.system.network'
+  notify: restart sensu-client missing ok
+
+- name: disk usage metrics check
+  sensu_metrics_check: name=disk-usage-metrics plugin=metrics-disk-usage.rb
+                       args='-f --scheme {{ monitoring_common.graphite.host_prefix }}.system.disk-usage'
+  notify: restart sensu-client missing ok
+
+- name: disk metrics check
+  sensu_metrics_check: name=disk-metrics plugin=metrics-disk.rb
+                       args='--scheme {{ monitoring_common.graphite.host_prefix }}.system.disk'
+  notify: restart sensu-client missing ok

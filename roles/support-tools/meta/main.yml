@@ -1,0 +1,12 @@
+---
+dependencies:
+  - role: git-repos
+  - role: source-install
+    source_install:
+      name: support-tools
+      git: "{{ support_tools.git }}"
+      system_deps: "{{ support_tools.system_deps }}"
+      virtualenvs: "{{ support_tools.virtualenvs }}"
+      pip_packages: "{{ support_tools.pip_packages }}"
+      alternatives: "{{ support_tools.alternatives }}"
+      cleanup: "{{ support_tools.cleanup }}"

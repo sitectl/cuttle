@@ -1,0 +1,19 @@
+---
+dependencies:
+  - role: apache
+  - role: git-repos
+  - role: source-install
+    source_install:
+      name: ipmi-proxy
+      git: "{{ ipmi_proxy.git }}"
+      system_deps: "{{ ipmi_proxy.system_deps }}"
+      virtualenvs: "{{ ipmi_proxy.virtualenvs }}"
+      alternatives: "{{ ipmi_proxy.alternatives }}"
+    tags:
+      - source-install
+  - role: logging-config
+    service: ipmi_proxy
+    logdata: "{{ ipmi_proxy.logs }}"
+    forward_type: "{{ ipmi_proxy.logging.forwarder }}"
+    when: logging.enabled|default("True")|bool
+  - role: sensu-check

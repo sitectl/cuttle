@@ -1,0 +1,44 @@
+---
+- name: create collectd user
+  user: name=collectd comment=collectd shell=/bin/false
+        system=yes home=/nonexistent
+
+- name: install collectd packages
+  apt: name={{ item }} state=present update_cache=yes
+  with_items:
+    - collectd
+    - collectd-utils
+
+- name: create config dirs
+  file: dest={{ collectd.plugin_conf_dir }} state=directory owner=root mode=0755
+
+- name: configure collectd
+  template: src=etc/collectd/collectd.conf dest=/etc/collectd/collectd.conf
+  notify:
+    - restart collectd
+
+- name: configure collectd plugins
+  template: src=etc/collectd/plugins/{{ item }}.conf dest={{ collectd.plugin_conf_dir }}/{{ item }}.conf
+  with_items:
+    - amqp
+    - system
+    - logfile
+  notify:
+    - restart collectd
+
+- meta: flush_handlers
+
+- name: ensure collectd is running
+  service: name=collectd state=started enabled=yes
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

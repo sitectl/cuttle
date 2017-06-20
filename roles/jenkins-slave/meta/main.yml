@@ -1,0 +1,8 @@
+---
+dependencies:
+  - role: jenkins-common
+  # NOTE: jenkins slave needs the private repo to calculate the latest version
+  - role: apt-repos
+    repos:
+      - repo: 'deb {{ apt_repos.openstack_packages.repo }} trusty main'
+        key_url: '{{ apt_repos.openstack_packages.key_url }}'

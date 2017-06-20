@@ -1,0 +1,9 @@
+# {{ ansible_managed }}
+
+# Base Kibana Config
+{{ kibana.config | to_yaml(default_flow_style=False) }}
+
+{% for plugin in kibana.plugins %}{% if plugin.config is defined %}
+# Kibana Plugin {{ plugin.name }} Config
+{{ plugin.config | to_yaml(default_flow_style=False) }}
+{% endif %}{% endfor %}

@@ -1,0 +1,8 @@
+{
+  "handlers": {
+      "metrics": {
+        "type": "set",
+        "handlers": {{ sensu.server.handlers.metrics | to_json }}
+      }
+  }
+}

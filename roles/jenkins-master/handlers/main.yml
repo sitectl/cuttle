@@ -1,0 +1,14 @@
+---
+- name: restart jenkins
+  service: name=jenkins state=started
+  changed_when: true
+  notify: wait for jenkins
+- name: wait for jenkins
+  jenkins: task=wait_for_startup url="http://{{ jenkins.host }}:{{ jenkins.port }}/{{ jenkins.prefix }}"
+           username="{{ jenkins.admin_username|default('') }}"
+           password="{{ jenkins.admin_password|default('') }}"
+  notify: restart jenkins safely
+- name: restart jenkins safely
+  jenkins: task=restart url="http://{{ jenkins.host }}:{{ jenkins.port }}/{{ jenkins.prefix }}"
+           username="{{ jenkins.admin_username|default('') }}"
+           password="{{ jenkins.admin_password|default('') }}"

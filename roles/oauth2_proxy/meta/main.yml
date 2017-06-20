@@ -1,0 +1,17 @@
+---
+dependencies:
+  - role: bbg-ssl
+    name: "oauth2_proxy"
+    ssl_cert: "{{ oauth2_proxy.apache.ssl.cert }}"
+    ssl_key: "{{ oauth2_proxy.apache.ssl.key }}"
+    ssl_intermediate: "{{ oauth2_proxy.apache.ssl.intermediate }}"
+    ssl_ca_cert: ~
+    when: oauth2_proxy.apache.ssl.enabled
+    tags: bbg-ssl
+  - role: apache
+  - role: logging-config
+    service: oauth2_proxy
+    logdata: "{{ oauth2_proxy.logs }}"
+    forward_type: "{{ oauth2_proxy.logging.forwarder }}"
+    when: logging.enabled|default("True")|bool
+  - role: sensu-check

@@ -1,0 +1,5 @@
+---
+- name: install jenkins process check
+  sensu_check_dict: name="check-jenkins-process" check="{{ sensu_checks.jenkins.check_jenkins_process }}"
+  notify: restart sensu-client missing ok
+

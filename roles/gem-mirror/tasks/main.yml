@@ -1,0 +1,80 @@
+---
+- name: create mirror user
+  user: name=mirror comment=mirror shell=/bin/false
+        system=yes home=/nonexistent
+
+- name: upgrade rubygems under ruby 2.0
+  gem:
+    name: rubygems-update
+    executable: /usr/bin/gem2.0
+    user_install: no
+  until: result|succeeded
+  retries: 5
+
+- name: refresh rubygems system after upgrade
+  command: update_rubygems
+  until: result|succeeded
+  retries: 5
+
+- name: install geminabox and other dependencies under ruby 2.0
+  gem:
+    name: "{{ item.name }}"
+    version: "{{ item.version }}"
+    executable: /usr/bin/gem2.0
+    user_install: no
+  with_items: "{{ gem_mirror.packages }}"
+  register: result
+  until: result|succeeded
+  retries: 5
+
+- name: create gem mirror config path
+  file: name="{{ gem_mirror.config_location }}" state=directory
+        owner=mirror recurse=true
+
+- name: create gem mirror files location
+  file: name="{{ gem_mirror.mirror_location }}" state=directory
+        owner=mirror recurse=true
+
+- name: geminabox config
+  template: src=opt/gem_mirror/config.ru
+            dest="{{ gem_mirror.config_location }}/config.ru"
+
+- name: unicorn config
+  template: src=opt/gem_mirror/unicorn.rb
+            dest="{{ gem_mirror.config_location }}/unicorn.rb"
+
+- name: gem_mirror service
+  upstart_service: name=gem_mirror
+                   cmd="{{ gem_mirror.bin_location }}/unicorn"
+                   args="--env production -c {{ gem_mirror.config_location }}/unicorn.rb {{ gem_mirror.config_location }}/config.ru"
+                   user=mirror
+  notify: restart gem_mirror server
+
+- meta: flush_handlers
+
+- name: ensure gem_mirror is running
+  service: name=gem_mirror state=started enabled=yes
+
+- include: apache.yml
+  when: gem_mirror.apache.enabled|bool
+
+- name: allow gem-mirror traffic
+  ufw: rule=allow
+       to_port={{ item.port }}
+       src={{ item.src }}
+       proto={{ item.protocol }}
+  with_items: "{{ gem_mirror.firewall }}"
+  tags:
+    - firewall
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

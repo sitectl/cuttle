@@ -1,0 +1,81 @@
+---
+- name: create grafana user
+  user: name=grafana groups=adm home=/usr/share/grafana
+        comment=grafana shell=/bin/false
+        system=yes
+
+- name: grafana log directory
+  file: dest=/var/log/grafana
+        owner=grafana group=adm mode=0775
+        state=directory
+
+- name: create grafana packages dir
+  file: dest=/usr/share/grafana/packages owner=grafana
+        state=directory
+
+- name: grafana default configuration
+  template: src=etc/default/grafana-server dest=/etc/default/grafana-server
+  notify:
+    - restart grafana
+
+- name: fix grafana service
+  template: src=etc/init.d/grafana-server dest=/etc/init.d/grafana-server
+            mode=0755
+
+- name: install grafana
+  apt: name="{{ 'grafana=' ~ grafana.version if grafana.version else 'grafana' }}"
+
+- name: grafana configuration
+  template: src=etc/grafana/grafana.ini dest=/etc/grafana/grafana.ini
+  notify:
+    - restart grafana
+
+- name: set up log rotation for grafana
+  logrotate: name=grafana path=/var/log/grafana/grafana*.log
+  args:
+    options:
+      - "{{ grafana.logrotate.frequency }}"
+      - "rotate {{ grafana.logrotate.rotations }}"
+      - missingok
+      - copytruncate
+      - compress
+      - notifempty
+
+- name: enabled grafana dashboards
+  template: src=dashboards/{{item}} dest=/usr/share/grafana/public/dashboards/{{item}}
+  with_items: "{{ grafana.dashboards.public.enabled }}"
+  notify:
+    - restart grafana
+
+- name: disabled grafana dashboards
+  file: path=/usr/share/grafana/public/dashboards/{{ item }} state=absent
+  with_items: "{{ grafana.dashboards.public.disabled }}"
+  notify:
+    - restart grafana
+
+- meta: flush_handlers
+
+- name: ensure grafana is running
+  service: name=grafana-server state=started enabled=yes
+
+- name: grafana firewall rules
+  ufw: rule=allow to_port={{ item.port }} proto=tcp src={{ item.src }}
+  with_items: "{{ grafana.firewall }}"
+  tags:
+    - firewall
+
+- include: datasources.yml
+  when: grafana.remote_graphite.datasources|length > 0
+  tags: grafana-datasources
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

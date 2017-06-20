@@ -1,0 +1,70 @@
+---
+apache:
+  listen:
+    - 8081
+
+database:
+  host: "{{ hostvars[groups['percona'][0]][private_interface]['ipv4']['address']|default('172.16.1.103') }}"
+  port: 3306
+  users:
+    graphite:
+      database: graphite
+      username: graphite
+      password: b82tPZ9W7Kjsba38
+      host: '%'
+    grafana:
+      database: grafana
+      username: grafana
+      password: QKBRt8Zz4j937dQS
+      host: '%'
+
+graphite:
+  host: "{{ hostvars[groups['graphite'][0]][private_interface]['ipv4']['address']|default('172.16.1.103') }}"
+  amqp:
+    enabled: False
+    verbose: False
+    host: "{{ rabbitmq.host }}"
+    port: 5672
+    vhost: /graphite
+    user: graphite
+    password: 6L2wyT9NXC6qZhQH
+    exchange: metrics
+    metric_name_in_body: True
+
+grafana:
+  host: "{{ hostvars[groups['grafana'][0]][private_interface]['ipv4']['address']|default('172.16.1.103') }}"
+  server:
+    http_port: 3001
+    http_addr: 0.0.0.0
+    root_url: "/grafana/"
+  security:
+    enabled: false
+    anonymous: true
+    admin_user: admin
+    admin_password: admin
+    secret_key: dsfdgrgrgrfewfdewgfreGregvre
+  database:
+    type: mysql
+    path: "/usr/share/grafana/data/grafana.db"
+    host: "{{ database.host }}:3306"
+    name: "{{ database.users.grafana.database }}"
+    user: "{{ database.users.grafana.username }}"
+    password: "{{ database.users.grafana.password }}"
+  firewall:
+    - port: 5671
+      src: "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+
+flapjack:
+  dashboard:
+    base_url: "http://elk01.local/flapjack/"
+  api:
+    base_url: "http://elk01.local/flapjack_api/"
+  receivers:
+    httpbroker:
+      enabled: True
+      debug: True
+  firewall:
+    - port: 3080
+      src: "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+    - port: 3081
+      src: "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"

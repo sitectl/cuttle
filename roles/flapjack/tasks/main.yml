@@ -1,0 +1,87 @@
+---
+- name: set 14.04 ruby version
+  set_fact: ruby_version=2.0
+  when: ansible_distribution_version == "14.04"
+
+- name: set 16.04 ruby version
+  set_fact: ruby_version=2.3
+  when: ansible_distribution_version == "16.04"
+
+- name: install system packages
+  apt: pkg={{ item }}
+  with_items:
+    - ruby{{ ruby_version }}
+    - ruby{{ ruby_version }}-dev
+    - flapjack
+    - flapjack-admin
+
+- name: install flapjack-diner gem
+  gem:
+    name: flapjack-diner
+    version: '~> 1.4.0'
+    executable: /usr/bin/gem{{ ruby_version }}
+    user_install: no
+  register: result
+  until: result|succeeded
+  retries: 5
+
+- name: create config dirs
+  file: dest=/etc/flapjack state=directory owner=root mode=0755
+
+- name: install config
+  template: src=etc/flapjack/flapjack_config.yaml
+            dest=/etc/flapjack/flapjack_config.yaml
+  notify:
+    - restart flapjack
+
+- name: set up log rotation for flapjack
+  logrotate: name=flapjack path=/var/log/flapjack/*.log
+  args:
+    options:
+      - "{{ flapjack.logrotate.frequency }}"
+      - "rotate {{ flapjack.logrotate.rotations }}"
+      - missingok
+      - compress
+      - copytruncate
+      - notifempty
+
+- name: httpbroker receiver service
+  upstart_service: name=flapjack-httpbroker
+                   cmd=/opt/flapjack/bin/httpbroker-nocache
+                   args="--port={{ flapjack.receivers.httpbroker.port }} --interval={{ flapjack.receivers.httpbroker.interval }} --database={{ flapjack.receivers.httpbroker.db }}{% if flapjack.receivers.httpbroker.debug %} --debug{% endif %}"
+                   user=flapjack
+  notify: restart flapjack-httpbroker
+  when: flapjack.receivers.httpbroker.enabled|bool
+
+- meta: flush_handlers
+
+- name: ensure redis-flapjack is running
+  service: name=redis-flapjack state=started enabled=yes
+
+- name: ensure flapjack is running
+  service: name=flapjack state=started enabled=yes
+
+- name: ensure flapjack httpbroker receiver is running
+  service: name=flapjack-httpbroker state=started enabled=yes
+  when: flapjack.receivers.httpbroker.enabled|bool
+
+- name: permit flapjack traffic
+  ufw: rule=allow to_port={{ item.port }} proto=tcp src={{ item.src }}
+  with_items: "{{ flapjack.firewall }}"
+  tags:
+    - firewall
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec
+
+- include: email.yml
+  when: flapjack.notifications.email.enabled|bool

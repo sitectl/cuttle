@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<jenkins.plugins.slack.SlackNotifier_-DescriptorImpl plugin="slack@1.8.1">
+  <teamDomain>{{ jenkins.slack.teamdomain }}</teamDomain>
+  <token>{{ jenkins.slack.token }}</token>
+  <room>{{ jenkins.slack.room }}</room>
+  <buildServerUrl>{{ jenkins.slack.buildserverurl }}</buildServerUrl>
+</jenkins.plugins.slack.SlackNotifier_-DescriptorImpl>

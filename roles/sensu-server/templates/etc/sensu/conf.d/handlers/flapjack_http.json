@@ -1,0 +1,3 @@
+{
+  "flapjack_http": {{ sensu.server.handlers.flapjack_http | to_nice_json }}
+}

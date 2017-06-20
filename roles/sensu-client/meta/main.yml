@@ -1,0 +1,8 @@
+---
+dependencies:
+  - role: sensu-common
+  - role: apt-repos
+    repos:
+      - repo: 'deb {{ apt_repos.sensu_checks.repo }} trusty main'
+        key_url: '{{ apt_repos.sensu_checks.key_url }}'
+    when: sensu.client.plugins_from == "apt"

@@ -1,0 +1,159 @@
+---
+- block:
+    - name: create loopback file
+      command: dd if=/dev/zero of={{ manage_disks.loopback.file }} bs=1 count=0 seek={{ manage_disks.loopback.size }}
+      args:
+        creates: "{{ manage_disks.loopback.file }}"
+
+    - name: mount loopback devices on boot
+      template:
+        src: mount-loopback.conf
+        dest: /etc/init/mount-loopback.conf
+      notify: start mount-loopback
+
+    - meta: flush_handlers
+
+  when: manage_disks.loopback.enabled|bool
+
+- block:
+    - name: install cryptsetup if needed
+      apt:
+       pkg: cryptsetup
+
+    - name: load xts module during boot
+      lineinfile:
+        dest: /etc/initramfs-tools/modules
+        line: 'xts'
+        insertafter: EOF
+      notify: update-initramfs
+  when: manage_disks.luks_volumes|length > 0
+
+- name: create volume groups
+  lvg:
+    vg: "{{ item.name }}"
+    pvs: "{{ item.pvs|join(',') }}"
+    pesize: "{{ item.pesize|default(manage_disks.defaults.pesize) }}"
+  with_items: "{{ manage_disks.volume_groups }}"
+
+- name: create logical volumes
+  lvol:
+    vg: "{{ item.volume_group }}"
+    lv: "{{ item.name }}"
+    size: "{{ item.size }}"
+  with_flattened:
+    - "{{ manage_disks.logical_volumes }}"
+    - "{{ manage_disks.luks_volumes }}"
+
+- name: determine if luks device already setup
+  command: "cryptsetup isLuks /dev/{{ item.volume_group }}/{{ item.name }}"
+  register: isluks
+  failed_when: false
+  with_items: "{{ manage_disks.luks_volumes }}"
+
+- name: fail immediately if /dev/shm is not tmpfs
+  command: df -t tmpfs /dev/shm
+
+- name: place cryptsetup keys if necessary
+  template:
+    src: passphrase
+    dest: "/dev/shm/{{ item.item.volume_group }}_{{ item.item.name }}.key"
+    owner: root
+    group: root
+    mode: 0700
+  with_items:
+    - "{{ isluks.results }}"
+  when: not isluks | skipped and item.rc != 0
+
+- name: run cryptsetup luksFormat
+  command: "cryptsetup luksFormat --key-file \"/dev/shm/{{ item.item.volume_group }}_{{ item.item.name }}.key\" --use-urandom --hash sha256 /dev/{{ item.item.volume_group }}/{{ item.item.name }}"
+  with_items:
+    - "{{ isluks.results }}"
+  when: not isluks | skipped and item.rc != 0
+
+- name: open luks filesystems if necessary
+  shell: "cryptsetup status luks-{{ item.volume_group }}-{{ item.name }} || cryptsetup luksOpen --key-file \"/dev/shm/{{ item.volume_group }}_{{ item.name }}.key\" /dev/{{ item.volume_group }}/{{ item.name }} luks-{{ item.volume_group }}-{{ item.name }}"
+  with_items: "{{ manage_disks.luks_volumes }}"
+
+- name: back up luks header
+  shell: "umask 077; cryptsetup luksHeaderBackup \"/dev/{{ item.item.volume_group }}/{{ item.item.name }}\" --header-backup-file \"/root/{{ ansible_fqdn }}_{{ item.item.volume_group }}_{{ item.item.name }}.luksHeaderBackup\""
+  with_items: "{{ isluks.results }}"
+  when: not isluks | skipped and item.rc != 0
+
+- name: create filesystems
+  filesystem:
+    fstype: "{{ item.filesystem }}"
+    dev: "/dev/mapper/{{ item.volume_group }}-{{ item.name }}"
+    opts: "{{ item.filesystem_opts|default(omit) }}"
+  when: item.filesystem is defined
+  with_items: "{{ manage_disks.logical_volumes }}"
+
+- name: create luks filesystems
+  filesystem:
+    fstype: "{{ item.filesystem }}"
+    dev: "/dev/mapper/luks-{{ item.volume_group }}-{{ item.name }}"
+    opts: "{{ item.filesystem_opts|default(omit) }}"
+  when: item.filesystem is defined
+  with_items: "{{ manage_disks.luks_volumes }}"
+
+# crypttab needs an fs label not a /dev/mapper entry, so just use UUID
+- name: get UUID for devices
+  command: "blkid -s UUID -o value /dev/{{ item.volume_group }}/{{ item.name }}"
+  register: blkid
+  with_items: "{{ manage_disks.luks_volumes }}"
+
+- name: add luks filesystems to /etc/crypttab
+  crypttab:
+    backing_device: "UUID={{ item.stdout }}"
+    name: "/dev/mapper/luks-{{ item.item.volume_group }}-{{ item.item.name }}"
+    opts: "{{ item.item.crypttab_opts|default('luks') }}"
+    password: "{{ item.item.password_file|default('-') }}" # default enter pass at boot
+    state: present
+  with_items: "{{ blkid.results }}"
+  # when: not blkid | skipped
+
+- name: create mount points
+  file: path={{ item.mount_point }} state=directory
+  when: item.mount_point is defined
+  with_flattened:
+    - "{{ manage_disks.logical_volumes }}"
+    - "{{ manage_disks.luks_volumes }}"
+
+- name: mount filesystems
+  mount:
+    name: "{{ item.mount_point }}"
+    src: "/dev/mapper/{{ item.volume_group }}-{{ item.name }}"
+    fstype: "{{ item.filesystem }}"
+    opts: "{{ item.mount_opts|default(omit) }}"
+    state: mounted
+  when: item.mount_point is defined and
+        item.filesystem is defined
+  with_items: "{{ manage_disks.logical_volumes }}"
+
+- name: mount filesystems
+  mount:
+    name: "{{ item.mount_point }}"
+    src: "/dev/mapper/luks-{{ item.volume_group }}-{{ item.name }}"
+    fstype: "{{ item.filesystem }}"
+    opts: "{{ item.mount_opts|default(omit) }}"
+    state: mounted
+  when: item.mount_point is defined and
+        item.filesystem is defined
+  with_items: "{{ manage_disks.luks_volumes }}"
+
+- name: remove cryptsetup keys
+  file:
+    path: "/dev/shm/{{ item.volume_group }}_{{ item.name }}.key"
+    state: absent
+  with_items: "{{ manage_disks.luks_volumes }}"
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

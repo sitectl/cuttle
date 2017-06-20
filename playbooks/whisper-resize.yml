@@ -1,0 +1,9 @@
+#playbook to change retention of whisper
+---
+- name: change whisper retention
+  hosts: monitor
+  tasks:
+    - name: find and change tap retention
+      shell: find {{ graphite.path.home }}/storage/whisper/stats -name \*.wsp -path  "*/ds*/tap*" -print0 | sudo -u graphite xargs -0 -I% -P40 whisper-resize.py --nobackup % 60s:7d
+    - name: find and change whisper files
+      shell: find {{ graphite.path.home }}/storage/whisper/stats -name \*.wsp -path "*/ds*/*" -not -path "*/ds*/tap*" -print0 | sudo -u graphite xargs -0 -I% -P40 whisper-resize.py --nobackup % 60s:90d

@@ -1,0 +1,9 @@
+default:
+  memory: 512
+  cpus: 1
+
+vms:
+  netdata01:
+    ip_address:
+      - 172.16.0.115
+      - 172.16.1.115

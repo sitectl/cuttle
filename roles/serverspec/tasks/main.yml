@@ -1,0 +1,44 @@
+---
+- name: install version-locked gems
+  gem: name="{{ item.name }}" version="{{ item.version | default(omit) }}"
+       user_install=no
+  with_items: "{{ serverspec.version_locked_gems }}"
+  register: result
+  until: result|succeeded
+  retries: 5
+
+- name: install serverspec gem
+  gem: name=serverspec version="{{ serverspec.version }}"
+       user_install=no
+  register: result
+  until: result|succeeded
+  retries: 5
+
+- name: install serverspec-extended-types gem
+  gem: name=serverspec-extended-types version=0.0.3
+       user_install=no
+  register: result
+  until: result|succeeded
+  retries: 5
+
+- name: ensure serverspec directory exists
+  file: dest=/etc/serverspec/spec/localhost state=directory
+        owner=root mode=0755 recurse=true
+
+- name: serverspec fixtures
+  file: dest=/etc/serverspec/spec/fixtures state=directory
+        owner=root mode=0755
+
+- name: serverspec rakefile
+  template: src=etc/serverspec/Rakefile
+            dest=/etc/serverspec/Rakefile mode=0755
+
+- name: serverspec helper
+  template: src=etc/serverspec/spec/spec_helper.rb
+            dest=/etc/serverspec/spec/spec_helper.rb mode=0755
+
+- name: monitoring common serverspec checks
+  template: src={{ item }}
+            dest=/etc/serverspec/spec/localhost/
+            mode=0755
+  with_fileglob: ../templates/etc/serverspec/spec/localhost/*

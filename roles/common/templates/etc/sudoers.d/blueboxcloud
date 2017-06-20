@@ -1,0 +1,7 @@
+# {{ ansible_managed }}
+
+{% for sudoer in common.sudoers|sort %}
+{% for arg in sudoer.args|sort %}
+{{ sudoer.name }} {{ arg }}
+{% endfor %}
+{% endfor %}

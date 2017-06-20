@@ -1,0 +1,3 @@
+# {{ ansible_managed }}
+
+blueboxadmin ALL=NOPASSWD: /usr/sbin/git_pull

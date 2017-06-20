@@ -1,0 +1,26 @@
+default:
+  memory: 512
+  cpus: 1
+  gui: false
+
+vms:
+  bastion01:
+    ip_address:
+      - 172.16.0.101
+      - 172.16.1.101
+    memory: 1024
+  bootstrap01:
+    ip_address:
+      - 172.16.0.102
+      - 172.16.1.102
+    memory: 1024
+  monitor01:
+    ip_address:
+      - 172.16.0.103
+      - 172.16.1.103
+    memory: 1536
+  elk01:
+    ip_address:
+      - 172.16.0.104
+      - 172.16.1.104
+    memory: 1536

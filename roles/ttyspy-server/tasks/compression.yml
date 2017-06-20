@@ -1,0 +1,16 @@
+---
+- name: python script to compress transcripts
+  template:
+    src: etc/ttyspy/compression.py
+    dest: /etc/ttyspy/compression.py
+    owner: root
+    group: root
+    mode: 0744
+
+- name: cron to call python script daily
+  template:
+    src: etc/cron.daily/ttyspy_compression
+    dest: /etc/cron.daily/ttyspy_compression
+    owner: root
+    group: root
+    mode: 0755

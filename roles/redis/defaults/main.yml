@@ -1,0 +1,10 @@
+---
+redis:
+  logs:
+    # See logging-config/defaults/main.yml for filebeat vs. logstash-forwarder example
+    - paths:
+        - /var/log/redis/redis-server.log
+      fields:
+        tags: redis
+  logging:
+    forwarder: filebeat

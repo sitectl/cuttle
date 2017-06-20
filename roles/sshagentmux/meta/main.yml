@@ -1,0 +1,8 @@
+---
+dependencies:
+  - role: git-repos
+  - role: logging-config
+    service: sshagentmux
+    logdata: "{{ sshagentmux.logs }}"
+    when: logging.enabled|default("True")|bool
+  - role: sensu-check

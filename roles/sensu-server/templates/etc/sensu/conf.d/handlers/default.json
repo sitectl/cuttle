@@ -1,0 +1,8 @@
+{
+  "handlers": {
+      "default": {
+        "type": "set",
+        "handlers": {{ sensu.server.handlers.default | to_json }}
+      }
+  }
+}

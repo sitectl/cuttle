@@ -1,0 +1,59 @@
+---
+- name: install dnsmasq prereqs
+  apt: pkg={{ item }} state=installed
+  with_items:
+    - dnsmasq
+
+- name: ensure /etc/dnsmasq.d exists
+  file: dest=/etc/dnsmasq.d state=directory mode=0755
+
+- name: dnsmasq config
+  lineinfile: dest=/etc/dnsmasq.conf
+              line="conf-dir=/etc/dnsmasq.d"
+  notify: restart dnsmasq
+
+- name: create dnsmasq server config
+  template: src=etc/dnsmasq.d/server.conf dest=/etc/dnsmasq.d/server.conf
+  notify: restart dnsmasq
+
+- name: ubuntu default config
+  template: src=etc/default/dnsmasq dest=/etc/default/dnsmasq
+  notify: restart dnsmasq
+
+- name: create dnsmasq hosts file
+  template: src=etc/hosts.dnsmasq dest=/etc/hosts.dnsmasq
+  with_items:
+    - server.conf
+  notify: restart dnsmasq
+
+- name: create dnsmasq unmanaged hosts files
+  copy: dest="{{ item }}" owner=dnsmasq content="" force=no
+  with_items: "{{ dnsmasq.addn_hosts }}"
+
+- name: create resolvconf
+  template: src=etc/resolv.conf dest=/etc/resolv.conf
+
+- meta: flush_handlers
+
+- name: start dnsmasq services
+  service: name=dnsmasq state=started enabled=yes
+
+- name: permit access to dnsmasq
+  ufw: rule=allow
+       port="{{ item.port }}" src="{{ item.src }}"
+       to_ip="{{ item.to_ip }}" proto="{{ item.proto }}"
+  with_items: "{{ dnsmasq.firewall }}"
+  tags:
+    - firewall
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

@@ -1,0 +1,79 @@
+---
+- name: install debmirror
+  apt:
+    name: debmirror
+    state: present
+
+- name: create keys path
+  file:
+    dest: "{{ apt_mirror.path }}/keys"
+    state: directory
+    mode: 0755
+
+- name: download repo keys
+  get_url:
+    url: "{{ item.value.key_url }}"
+    dest: "{{ apt_mirror.path }}/keys/{{ item.key }}.key"
+    mode: 0644
+  when: proxy_env is not defined and item.value.key_url is defined
+  with_dict: "{{ apt_mirror.debmirror.repositories }}"
+
+- name: download repo keys via proxy
+  get_url:
+    url: "{{ item.value.key_url }}"
+    dest: "{{ apt_mirror.path }}/keys/{{ item.key }}.key"
+    mode: 0644
+  environment: proxy_env
+  when: proxy_env is defined and item.value.key_url is defined
+  with_dict: "{{ apt_mirror.debmirror.repositories }}"
+
+- name: add mirror keys to local trust store
+  apt_key:
+    url: "{{ item.value.key_url }}"
+  when: item.value.key_url is defined
+  with_dict: "{{ apt_mirror.debmirror.repositories }}"
+
+- name: create per repo mirror directory
+  file:
+    dest: "{{ apt_mirror.path }}/mirror/{{ item.key }}"
+    state: directory
+    owner: apt-mirror
+  with_dict: "{{ apt_mirror.debmirror.repositories|combine(apt_mirror.debmirror.distros) }}"
+
+- name: create apt mirror htpasswd location
+  file:
+    name: "{{ apt_mirror.htpasswd_location }}"
+    state: directory
+    owner: apt-mirror
+
+- name: create per repo .htpasswd
+  htpasswd:
+    name: "{{ item.value.username }}"
+    password: "{{ item.value.password }}"
+    path: "{{ apt_mirror.path }}/mirror/{{ item.key }}/.htpasswd"
+  with_dict: "{{ apt_mirror.debmirror.repositories|combine(apt_mirror.debmirror.distros) }}"
+  when: item.value.username is defined and item.value.username is defined
+
+- name: create debmirror cron directory
+  file:
+    dest: "{{ apt_mirror.path }}/cron"
+    state: directory
+
+- name: debmirror cron script
+  template:
+    src: debmirror.sh
+    dest: "{{ apt_mirror.path }}/cron/debmirror.sh"
+    mode: 0755
+
+- name: debmirror crontab
+  template:
+    src: etc/cron.d/debmirror
+    dest: /etc/cron.d/debmirror
+
+- name: remove antiquated cron jobs
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /etc/cron.d/partial-apt
+    - /etc/cron.d/apt-mirror

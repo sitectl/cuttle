@@ -1,0 +1,5 @@
+---
+rally:
+  rev: 1c761cfbb4cf053219ed2d9b5046d996a1a0ddd9
+  git_mirror: https://github.com/openstack
+  git_update: yes

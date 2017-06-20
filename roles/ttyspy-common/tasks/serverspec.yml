@@ -1,0 +1,7 @@
+---
+- name: install ttyspy-common serverspec tests
+  template:
+    src: "{{ item }}"
+    dest: /etc/serverspec/spec/localhost/
+    mode: 0755
+  with_fileglob: ../templates/serverspec/*

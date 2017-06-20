@@ -1,0 +1,9 @@
+---
+varnish:
+  host: "127.0.0.1"
+  port: 8080
+  enabled: True
+  backends:
+    - name: default
+      host: "127.0.0.1"
+      port: 9292

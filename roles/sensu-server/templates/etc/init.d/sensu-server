@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# chkconfig: 345 90 90
+# description: Sensu monitoring framework server
+
+### BEGIN INIT INFO
+# Provides:       ${serverTag}
+# Required-Start: $remote_fs $network
+# Required-Stop:  $remote_fs $network
+# Default-Start:  2 3 4 5
+# Default-Stop:   0 1 6
+# Description:    Sensu monitoring framework server
+### END INIT INFO
+
+cmdLine="$1"
+ADDITIONAL_INSTANCE_COUNT=0 # default to a single sensu-server instance
+
+/etc/init.d/sensu-service server "${cmdLine}"
+
+if [ -f "/etc/default/sensu-server" ]; then
+  . /etc/default/sensu-server
+fi
+
+# Additional instance(s) ---|
+exitStatus="${?}"
+
+allOkExitCode=0
+serverTag=`echo "${0}" | xargs basename`
+
+# --------------------------|
+
+  ( test "${1}" = "status" ) && allOkExitCode="${exitStatus}"
+
+  if [ ! -z "${ADDITIONAL_INSTANCE_COUNT}" ]
+   then
+
+    if [ "${ADDITIONAL_INSTANCE_COUNT}" -gt 0 ]
+    then
+      for index in `seq 1 ${ADDITIONAL_INSTANCE_COUNT} | xargs`
+       do
+        instanceId="${index}-server";
+
+        ( test "${exitStatus}" -eq 0 ) && (( test -f "/etc/default/${serverTag}" ) && ln -s "/etc/default/${serverTag}" "/etc/default/sensu-${instanceId}" 2>/dev/null )
+        ( test "${exitStatus}" -eq 0 ) && (( test -L "/opt/sensu/bin/${serverTag}" ) && ln -s "/opt/sensu/bin/${serverTag}" "/opt/sensu/bin/sensu-${instanceId}" 2>/dev/null )
+        ( test "${exitStatus}" -eq "${allOkExitCode}" ) && /etc/init.d/sensu-service "${instanceId}" "${cmdLine}"; exitStatus="${?}";
+
+      done
+    fi
+  fi
+
+# -------------------------|
+
+exit "${exitStatus}"

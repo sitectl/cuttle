@@ -1,0 +1,92 @@
+---
+- name: firewall rules for jenkins
+  ufw: rule=allow dest={{ jenkins.host }} to_port={{ jenkins.port }}
+  tags:
+    - firewall
+
+- name: install jenkins packages
+  apt:
+    pkg: "{{ item }}"
+  with_items: "{{ jenkins.apt.pkgs }}"
+
+- name: Ensure Jenkins is started and runs on startup.
+  service: name=jenkins state=started enabled=yes
+
+- name: wait for jenkins to start
+  jenkins:
+    task: wait_for_startup
+    url: "http://{{ jenkins.host }}:{{ jenkins.port }}/{{ jenkins.prefix }}"
+    username: "{{ jenkins.admin_username|default('') }}"
+    password: "{{ jenkins.admin_password|default('') }}"
+
+- name: install jenkins plugins
+  jenkins:
+    task: install_plugin
+    url: "http://{{ jenkins.host }}:{{ jenkins.port }}/{{ jenkins.prefix }}"
+    username: "{{ jenkins.admin_username|default('') }}"
+    password: "{{ jenkins.admin_password|default('') }}"
+    plugin: "{{ item.name }}"
+    version: "{{ item.version|default('latest') }}"
+  with_items: "{{ jenkins.plugins }}"
+  notify: restart jenkins
+  tags: ['jenkins-plugins']
+  become: yes
+  become_user: jenkins
+
+- meta: flush_handlers
+
+# now we have all the plugins, install the global config file and restart,
+# so any encryption keys are generated and we'll have the correct values
+# everywhere to install all the other configuration files with
+- name: install global configuration file
+  template: src=var/lib/jenkins/config.xml dest=/var/lib/jenkins/config.xml owner=jenkins group=jenkins mode=0644
+  notify: restart jenkins
+
+- meta: flush_handlers
+
+- name: Read jenkins master key for use in configuring credentials.
+  command: cat /var/lib/jenkins/secrets/master.key
+  register: jenkins_master_key
+  become: yes
+  become_user: jenkins
+  changed_when: false
+
+- name: Read jenkins secret key for use in configuring credentials.
+  command: base64 /var/lib/jenkins/secrets/hudson.util.Secret
+  register: jenkins_secret_key
+  become: yes
+  become_user: jenkins
+  changed_when: false
+
+- name: copy multijob retry rule file into place
+  copy: src=rules/failure.prop dest=/var/lib/jenkins/failure.prop owner=jenkins group=jenkins mode=0644
+
+- name: Install configuration files.
+  template: src=var/lib/jenkins/{{ item }} dest=/var/lib/jenkins/{{ item }} owner=jenkins group=jenkins mode=0644
+  with_items: "{{ jenkins.configuration_templates }}"
+  notify: restart jenkins
+
+- name: Adjust stateful github pull request configuration file.
+  xml_configuration: file=/var/lib/jenkins/org.jenkinsci.plugins.ghprb.GhprbTrigger.xml xpath={{ item.path }} value="{{ item.value }}"
+  notify: restart jenkins
+  with_items: "{{ jenkins.github_pull_config }}"
+
+- meta: flush_handlers
+
+- include: jjb.yml
+  tags: jenkins-jjb
+
+- include: apache.yml
+  when: jenkins.apache.enabled|bool
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

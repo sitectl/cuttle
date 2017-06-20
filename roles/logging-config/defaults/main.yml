@@ -1,0 +1,28 @@
+---
+#logging:
+#  follow:
+#    enabled: true
+#    global_fields:
+#      customer_id: "unknown"
+#      cluster_name: "unknown"
+#    logs: []
+
+# EXAMPLE
+#logs:
+#
+# FILEBEAT
+#- paths:
+#    - /var/log/syslog
+#  document_type: syslog
+#  fields:
+#    tags: syslog
+#
+# LOGSTASH FORWARDER
+#- paths:
+#    - /var/log/syslog
+#  fields:
+#    type: syslog
+#    tags: syslog
+#
+#logging:
+#  forwarder: filebeat # or 'logstash-forwarder'

@@ -1,0 +1,47 @@
+---
+- name: install system packages
+  apt: pkg={{ item }}
+  with_items:
+    - sqlite3
+
+- name: install sshagentmux
+  pip: name=sshagentmux virtualenv="{{ sshagentmux.virtualenv_path }}"
+
+- name: update-alternatives
+  alternatives: name={{ item }}
+                path={{ sshagentmux.virtualenv_path }}/bin/{{ item }}
+                link=/usr/local/bin/{{ item }}
+  with_items:
+    - authorization_proxy
+    - sshagentmux
+
+- name: configure authorization_proxy service
+  template: src=etc/init/authorization_proxy.conf
+            dest=/etc/init/authorization_proxy.conf
+            mode=0644
+  notify: restart authorization_proxy
+
+- name: configure authorization_proxy profile.d
+  template: src=etc/profile.d/authorization_proxy.sh
+            dest=/etc/profile.d/authorization_proxy.sh
+            mode=0755
+
+- meta: flush_handlers
+
+- name: start and enable authorization_proxy service
+  service: name=authorization_proxy state=started enabled=yes
+
+- include: ssh_keys.yml
+  tags: users
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

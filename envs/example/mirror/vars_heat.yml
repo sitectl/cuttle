@@ -1,0 +1,127 @@
+---
+datacenter: tardis
+public_interface: ansible_eth0
+private_interface: ansible_eth0
+public_ipv4: "{{ hostvars[inventory_hostname][public_interface]['ipv4'] }}"
+private_ipv4: "{{ hostvars[inventory_hostname][private_interface]['ipv4'] }}"
+
+common:
+  ssh:
+    allow_from:
+      - "0.0.0.0/0"
+  sysdig:
+    enabled: False
+
+pypi_mirror:
+  web:
+    servername: mirror.tardis.openstack.blueboxgrid.com
+    port: 81
+
+apt_mirror:
+  web:
+    servername: mirror.tardis.openstack.blueboxgrid.com
+    port: 80
+  precise: True
+  trusty: False
+  repositories:
+    docker:
+      key_url: 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xD8576A8BA88D21E9'
+      type: deb
+      url: 'https://get.docker.com/ubuntu'
+      distributions:
+        - docker
+      components:
+        - main
+    bbg_ubuntu:
+      url: 'http://repo.openstack.blueboxgrid.com/ubuntu/'
+      key_url: 'http://repo.openstack.blueboxgrid.com/blue_box_cloud.gpg.key'
+      type: deb
+      distributions:
+        - precise
+        - trusty
+      components:
+        - main
+    blueboxcloud_giftwrap:
+      url: 'https://packagecloud.io/blueboxcloud/giftwrap/ubuntu/'
+      key_url: 'https://packagecloud.io/gpg.key'
+      type: deb
+      distributions:
+        - precise
+        - trusty
+      components:
+        - main
+    hwraid:
+      key_url: http://hwraid.le-vert.net/debian/hwraid.le-vert.net.gpg.key
+      type: deb
+      url: http://hwraid.le-vert.net/ubuntu
+      distributions:
+        - precise
+      components:
+        - main
+    sensu:
+      url: 'http://repos.sensuapp.org/apt'
+      key_url: 'http://repos.sensuapp.org/apt/pubkey.gpg'
+      type: deb
+      distributions:
+        - sensu
+      components:
+        - main
+    haproxy:
+      url: 'http://ppa.launchpad.net/vbernat/haproxy-1.5/ubuntu'
+      key_url: 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xCFFB779AADC995E4F350A060505D97A41C61B9CD'
+      type: deb
+      distributions:
+        - precise
+        - trusty
+      components:
+        - main
+    bbg_openstack_ppa:
+      url: 'http://ppa.launchpad.net/blueboxgroup/openstack/ubuntu'
+      key_url: 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xC37BA5F849DE63CB'
+      type: deb
+      distributions:
+        - precise
+      components:
+        - main
+    percona:
+      url: 'http://repo.percona.com/apt'
+      key_url: 'https://www.percona.com/redir/downloads/RPM-GPG-KEY-percona'
+      type: deb
+      distributions:
+        - precise
+        - trusty
+      components:
+        - main
+    rabbitmq:
+      url: 'http://www.rabbitmq.com/debian/'
+      key_url: 'https://www.rabbitmq.com/rabbitmq-signing-key-public.asc'
+      type: deb
+      distributions:
+        - testing
+      components:
+        - main
+    cloud_archive:
+      url: 'http://ubuntu-cloud.archive.canonical.com/ubuntu'
+      type: deb
+      distributions:
+        - precise-updates/icehouse
+      components:
+        - main
+    erlang:
+      url: 'http://packages.erlang-solutions.com/debian'
+      key_url: 'https://packages.erlang-solutions.com/debian/erlang_solutions.asc'
+      type: deb
+      distributions:
+        - precise
+        - trusty
+      components:
+        - contrib
+    ceph:
+      url: 'http://ceph.com/debian-hammer'
+      key_url: 'https://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc'
+      type: deb
+      distributions:
+        - trusty
+        - precise
+      components:
+        - main

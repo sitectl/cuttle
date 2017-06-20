@@ -1,0 +1,6 @@
+---
+- name: serverspec checks for gem-mirror role
+  template: src={{ item }}
+            dest=/etc/serverspec/spec/localhost/
+            mode=0755
+  with_fileglob: ../templates/serverspec/*

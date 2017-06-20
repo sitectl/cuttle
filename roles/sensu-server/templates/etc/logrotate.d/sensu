@@ -1,0 +1,50 @@
+/var/log/sensu/sensu-client.log {
+    rotate 7
+    daily
+    missingok
+    notifempty
+    sharedscripts
+    compress
+    postrotate
+        kill -USR2 `cat /var/run/sensu/sensu-client.pid 2> /dev/null` 2> /dev/null || true
+    endscript
+}
+
+/var/log/sensu/sensu-server.log {
+    rotate 7
+    daily
+    missingok
+    notifempty
+    sharedscripts
+    compress
+    postrotate
+        kill -USR2 `cat /var/run/sensu/sensu-server.pid 2> /dev/null` 2> /dev/null || true
+    endscript
+}
+
+{% for i in range(1, sensu.server.instances + 1) %}
+/var/log/sensu/sensu-{{ i }}-server.log {
+    rotate 7
+    daily
+    missingok
+    notifempty
+    sharedscripts
+    compress
+    postrotate
+        kill -USR2 `cat /var/run/sensu/sensu-{{ i }}-server.pid 2> /dev/null` 2> /dev/null || true
+    endscript
+}
+{% endfor %}
+
+/var/log/sensu/sensu-api.log {
+    rotate 7
+    daily
+    missingok
+    notifempty
+    sharedscripts
+    compress
+    postrotate
+        kill -USR2 `cat /var/run/sensu/sensu-api.pid 2> /dev/null` 2> /dev/null || true
+    endscript
+}
+

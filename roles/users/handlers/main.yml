@@ -1,0 +1,5 @@
+---
+- name: place authorized keys checksums
+  shell: sha256sum ~{{ item.key }}/.ssh/authorized_keys | cut -d' ' -f 1 > /etc/serverspec/spec/fixtures/{{ item.key }}_keys.checksum
+  with_dict: "{{ users_to_add }}"
+  when: serverspec.enabled|default("True")|bool

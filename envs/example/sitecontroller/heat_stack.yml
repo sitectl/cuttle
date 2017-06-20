@@ -1,0 +1,133 @@
+heat_template_version: 2013-05-23
+
+description: HOT template to sitecontroller
+
+parameters:
+  image:
+    type: string
+    description: Name of image to use for servers
+    default: ubuntu-14.04
+  flavor:
+    type: string
+    description: Flavor to use for servers
+    default: m1.medium
+  net_id:
+    type: string
+    description: ID of Neutron network into which servers get deployed
+    default: d9d929b6-6797-4247-85f4-b620e392c391
+  floating_ip_pool:
+    type: string
+    description: name of floating ip pool to use
+    default: external
+  ssh_key_name:
+    type: string
+    description: name of the ssh keypair
+    default: sitecontroller
+  secgroup_name:
+    type: string
+    description: name of the security group
+    default: sitecontroller-test-security-group
+
+resources:
+
+  server_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      description: Security group for SC testing.
+      name: { get_param: secgroup_name }
+      rules:
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: tcp
+          port_range_min: 22
+          port_range_max: 22
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: icmp
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: tcp
+          port_range_min: 9300
+          port_range_max: 9300
+
+  sc_ssh_key:
+    type: OS::Nova::KeyPair
+    properties:
+      save_private_key: true
+      name: { get_param: ssh_key_name }
+
+  bastion01_floating_ip:
+     type: OS::Nova::FloatingIP
+     properties:
+       pool: { get_param: floating_ip_pool }
+
+  bastion01:
+    type: OS::Nova::Server
+    properties:
+      name: bastion01
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_resource: sc_ssh_key }
+      user_data_format: RAW
+      security_groups: [{ get_resource: server_security_group }]
+      networks:
+        - network: { get_param: net_id }
+
+  bastion01_fip_association:
+     type: OS::Nova::FloatingIPAssociation
+     properties:
+       floating_ip: { get_resource: bastion01_floating_ip }
+       server_id: { get_resource: bastion01 }
+
+  bootstrap01:
+    type: OS::Nova::Server
+    properties:
+      name: bootstrap01
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_resource: sc_ssh_key }
+      user_data_format: RAW
+      security_groups: [{ get_resource: server_security_group }]
+      networks:
+        - network: { get_param: net_id }
+
+  monitor01:
+    type: OS::Nova::Server
+    properties:
+      name: monitor01
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_resource: sc_ssh_key }
+      user_data_format: RAW
+      security_groups: [{ get_resource: server_security_group }]
+      networks:
+        - network: { get_param: net_id }
+
+  elk01:
+    type: OS::Nova::Server
+    properties:
+      name: elk01
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_resource: sc_ssh_key }
+      user_data_format: RAW
+      security_groups: [{ get_resource: server_security_group }]
+      networks:
+        - network: { get_param: net_id }
+
+outputs:
+  floating_ip:
+    description: Floating IP address of bastion01
+    value: { get_attr: [ bastion01_floating_ip, ip ] }
+  bastion01:
+    description: IP address of bastion01 in provider network
+    value: { get_attr: [ bastion01, first_address ] }
+  bootstrap01:
+    description: IP address of elk01 in provider network
+    value: { get_attr: [ bootstrap01, first_address ] }
+  monitor01:
+    description: IP address of monitor01 in provider network
+    value: { get_attr: [ monitor01, first_address ] }
+  elk01:
+    description: IP address of elk01 in provider network
+    value: { get_attr: [ elk01, first_address ] }
+  private_key:
+    description: Private key
+    value: { get_attr: [ sc_ssh_key, private_key ] }

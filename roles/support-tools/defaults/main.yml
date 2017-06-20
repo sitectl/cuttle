@@ -1,0 +1,45 @@
+---
+support_tools:
+  enabled: false
+  system_deps:
+    - libffi-dev
+    - libxml2-dev
+    - libxslt-dev
+    - libssl-dev
+  cron:
+    minute: '0'
+    hour: '*'
+
+  git: []
+# EXAMPLE
+#    - name: sitecontroller_envs
+#      path: /opt/git/sitecontroller-envs/master
+#      owner: "{{ admin_user }}"
+#      repo: "{{ git_repos.sitecontroller_envs }}"
+#      rev: master
+#      auto_update: true
+
+  virtualenvs: []
+# EXAMPLE
+#    - name: ursula-master
+#      path: /opt/venv/ursula/master
+#      owner: "{{ admin_user }}"
+#      requirements: /opt/git/ursula/master/requirements.txt
+
+  alternatives: []
+# EXAMPLE
+#    - name: sitecontroller
+#      path: /opt/venv/sitecontroller/master/bin/ursula
+#      link: /usr/local/bin/sitecontroller
+
+  pip_packages: []
+# EXAMPLE
+#    - name: ursula-cli
+#      path: /opt/venv/ursula-cli/master
+#      location: "https://pypi-mirror.openstack.blueboxgrid.com/bluebox/openstack"
+#      owner: "{{ admin_user }}"
+#      private: False
+
+  cleanup: []
+# EXAMPLE
+#    - /opt/git/ursula-infra
