@@ -2,7 +2,7 @@
 
 _Originally called Site Controller (sitectl) and is Pronounced "Cuddle"._
 
-_insert logo of a squid/cuttlefish cuddling a server_
+![](http://www.reactiongifs.com/wp-content/uploads/2013/02/nope.gif)
 
 A Monolithic Repository of Composable Ansible Roles for building an SRE Operations Platform.
 
