@@ -80,20 +80,6 @@ $ ursula --provisioner=vagrant envs/example/sitecontroller bastion.yml
 $ ursula --provisioner=vagrant envs/example/sitecontroller site.yml
 ```
 
-### Tardis and Heat
-
-You can also test in Tardis with Heat Orchestration. First, grab your stackrc file from Tardis:
-
-`Project > Compute > Access & Security > Download OpenStack RC File`
-
-Ensure your `ssh-agent` is running, then source your stackrc and run the play:
-```
-$ source <username>-openrc.sh
-$ ursula --ursula-forward --provisioner=heat envs/example/sitecontroller site.yml
-```
-
-Add argument `--ursula-debug` for verbose output.
-
 ## Run behind a docker proxy for local dev
 
 ```
