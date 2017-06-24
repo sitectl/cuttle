@@ -80,9 +80,11 @@ $ ursula --provisioner=vagrant envs/example/sitecontroller bastion.yml
 $ ursula --provisioner=vagrant envs/example/sitecontroller site.yml
 ```
 
-### Tardis and Heat
+### Openstack and Heat
 
-You can also test in Tardis with Heat Orchestration. First, grab your stackrc file from Tardis:
+_your inventory must have a `heat_stack.yml` and a optional `vars_heat.yml` in order for this to work_
+
+You can also test in Openstack with Heat Orchestration. First, grab your stackrc file from Openstack Horizon:
 
 `Project > Compute > Access & Security > Download OpenStack RC File`
 
