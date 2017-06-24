@@ -1,6 +1,19 @@
 Overall Architecture
 ====================
 
+Blue Box primarily uses Cuttle as a way to manage Openstack Clouds across 30+
+datacenters. Many of those datacenters are in locations with minimal (if any)
+internet access and therefore each DataCenter has all of the infrastructure
+(logging, monitoring, etc) required for daily operations local to the datacenter
+with minimal connectivity.  Each DataCenter does have a IPSEC (hardware and/or
+Vyatta managed outside of this repo, although it can be simulated using the
+ipsec role) tether back to a central location which hosts mirrors, flapjack,
+ bastion, and monitoring/logging for the remote Cuttle systems.
+
+Blue Box refers to Cuttle installed in this manner as Site Controller.  The
+Central system is imaginatively referred to as "Central Site Controller" and
+each datacenter that connects through to it as "Remote Site Controller".
+
 Central Site Controller
 -----------------------
 
