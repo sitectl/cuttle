@@ -1,0 +1,8 @@
+#urllib3>=1.19.1
+#six>=1.10.0
+#jinja2==2.8.1
+ansible>=2.3,<2.4
+#python-heatclient
+python-vagrant
+#requests[security]
+molecule
