@@ -163,15 +163,15 @@ apt_repos:
 #    key_url: https://apt-mirror.openstack.blueboxgrid.com/keys/aptly.key
   elasticsearch:
     repo: http://artifacts.elastic.co/packages/5.x/apt/
-    key_url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    key_url: http://artifacts.elastic.co/GPG-KEY-elasticsearch
   logstash:
     repo: http://artifacts.elastic.co/packages/5.x/apt
-    key_url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    key_url: http://artifacts.elastic.co/GPG-KEY-elasticsearch
   kibana:
     repo: http://artifacts.elastic.co/packages/5.x/apt
-    key_url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    key_url: http://artifacts.elastic.co/GPG-KEY-elasticsearch
   jenkins:
-    repo: https://pkg.jenkins.io/debian
+    repo: http://pkg.jenkins.io/debian
     key_url: https://pkg.jenkins.io/debian/jenkins.io.key
   flapjack:
     repo: http://packages.flapjack.io/deb/v1/

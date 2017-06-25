@@ -1,5 +1,5 @@
 ---
-sitecontroller:
+cuttle:
   apt:
     force_cache_update: false
     do_upgrade: false

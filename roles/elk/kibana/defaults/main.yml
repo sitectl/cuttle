@@ -1,6 +1,7 @@
 ---
 kibana:
   version: "5.4.1"
+  start: true
   config:
     server.host: 0.0.0.0
     server.port: 5601

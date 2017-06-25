@@ -15,7 +15,7 @@ end
 SETTINGS = YAML.load_file SETTINGS_FILE
 
 BOX_URL = SETTINGS['default']['box_url'] || 'http://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_ubuntu-14.04_chef-provisionerless.box'
-BOX_NAME = SETTINGS['default']['box_name'] || 'ubuntu-trusty'
+BOX_NAME = SETTINGS['default']['box_name'] || 'bento/ubuntu-14.04'
 
 
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
@@ -67,6 +67,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       end
       # performance booster for VMs running on SSDs
       c.vm.provision "shell", inline: "echo noop > /sys/block/sda/queue/scheduler"
+      # ensure python is installed please
+      c.vm.provision "shell", inline: "apt-get -yqq update && apt-get -yqq install python-dev"
     end
   end
 

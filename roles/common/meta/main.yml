@@ -8,9 +8,6 @@ dependencies:
     repos:
       - repo: 'deb {{ apt_repos.hwraid.repo }} trusty main'
         key_url: '{{ apt_repos.hwraid.key_url }}'
-    purge_repos:
-      - repo: 'deb {{ apt_repos.hwraid.repo }} precise main'
-      - repo: 'deb http://apt-mirror.openstack.blueboxgrid.com/sysdig/stable/deb/ stable-$(ARCH)/'
     when: common.hwraid.enabled|bool
   - role: serverspec
     tags: ['serverspec']

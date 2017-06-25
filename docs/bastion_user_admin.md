@@ -123,7 +123,7 @@ If you decide you want to run `site.yml` here are some options:
 # if only updating users
 ursula ../sitecontroller-envs/control-dc01 site.yml --limit=bastion -e "@../inventory/bastion-users.yml" --ask-vault-pass --ask-su-pass --skip-tags support-tools,ssh-agent
 <enter Bastion password>
-<enter Vault password from Box Panel Password Management>
+<enter Vault password>
 
 # if updating both users and groups
 ursula ../sitecontroller-envs/control-dc01 site.yml --limit=bastion -e "@../inventory/bastion-users.yml" --ask-vault-pass --ask-su-pass --skip-tags support-tools

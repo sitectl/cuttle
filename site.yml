@@ -4,22 +4,21 @@
   gather_facts: false
   pre_tasks:
      - name: make sure python is installed
-       raw: "[[ -e /usr/bin/python ]] || apt-get update && apt-get -y install python"
+       raw: test -e /usr/bin/python || (apt -y update && apt install -y python)
        changed_when: false
   tasks:
     - action: ping
       tags: ['ping']
     - action: setup
       tags: ['ping']
-  environment: "{{ env_vars|default({}) }}"
   any_errors_fatal: true
   max_fail_percentage: 0
 
 - name: sitecontroller base
   hosts: all:!vyatta-*
   roles:
-    - role: _sitecontroller
-      tags: ['sc', 'sitecontroller']
+    - role: _cuttle
+      tags: ['sc', 'cuttle']
   environment: "{{ env_vars|default({}) }}"
   tags: ['always']
   any_errors_fatal: true
@@ -128,11 +127,11 @@
 - name: elk
   hosts: elk
   roles:
-    - role: elasticsearch
+    - role: elk/elasticsearch
       tags: ['elasticsearch']
-    - role: logstash
+    - role: elk/logstash
       tags: ['logstash']
-    - role: kibana
+    - role: elk/kibana
       tags: ['kibana']
   environment: "{{ env_vars|default({}) }}"
   any_errors_fatal: true
