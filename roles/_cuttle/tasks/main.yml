@@ -1,11 +1,11 @@
 ---
 - name: ubuntu apt sources list
   template: src=etc/apt/sources.list dest=/etc/apt/sources.list
-  when: sitecontroller.ubuntu_mirror
+  when: cuttle.ubuntu_mirror
 
 - name: force-update apt cache
   apt: update_cache=yes cache_valid_time=1
-  when: sitecontroller.apt.force_cache_update|bool
+  when: cuttle.apt.force_cache_update|bool
   register: result
   until: result|succeeded
   retries: 5
@@ -18,30 +18,30 @@
 
 - name: do apt upgrade
   apt: upgrade=yes
-  when: sitecontroller.apt.do_upgrade
+  when: cuttle.apt.do_upgrade
   register: result
   until: result|succeeded
   retries: 5
 
 - name: root user pip config directory
   file: dest=/root/.pip state=directory
-  when: sitecontroller.python.pypi_mirror
+  when: cuttle.python.pypi_mirror
 
 - name: pip config file
   template: src=python/pip.conf dest=/root/.pip/pip.conf
-  when: sitecontroller.python.pypi_mirror
+  when: cuttle.python.pypi_mirror
 
 - name: easyinstall config file
   template: src=python/pydistutils.cfg dest=/root/.pydistutils.cfg
-  when: sitecontroller.python.pypi_mirror
+  when: cuttle.python.pypi_mirror
 
 - name: set up gem sources if needed
   template: src=ruby/gemrc dest=/root/.gemrc
-  when: sitecontroller.ruby.gem_sources
+  when: cuttle.ruby.gem_sources
 
 - name: nuke gem sources if unused
   file: dest=/root/.gemrc state=absent
-  when: not sitecontroller.ruby.gem_sources
+  when: not cuttle.ruby.gem_sources
 
 - name: nuke user_install gems for root
   file:

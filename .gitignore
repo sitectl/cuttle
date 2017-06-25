@@ -10,3 +10,4 @@ ursula.log
 elk-stats
 .ssh_config
 *.log
+.molecule

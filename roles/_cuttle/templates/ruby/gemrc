@@ -5,7 +5,7 @@
 :benchmark: false
 :bulk_threshold: 1000
 :sources:
-{% for gem_source in sitecontroller.ruby.gem_sources %}
+{% for gem_source in cuttle.ruby.gem_sources %}
 - {{ gem_source }}
 {% endfor %}
 :update_sources: true

@@ -19,11 +19,6 @@
   notify: restart kibana
   tags: kibana-config
 
-- meta: flush_handlers
-
-- name: enable and start kibana service
-  service: name=kibana state=started enabled=yes
-
 - name: allow kibana traffic
   ufw: rule=allow to_port={{ item.0.port }} src={{ item.1|default('127.0.0.1') }}
   with_subelements:
@@ -31,9 +26,6 @@
     - src
   tags:
     - firewall
-
-- name: wait until kibana is listening
-  wait_for: port=5601
 
 - name: make kibana plugin directory
   file:
@@ -64,13 +56,6 @@
   until: result|succeeded
   retries: 5
 
-- name: install kibana plugins (may take a while)
-  shell: "sudo -u kibana /usr/share/kibana/bin/kibana-plugin install file:///opt/kibana-plugins/{{ item.file }}"
-  with_items: "{{ kibana.plugins }}"
-  when: item.name not in installed_plugins.stdout_lines
-  tags: kibana-plugins
-  notify: restart kibana
-
 - include: config.yml
   when: kibana.config_in_es|bool
   tags: kibana-config
@@ -83,6 +68,38 @@
     - src
   tags:
     - firewall
+
+- block:
+  - name: install kibana plugins (may take a while)
+    command: "/usr/share/kibana/bin/kibana-plugin install file:///opt/kibana-plugins/{{ item.file }}"
+    with_items: "{{ kibana.plugins }}"
+    when:
+      - item.name not in installed_plugins.stdout_lines
+    tags: kibana-plugins
+    become_user: kibana
+    notify: restart kibana
+
+  - meta: flush_handlers
+
+  - name: enable and start kibana service
+    service: name=kibana state=started enabled=yes
+
+  - name: wait until kibana is listening (may take a while if first start)
+    wait_for:
+      port: 5601
+      sleep: 60
+      timeout: 1200
+  when: kibana.start|bool
+  tags: start-kibana
+
+- block:
+  - name: will not start kibana
+    debug:
+      msg: |
+        on first boot kibana takes a lot of resources to start as it optimizes web
+        content.  in dev/test this adds 5+ minutes to a install run.  You have opted
+        to not start kibana by settting "kibana.start_on_install: false"
+  when: not kibana.start|bool
 
 - include: checks.yml
   when: sensu.client.enable_checks|default('True')|bool

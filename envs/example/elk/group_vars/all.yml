@@ -7,13 +7,12 @@ private_ipv4: "{{ hostvars[inventory_hostname][private_interface]['ipv4'] }}"
 elasticsearch:
   config:
     cluster.name: "elk_{{ stack_name }}"
-    #index.number_of_replicas: 1
     discovery.zen.minimum_master_nodes: "{{ (groups['elasticsearch']|length / 2)|int + (groups['elasticsearch']|length % 2 > 0)|int }}"
     discovery.zen.ping.unicast.hosts: "['{{ hostvars['elk01'][private_interface]['ipv4']['address'] }}','{{ hostvars['elk02'][private_interface]['ipv4']['address'] }}']"
     gateway.expected_nodes: "{{ groups['elasticsearch']|length }}"
     gateway.recover_after_nodes: "{{ (groups['elasticsearch']|length / 2)|int + (groups['elasticsearch']|length % 2 > 0)|int }}"
-    cluster.routing.allocation.disk.watermark.low: 10gb
-    cluster.routing.allocation.disk.watermark.high: 5gb
+    cluster.routing.allocation.disk.watermark.low: 5gb
+    cluster.routing.allocation.disk.watermark.high: 2gb
     node.name: "{{ ansible_hostname }}"
     path.conf: /etc/elasticsearch
     path.data: /var/lib/elasticsearch

@@ -4,7 +4,7 @@ default:
 # LULZ WAT?  needed a xenial box that had old style ethernet naming, as the newer predictive network
 # names are affected by the number of networks a person has configured in virtualbox
 # making it inconsistent across development machines.
-  box_url: https://atlas.hashicorp.com/cloudtoad/boxes/xenial_server_base/versions/1.2/providers/virtualbox.box
+  box_url: https://atlas.hashicorp.com/envimation/boxes/ubuntu-xenial/versions/1.0.3-1498266821/providers/virtualbox.box
   box_name: envimation/ubuntu-xenial
 
 vms:
