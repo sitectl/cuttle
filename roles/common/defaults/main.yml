@@ -101,7 +101,7 @@ common:
     ssh_host_rsa_key:
       public: ~
       private: ~
-    ghe_authorized_keys:
+    github_authorized_keys:
       enabled: False
       api_url: ~ # ex: https://api.github.com
       api_user: ~

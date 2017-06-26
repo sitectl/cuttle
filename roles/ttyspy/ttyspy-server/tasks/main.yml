@@ -27,6 +27,7 @@
     group: ttyspy
     mode: 0640
   with_fileglob: ../templates/etc/ttyspy/server/*
+  notify: restart ttyspy-receiver
 
 - name: allow ttyspy traffic
   ufw:

@@ -25,6 +25,9 @@ kibana:
   start: false
   config_in_es: false
 
+security:
+  enabled: false
+
 #env_vars:
 #  http_proxy: "http://10.0.2.2:3128"
 #  https_proxy: "http://10.0.2.2:3128"

@@ -41,7 +41,7 @@ class VarsModule(object):
         p, cfg_path = load_config_file()
         defaults_file = get_config(p, DEFAULTS, 'var_defaults_file',
                                    'ANSIBLE_VAR_DEFAULTS_FILE', None)
-        print "Using defaults.yml: %s" % defaults_file
+        #print "Using defaults.yml: %s" % defaults_file
         if not defaults_file:
             return None
 

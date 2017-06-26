@@ -29,13 +29,14 @@ There are two data structures of importance in your ansible inventory.
   Users belong to groups, and groups have ssh keys. Certain systems
   permit access to specific ssh keys. Here's a taste:
   ```
-  blueboxadmin:
-    system: yes
-    ssh_keys:
-      enable_passphrase: no
-      fingerprint: ~
-      public: ~
-      private: ~
+  user_groups:
+    blueboxadmin:
+      system: yes
+      ssh_keys:
+        enable_passphrase: no
+        fingerprint: ~
+        public: ~
+        private: ~
   ```
 
 2. `users`
@@ -45,21 +46,22 @@ There are two data structures of importance in your ansible inventory.
   This allows granular, explicit, and auditable control of permissions on Bastion systems. Users also have YubiKey
   data associated with them, which allows for two-factor authentication. `uid` needs to be unique per user. Here's a flavor:
   ```
-  bobsmith:
-    comment: "Bob Smith; bobsmith@example.com"
-    primary_group: default
-    groups:
-      - internal_restricted
-      - OpenStack_Operations
-      - SiteController_Operations
-    public_keys:
-      - ssh-rsa AAAAB3...
-    uid: 1002
-    yubikey:
-      aes_key: ~
-      private_id: ~
-      public_id: ~
-      serial_number: ~
+  users:
+    bobsmith:
+      comment: "Bob Smith; bobsmith@example.com"
+      primary_group: default
+      groups:
+        - internal_restricted
+        - OpenStack_Operations
+        - SiteController_Operations
+      public_keys:
+        - ssh-rsa AAAAB3...
+      uid: 1002
+      yubikey:
+        aes_key: ~
+        private_id: ~
+        public_id: ~
+        serial_number: ~
   ```
 
 ## Add & Update Bastion Users

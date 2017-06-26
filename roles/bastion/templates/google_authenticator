@@ -1,0 +1,7 @@
+{{ item.value.google_2fa.secret_key }}
+" RATE_LIMIT 3 30
+" DISALLOW_REUSE
+" TOTP_AUTH
+{% for code in item.value.google_2fa.emergency_codes %}
+{{ code }}
+{% endfor %}

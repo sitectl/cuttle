@@ -1,0 +1,35 @@
+---
+- name: install google authenticator pam plugin
+  apt:
+    name: libpam-google-authenticator
+
+- name: update pam for google auth
+  lineinfile:
+    dest: /etc/pam.d/sshd
+    regexp: '^auth required pam_google_authenticator.so'
+    insertafter: EOF
+    line: "auth required pam_google_authenticator.so secret=/etc/google_authenticator/${USER} user=root {{ ( google_2fa.nullok|bool ) | ternary('nullok', '') }}"
+
+- name: update pam to disable common auth
+  lineinfile:
+    dest: /etc/pam.d/sshd
+    regexp: "^@include common-auth"
+    state: absent
+
+- name: create google authenticator directory
+  file:
+    dest: /etc/google_authenticator
+    mode: 0700
+    owner: root
+    group: root
+    state: directory
+
+- name: set google2a file per user
+  template:
+    src: google_authenticator
+    dest: "/etc/google_authenticator/{{ item.key }}"
+    owner: "root"
+    mode: "0600"
+  with_dict: "{{ users_to_add|default(users) }}"
+  when: item.value.google_2fa|default({})
+  tags: google-2fa, users

@@ -6,10 +6,21 @@
   when: users_to_add is not defined
 
 - include: yubiauthd.yml
-  when: yubiauthd.enabled|default("False")|bool
+  when:
+    - twofa.enabled|default("False")|bool
+    - twofa.method == "yubiauthd"
+  tags: yubiauthd
+
+- include: google-2fa.yml
+  when:
+    - twofa.enabled|default("False")|bool
+    - twofa.method == "google"
+  tags: google-2fa
+
 
 - include: utils.yml
   when: yama_utils.enabled|default("False")|bool
+  tags: yama_utils
 
 - include: checks.yml
   when: sensu.client.enable_checks|default('True')|bool
