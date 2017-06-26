@@ -28,21 +28,17 @@ INIT_CONFIG_TEMPLATE = """
 {% if description -%}
 Description={{ description }}
 {% endif %}
-
 {% if default_deps -%}
 DefaultDependencies={{ default_deps }}
 {% endif %}
-
 {% if after -%}
 After={{ after }}
 {% else -%}
 After=network.target syslog.target
 {% endif %}
-
 {% if before -%}
 Before={{ before }}
 {% endif %}
-
 {% if wants -%}
 Wants={{ wants }}
 {% endif %}
@@ -57,51 +53,39 @@ WantedBy={{ wanted_by }}
 {% if service_type -%}
 Type={{ service_type }}
 {% endif %}
-
 {% if pidfile -%}
 PIDFile={{ pidfile }}
 {% endif %}
-
 {% if env_vars -%}
 Environment={{ env_vars | join(' ') }}
 {% endif %}
 {% if environment_file -%}
 EnvironmentFile={{ environment_file }}
 {% endif %}
-
 {% if chdir -%}
 WorkingDirectory={{ chdir }}
 {% endif %}
-
 {% if restart -%}
 Restart={{ restart }}
 {% endif %}
-
 # Start main service
 ExecStart={{ cmd }} {{ args }}
-
 {% if prestart_script -%}
 ExecStartPre={{ prestart_script }}
 {% endif %}
-
 #ExecStop=
-
 #ExecStopPost=
-
 {% if reload_script -%}
 ExecReload={{ reload_script }}
 {% endif %}
-
 {% if user -%}
 User={{ user }}
 {% endif %}
 {% if group -%}
 Group={{ group }}
 {% endif %}
-
 TimeoutStartSec=120
 TimeoutStopSec=120
-
 """
 
 def main():

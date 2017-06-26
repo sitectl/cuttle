@@ -15,11 +15,25 @@
     - authorization_proxy
     - sshagentmux
 
-- name: configure authorization_proxy service
-  template: src=etc/init/authorization_proxy.conf
-            dest=/etc/init/authorization_proxy.conf
-            mode=0644
+- name: configure authorization_proxy upstart service
+  upstart_service:
+    name: authorization_proxy
+    cmd: /usr/local/bin/authorization_proxy
+    args: "--socket {{ sshagentmux.auth_socket }} --logfile /var/log/authorization_proxy.log --pidfile /var/run/authorization_proxy.pid start"
+    user: root
+    respawn: true
+    expect: daemon
   notify: restart authorization_proxy
+  when: ansible_distribution_version == "14.04"
+
+- name: configure authorization_proxy systemd service
+  systemd_service:
+    name: authorization_proxy
+    cmd: /usr/local/bin/authorization_proxy
+    args: "--socket {{ sshagentmux.auth_socket }} --logfile /var/log/authorization_proxy.log --pidfile /var/run/authorization_proxy.pid debug"
+    user: root
+  notify: restart authorization_proxy
+  when: ansible_distribution_version == "16.04"
 
 - name: configure authorization_proxy profile.d
   template: src=etc/profile.d/authorization_proxy.sh

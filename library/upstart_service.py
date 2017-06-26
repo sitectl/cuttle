@@ -47,6 +47,10 @@ end script
 respawn
 {% endif -%}
 
+{% if expect -%}
+expect {{ expect }}
+{% endif -%}
+
 exec start-stop-daemon --start --chuid {{ user }} {{ pidfile }} --exec {{ cmd }} {{ args }}
 """
 
@@ -61,6 +65,7 @@ def main():
             config_dirs=dict(default=None),
             config_files=dict(default=None),
             description=dict(default=None),
+            expect=dict(default=None),
             envs=dict(default=None, required=False, type='list'),
             state=dict(default='present'),
             start_on=dict(default='runlevel [2345]'),

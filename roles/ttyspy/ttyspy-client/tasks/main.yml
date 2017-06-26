@@ -29,12 +29,23 @@
   with_fileglob: ../templates/etc/ttyspy/client/*
   notify: restart ttyspyd
 
-- name: configure ttyspyd service
-  template:
-    src: etc/init/ttyspyd.conf
-    dest: /etc/init/ttyspyd.conf
-    mode: 0644
+- name: configure ttyspyd upstart service
+  upstart_service:
+    name: ttyspyd
+    cmd: /usr/sbin/ttyspyd -f
+    args: "-f"
+    user: root
   notify: restart ttyspyd
+  when: ansible_distribution_version == "14.04"
+
+- name: configure ttyspyd systemd service
+  systemd_service:
+    name: ttyspyd
+    cmd: /usr/sbin/ttyspyd -f
+    args: "-f"
+    user: root
+  notify: restart ttyspyd
+  when: ansible_distribution_version == "16.04"
 
 - meta: flush_handlers
 

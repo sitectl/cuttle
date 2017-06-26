@@ -9,7 +9,7 @@
   when: (groups['bastion'] is not defined or inventory_hostname not in groups['bastion']) and
         (groups['ttyspy-server'] is not defined or inventory_hostname not in groups['ttyspy-server'])
 
-- name: ensure blueboxadmin does not have sudo access
+- name: ensure admin user does not have sudo access
   file:
     dest: "/etc/sudoers.d/admin_user"
     state: absent
@@ -18,8 +18,8 @@
 
 - name: write general sudoers file
   template:
-    src: etc/sudoers.d/blueboxcloud
-    dest: /etc/sudoers.d/blueboxcloud
+    src: etc/sudoers.d/cuttle_users
+    dest: /etc/sudoers.d/cuttle_users
     owner: root
     group: root
     mode: 0744

@@ -26,12 +26,23 @@
   tags:
     - firewall
 
-- name: configure yubiauthd service
-  template:
-    src: etc/init/yubiauthd.conf
-    dest: /etc/init/yubiauthd.conf
-    mode: 0644
+- name: configure yubiauthd upstart service
+  upstart_service:
+    name: yubiauthd
+    cmd: /usr/sbin/yubiauthd
+    user: root
+    respawn: true
   notify: restart yubiauthd
+  when: ansible_distribution_version == "14.04"
+
+- name: configure yubiauthd systemd service
+  systemd_service:
+    name: yubiauthd
+    cmd: /usr/sbin/yubiauthd
+    user: root
+    service_type: forking
+  notify: restart yubiauthd
+  when: ansible_distribution_version == "16.04"
 
 - meta: flush_handlers
 

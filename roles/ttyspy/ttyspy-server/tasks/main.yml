@@ -39,7 +39,7 @@
   tags:
     - firewall
 
-- name: ttyspy-receiver service
+- name: ttyspy-receiver upstart service
   upstart_service:
     name: ttyspy-receiver
     cmd: /usr/bin/ttyspy_receiver
@@ -49,6 +49,19 @@
            -store {{ ttyspy.server.transcript_path }}"
     user: ttyspy
   notify: restart ttyspy-receiver
+  when: ansible_distribution_version == "14.04"
+
+- name: ttyspy-receiver systemd service
+  systemd_service:
+    name: ttyspy-receiver
+    cmd: /usr/bin/ttyspy_receiver
+    args: "-ca /etc/ttyspy/server/ca.pem
+           -cert /etc/ttyspy/server/cert.pem
+           -key /etc/ttyspy/server/key.pem
+           -store {{ ttyspy.server.transcript_path }}"
+    user: ttyspy
+  notify: restart ttyspy-receiver
+  when: ansible_distribution_version == "16.04"
 
 - meta: flush_handlers
 

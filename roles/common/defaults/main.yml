@@ -43,6 +43,7 @@ common:
     - unzip
     - vim
     - whois
+    - less
 
   python:
     packages:

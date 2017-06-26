@@ -3,4 +3,4 @@
   action: service name=authorization_proxy state=restarted
 
 - name: reload authorization_proxy
-  action: service name=authorization_proxy state=reloaded
+  action: service name=authorization_proxy state=restarted
