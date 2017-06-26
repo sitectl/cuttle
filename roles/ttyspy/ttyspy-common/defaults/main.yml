@@ -16,6 +16,7 @@ ttyspy:
 
   server:
     enabled: false
+    package: https://github.com/IBM/ttyspy/releases/download/packages/ttyspy-server_0.0.1_amd64.deb
     host: server.test
     ip: 127.0.0.1
     port: 8090

@@ -1,5 +1,6 @@
 ---
 security:
+  enabled: true
   always_update:
     apt:
       - bash

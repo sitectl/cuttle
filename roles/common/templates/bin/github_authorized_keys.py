@@ -8,16 +8,22 @@ import json
 if len(sys.argv) == 2:
     ssh_user = sys.argv[1]
 
-    user_url = "{{ common.ssh.ghe_authorized_keys.api_url }}/users/%s" % ssh_user
+    user_url = "{{ common.ssh.github_authorized_keys.api_url }}/users/%s" % ssh_user
     key_url = "%s/keys" % user_url
-    api_user = '{{ common.ssh.ghe_authorized_keys.api_user }}'
-    api_key = '{{ common.ssh.ghe_authorized_keys.api_pass }}'
+    api_user = '{{ common.ssh.github_authorized_keys.api_user }}'
+    api_key = '{{ common.ssh.github_authorized_keys.api_pass }}'
 
-    user_info = requests.get(user_url,auth=(api_user, api_key))
+    if api_user and api_key:
+        user_info = requests.get(user_url,auth=(api_user, api_key))
+    else:
+        user_info = requests.get(user_url)
     if(user_info.ok):
         user = json.loads(user_info.content)
         if not user['suspended_at']:
-            myResponse = requests.get(key_url,auth=(api_user, api_key))
+            if api_user and api_key:
+                myResponse = requests.get(key_url,auth=(api_user, api_key))
+            else:
+                myResponse = requests.get(key_url)
             if(myResponse.ok):
                 keys = json.loads(myResponse.content)
                 for key in keys:

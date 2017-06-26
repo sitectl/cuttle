@@ -1,12 +1,12 @@
 ---
-- name: install GHE authorized keys app
+- name: install GitHub authorized keys app
   template:
-    src: bin/ghe_authorized_keys.py
-    dest: /usr/local/bin/ghe_authorized_keys.py
+    src: bin/github_authorized_keys.py
+    dest: /usr/local/bin/github_authorized_keys.py
     owner: root
     group: root
     mode: 0755
-  when: common.ssh.ghe_authorized_keys.enabled|bool
+  when: common.ssh.github_authorized_keys.enabled|bool
 
 - name: configure ssh settings
   template: src=etc/ssh/sshd_config

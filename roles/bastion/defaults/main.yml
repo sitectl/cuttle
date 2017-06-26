@@ -6,6 +6,10 @@ yama_utils:
     - libdbd-mysql-perl
     - python-daemon
 
+twofa:
+  enabled: false
+  method: yubiauthd
+
 yubiauthd:
   enabled: false
   package: https://github.com/blueboxgroup/yubiauthd/releases/download/1.0.1/yubiauthd_1.0.1_all.deb
@@ -28,3 +32,6 @@ yubiauthd:
   firewall:
     friendly_networks:
       - 0.0.0.0/0
+
+google_2fa:
+  nullok: true

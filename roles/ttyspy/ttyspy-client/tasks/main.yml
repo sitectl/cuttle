@@ -27,12 +27,7 @@
     group: ttyspy
     mode: 0640
   with_fileglob: ../templates/etc/ttyspy/client/*
-
-# TLS doesn't play nicely with IPs
-- name: configure ttyspy server IP & hostname in /etc/hosts
-  lineinfile:
-    dest: "/etc/hosts"
-    line: "{{ ttyspy.server.ip }} {{ ttyspy.server.host }}"
+  notify: restart ttyspyd
 
 - name: configure ttyspyd service
   template:

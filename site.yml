@@ -56,25 +56,25 @@
   hosts: bastion
   serial: 1
   roles:
-    - role: ttyspy-client
-      tags: ['ttyspy-client']
+    - role: ttyspy/ttyspy-client
+      tags: ['ttyspy-client', 'ttyspy']
       when: ttyspy.client.enabled|default("False")|bool
     - role: sshagentmux
       tags: ['sshagentmux']
       when: sshagentmux.enabled|default("False")|bool
+    - role: bastion
+      tags: ['bastion-role','bastion']
 #    - role: support-tools
 #      tags: ['support-tools']
 #      when: support_tools.enabled|default("False")|bool
-#    - role: bastion
-#      tags: ['bastion-role']
   environment: "{{ env_vars|default({}) }}"
   any_errors_fatal: true
 
 - name: ttyspy server
   hosts: ttyspy-server
   roles:
-    - role: ttyspy-server
-      tags: ['ttyspy-server']
+    - role: ttyspy/ttyspy-server
+      tags: ['ttyspy-server', 'ttyspy']
       when: ttyspy.server.enabled|default("False")|bool
   environment: "{{ env_vars|default({}) }}"
   any_errors_fatal: true
@@ -235,5 +235,6 @@
   roles:
     - role: security
       tags: ['security', 'always']
+      when: security.enabled|default('true')|bool
   environment: "{{ env_vars|default({}) }}"
   any_errors_fatal: true

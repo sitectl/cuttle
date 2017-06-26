@@ -52,7 +52,13 @@ PermitEmptyPasswords no
 
 # Change to yes to enable challenge-response passwords (beware issues with
 # some PAM modules and threads)
+{% if groups['bastion'] is defined and inventory_hostname in groups['bastion'] %}
+{% if twofa.enabled|bool and twofa.method == "google"  %}
+AuthenticationMethods publickey,keyboard-interactive
+ChallengeResponseAuthentication yes
+{% else %}
 ChallengeResponseAuthentication no
+{% endif %}{% endif %}
 
 # Kerberos options
 #KerberosAuthentication no
@@ -112,15 +118,18 @@ ClientAliveCountMax {{ common.ssh.client_alive.countmax }}
 # The remaining values are exclusive to Bastion hosts
 
 AllowAgentForwarding yes
-
 {% if bastion.force_commands | length > 0 %}
+{% if bastion.backdoor_user %}
 # Backdoor for {{ bastion.backdoor_user }} user
-Match User *,!{{ bastion.backdoor_user }} 
+Match User *,!{{ bastion.backdoor_user }}
+{% else %}
+Match User *
+{% endif %}
   ForceCommand {{ bastion.force_commands | join(" ") }}
 {% endif %}
 {% endif %}
 
-{% if common.ssh.ghe_authorized_keys.enabled | bool %}
-AuthorizedKeysCommand      /usr/local/bin/ghe_authorized_keys.py
+{% if common.ssh.github_authorized_keys.enabled | bool %}
+AuthorizedKeysCommand      /usr/local/bin/github_authorized_keys.py
 AuthorizedKeysCommandUser  nobody
 {% endif %}
