@@ -161,10 +161,9 @@ Session ended: 2017-06-25T18:22:13Z
 The easiest of the options is Google Authenticator as there are plenty of
 OTP clients to use, including the Google Authenticator phone app.
 
-we have an extra file in our inventory called `bastion-users.yml` which we can
-inject into our ansible runs with `-e "@envs/example/bastion/bastion-users.yml"`.
-While we can do a full `site.yml` run to add the users, we can also be a bit more
-targeted by running it with just the necessary tags:
+To enable 2FA for the `bobsmith` user we can do a
+targeted ansible run by setting the necessary tags and setting the
+`twofa_enabled` variable.
 
 ```
 $ ursula --provisioner=vagrant envs/example/bastion \
@@ -173,8 +172,9 @@ $ ursula --provisioner=vagrant envs/example/bastion \
   -e "usernames=bobsmith"
 ```
 
-The `twofa_enabled` variable we set above is a shortcut in the bastion
-inventory so that we can easily toggle it on.
+_The `twofa_enabled` variable we set above is a shortcut in the bastion
+inventory so that we can easily toggle it on and is not how you would normally
+enable 2fa_
 
 We preload the google authenticator details in the `users` variable in inventory
 and host the files in a directory that only root can read so that users cannot
