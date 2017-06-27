@@ -20,6 +20,7 @@
 
 - name: install cgi lib
   shell: cp -a {{ ipmi_proxy.git[0].path }}/src/cgi/* /usr/local/lib/ipmi-proxy
+  tags: skip_ansible_lint
 
 - name: www-data sudoers
   template: src=etc/sudoers.d/www-data

@@ -1,5 +1,6 @@
 ---
-- set_fact:
+- name: get passed in user
+  set_fact:
     current_user: "{{ item }}"
 
 - name: determine existing users
@@ -7,6 +8,7 @@
            "SELECT username, GROUP_CONCAT(identity_id) FROM authorizations
             GROUP BY username ORDER BY username"
   register: existing_authorizations
+  changed_when: false
 
 # combine() below creates a dict with the username as the key with associated identity_ids as a list for value
 - name: sort existing users

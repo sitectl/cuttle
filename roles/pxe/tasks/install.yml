@@ -46,5 +46,7 @@
     src: etc/dnsmasq.d/pxeboot.conf
     dest: /etc/dnsmasq.d/pxeboot.conf
 
-- command: /bin/true
-  notify: restart dnsmasq
+- name: restart dnsmasq
+  service:
+    name: dnsmasq
+    state: restarted

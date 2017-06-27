@@ -32,6 +32,7 @@
            "SELECT name, rowid, key_digest FROM identities
             ORDER BY name"
   register: existing_identities
+  changed_when: false
 
 - name: sort existing keys
   set_fact:

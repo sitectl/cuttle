@@ -14,5 +14,7 @@
     path: /etc/dnsmasq.d/pxeboot.conf
     state: absent
 
-- command: /bin/true
-  notify: restart dnsmasq
+- name: restart dnsmasq
+  service:
+    name: dnsmasq
+    state: restarted

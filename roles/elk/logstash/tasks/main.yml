@@ -11,9 +11,6 @@
         owner=logstash group=logstash mode=0750
         state=directory
 
-- name: remove logstash directory acl
-  command: setfacl -b /var/log/logstash
-
 - name: set up log rotation for logstash
   logrotate: name=logstash path=/var/log/logstash/*.log
   args:

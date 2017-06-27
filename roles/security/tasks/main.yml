@@ -1,10 +1,14 @@
 ---
 - name: always update these packages
-  apt: pkg={{ item }} update_cache=yes state=latest
+  apt:
+    pkg: "{{ item }}"
+    update_cache: yes
+    state: latest
   register: result
   until: result|succeeded
   retries: 5
   with_items: "{{ security.always_update.apt }}"
+  tags: skip_ansible_lint
 
 - include: checks.yml
   when: sensu.client.enable_checks|default('True')|bool

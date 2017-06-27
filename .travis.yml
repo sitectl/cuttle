@@ -1,0 +1,17 @@
+branches:
+  only: 
+    - master
+
+sudo: required
+dist: xenial
+language: python
+python: '2.7'
+install:
+  - sudo pip install -r requirements.txt
+
+matrix:
+  fast_finish: true
+
+script:
+  -  ansible-lint site.yml
+  -  ansible-playbook -i envs/example/sitecontroller site.yml --syntax-check

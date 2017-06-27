@@ -18,20 +18,17 @@
 - name: Configuring open file limits
   lineinfile: dest=/etc/security/limits.conf regexp='^elasticsearch     -    nofile    {{ elasticsearch.max_open_files }}' insertafter=EOF line='elasticsearch     -    nofile    {{ elasticsearch.max_open_files }}'
   when: elasticsearch.max_open_files is defined
-- lineinfile: dest=/etc/security/limits.conf regexp='^elasticsearch     -    memlock   {{ elasticsearch.max_locked_memory }}' insertafter=EOF line='elasticsearch     -    memlock   {{ elasticsearch.max_locked_memory }}'
+- name: Configuring locked memory limits
+  lineinfile: dest=/etc/security/limits.conf regexp='^elasticsearch     -    memlock   {{ elasticsearch.max_locked_memory }}' insertafter=EOF line='elasticsearch     -    memlock   {{ elasticsearch.max_locked_memory }}'
   when: elasticsearch.max_locked_memory is defined
-- lineinfile: dest=/etc/pam.d/su regexp='^session    required   pam_limits.so' insertafter=EOF line='session    required   pam_limits.so'
-- lineinfile: dest=/etc/pam.d/common-session regexp='^session    required   pam_limits.so' insertafter=EOF line='session    required   pam_limits.so'
-- lineinfile: dest=/etc/pam.d/common-session-noninteractive regexp='^session    required   pam_limits.so' insertafter=EOF line='session    required   pam_limits.so'
-- lineinfile: dest=/etc/pam.d/sudo regexp='^session    required   pam_limits.so' insertafter=EOF line='session    required   pam_limits.so'
-
-#- name: install elasticsearch service
-#  template:
-#    src: etc/init.d/elasticsearch
-#    dest: /etc/init.d/elasticsearch
-#    mode: 0755
-#  notify:
-#    - restart elasticsearch-if-restart-enabled
+- name: ensure pam limits are enforced
+  lineinfile: dest=/etc/pam.d/su regexp='^session    required   pam_limits.so' insertafter=EOF line='session    required   pam_limits.so'
+- name: ensure pam limits are enforced
+  lineinfile: dest=/etc/pam.d/common-session regexp='^session    required   pam_limits.so' insertafter=EOF line='session    required   pam_limits.so'
+- name: ensure pam limits are enforced
+  lineinfile: dest=/etc/pam.d/common-session-noninteractive regexp='^session    required   pam_limits.so' insertafter=EOF line='session    required   pam_limits.so'
+- name: ensure pam limits are enforced
+  lineinfile: dest=/etc/pam.d/sudo regexp='^session    required   pam_limits.so' insertafter=EOF line='session    required   pam_limits.so'
 
 - name: configure elasticsearch
   template: src={{ item }}

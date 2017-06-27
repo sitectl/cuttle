@@ -48,10 +48,12 @@
   command: "cryptsetup isLuks /dev/{{ item.volume_group }}/{{ item.name }}"
   register: isluks
   failed_when: false
+  changed_when: false
   with_items: "{{ manage_disks.luks_volumes }}"
 
 - name: fail immediately if /dev/shm is not tmpfs
   command: df -t tmpfs /dev/shm
+  changed_when: false
 
 - name: place cryptsetup keys if necessary
   template:
@@ -73,6 +75,7 @@
 - name: open luks filesystems if necessary
   shell: "cryptsetup status luks-{{ item.volume_group }}-{{ item.name }} || cryptsetup luksOpen --key-file \"/dev/shm/{{ item.volume_group }}_{{ item.name }}.key\" /dev/{{ item.volume_group }}/{{ item.name }} luks-{{ item.volume_group }}-{{ item.name }}"
   with_items: "{{ manage_disks.luks_volumes }}"
+  tags: skip_ansible_lint
 
 - name: back up luks header
   shell: "umask 077; cryptsetup luksHeaderBackup \"/dev/{{ item.item.volume_group }}/{{ item.item.name }}\" --header-backup-file \"/root/{{ ansible_fqdn }}_{{ item.item.volume_group }}_{{ item.item.name }}.luksHeaderBackup\""
@@ -98,6 +101,7 @@
 # crypttab needs an fs label not a /dev/mapper entry, so just use UUID
 - name: get UUID for devices
   command: "blkid -s UUID -o value /dev/{{ item.volume_group }}/{{ item.name }}"
+  changed_when: false
   register: blkid
   with_items: "{{ manage_disks.luks_volumes }}"
 

@@ -49,6 +49,6 @@
     state: absent
 
 - name: clean out sensu checks
-  shell: "rm -f /etc/sensu/conf.d/checks/*"
+  shell: warn=no "rm -f /etc/sensu/conf.d/checks/*"
   failed_when: false
   when: delete_all_sensu_checks|default('False')|bool

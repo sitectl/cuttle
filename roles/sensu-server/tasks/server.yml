@@ -187,6 +187,7 @@
   until: result.stdout.find("PONG") != -1
   retries: 15
   delay: 1
+  changed_when: false
 
 - name: start sensu-server
   service: name=sensu-server state=started enabled=yes
