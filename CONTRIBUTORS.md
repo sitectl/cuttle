@@ -31,4 +31,3 @@ added to this list, please PR it.
 * Priya Ingle
 * Leslie Lundquist
 * Dustin Lundquist
-* Jesse Keating
