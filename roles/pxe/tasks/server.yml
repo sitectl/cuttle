@@ -20,13 +20,10 @@
     - ansible_architecture != "aarch64"
 
 - name: copy files to tftpboot
-  command: creates="{{ pxe.tftpboot_path }}/{{ item }}" cp /usr/lib/syslinux/{{ item }} {{ pxe.tftpboot_path }}/
-  with_items:
-    - pxelinux.0
-    - vesamenu.c32
-    - memdisk
-    - reboot.c32
-    - poweroff.com
+  command: "cp {{ item }} {{ pxe.tftpboot_path }}/"
+  args:
+    creates: "{{ pxe.tftpboot_path }}/{{ item | basename }}"
+  with_items: "{{ pxe.netboot_files }}"
 
 - name: create os tftp directories
   file:

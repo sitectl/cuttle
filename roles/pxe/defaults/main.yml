@@ -2,6 +2,11 @@
 pxe_files: False
 
 pxe:
+  netboot_files:
+    - "{{ ( ansible_distribution_version == '14.04' )|ternary('/usr/lib/syslinux', '/usr/lib/PXELINUX') }}/pxelinux.0"
+    - "{{ ( ansible_distribution_version == '14.04' )|ternary('/usr/lib/syslinux', '/usr/lib/syslinux/modules/bios') }}/vesamenu.c32"
+    - "{{ ( ansible_distribution_version == '14.04' )|ternary('/usr/lib/syslinux', '/usr/lib/syslinux/modules/bios') }}/reboot.c32"
+    - "{{ ( ansible_distribution_version == '14.04' )|ternary('/usr/lib/syslinux', '/usr/lib/syslinux/modules/bios') }}/poweroff.{{ ( ansible_distribution_version == '14.04' )|ternary('com', 'c32') }}"
   enable_server: True
   interactive: false
   pxe_interface: "{{ private_device_interface }}"
