@@ -1,11 +1,13 @@
 ---
 - name: devpi use local server
   command: "{{ pypi_mirror.virtualenv }}/bin/devpi use http://127.0.0.1:4040/root/pypi"
+  changed_when: false
 
 - name: check if root password is set
   command: "{{ pypi_mirror.virtualenv }}/bin/devpi login root --password ''"
   register: devpi
   failed_when: False
+  changed_when: false
 
 - name: set root password
   command: "{{ pypi_mirror.virtualenv }}/bin/devpi user -m root password='{{ pypi_mirror.root_password }}'"
@@ -24,6 +26,7 @@
 
 - name: run user management script
   command: /root/devpi_users.sh
+  tags: skip_ansible_lint
 
 - name: remove user management script
   file: dest=/root/devpi_users.sh state=absent

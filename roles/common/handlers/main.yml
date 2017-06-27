@@ -1,9 +1,11 @@
 ---
 - name: update timezone
   command: dpkg-reconfigure --frontend noninteractive tzdata
+  tags: skip_ansible_lint
 
 - name: update locales
   command: dpkg-reconfigure --frontend noninteractive locales
+  tags: skip_ansible_lint
 
 - name: reload-sshd
   service: name=ssh state=reloaded
@@ -13,6 +15,7 @@
          service ntp stop
          ntpdate -s {{ common.ntpd.servers[0]|quote }}
          service ntp start
+  tags: skip_ansible_lint
 
 - name: restart ntpd service
   service: name=ntp state=restarted

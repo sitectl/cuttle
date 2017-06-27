@@ -1,5 +1,6 @@
 ---
-- set_fact:
+- name: get passed in user
+  set_fact:
     current_group: "{{ item }}"
 
 - name: ask for passphrase for ssh key

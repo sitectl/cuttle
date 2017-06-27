@@ -30,7 +30,7 @@
   template:
     src: "etc/ssh/ssh_host_rsa_key.pub"
     dest: "/etc/ssh/ssh_host_rsa_key.pub"
-    mode: 644
+    mode: 0644
     owner: root
     group: root
   when: common.ssh.ssh_host_rsa_key.public
@@ -41,7 +41,7 @@
   template:
     src: "etc/ssh/ssh_host_rsa_key"
     dest: "/etc/ssh/ssh_host_rsa_key"
-    mode: 600
+    mode: 0600
     owner: root
     group: root
   when: common.ssh.ssh_host_rsa_key.private

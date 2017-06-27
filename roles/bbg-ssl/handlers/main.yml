@@ -1,3 +1,4 @@
 ---
 - name: update ca certificates
-  shell: update-ca-certificates
+  shell: warn=no update-ca-certificates
+  tags: skip_ansible_lint

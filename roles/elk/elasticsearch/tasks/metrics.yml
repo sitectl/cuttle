@@ -10,15 +10,15 @@
   tags: elk-stats
 
 - name: designate folder for elk stat file collection
-  file: 
-    dest: /opt/sitecontroller/elk-stats-output 
+  file:
+    dest: /opt/sitecontroller/elk-stats-output
     owner: root
     group: sensu
     state: directory
     mode: 0775
     recurse: yes
   tags: elk-stats
- 
+
 - name: setup cronjob for elk-stats-collection
   cron:
     name: elk-stats-collection

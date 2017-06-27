@@ -2,7 +2,8 @@
 - name: are we already already bootstrapped
   shell: mysql -e "SHOW VARIABLES LIKE 'wsrep_on'" | grep 'ON'
   register: already_bootstrapped
-  failed_when: False
+  failed_when: false
+  changed_when: false
 
 - name: create state snapshot transfer user from anywhere
   mysql_user: name={{ percona.sst_auth_user }} host={{ item }}
@@ -19,6 +20,7 @@
 - name: register replication databases
   command: echo {% for host in groups['percona_primary']|union(groups['percona_secondary']) %}{% if not loop.last %}{{ hostvars[host][private_interface]['ipv4']['address'] }},{% else %}{{ hostvars[host][private_interface]['ipv4']['address'] }}{% endif %}{% endfor %}
   register: percona_replication_nodes
+  changed_when: false
 
 - name: configure bootstrap replication
   template: src=etc/mysql/conf.d/replication.cnf

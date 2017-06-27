@@ -1,7 +1,7 @@
 ---
 - name: install sensu
   apt:
-    name: "sensu={{ sensu.version }}" 
+    name: "sensu={{ sensu.version }}"
     state: present
     force: yes
 

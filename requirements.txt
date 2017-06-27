@@ -3,5 +3,6 @@ six>=1.10.0
 jinja2==2.8.1
 ansible>=2.3,<2.4
 python-heatclient
+ansible-lint
 requests[security]
 -e git://github.com/blueboxgroup/ursula-cli.git@master#egg=ursula-cli

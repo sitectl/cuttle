@@ -4,40 +4,37 @@
 # http://rabbitmq.1065348.n5.nabble.com/Rabbitmq-boot-failure-with-quot-tables-not-present-quot-td24494.html
 
 - name: add rabbitmq erlang cookie
-  template: 
+  template:
     src: var/lib/rabbitmq/erlang.cookie
     dest: /var/lib/rabbitmq/.erlang.cookie
-    owner: rabbitmq 
-    group: rabbitmq 
+    owner: rabbitmq
+    group: rabbitmq
     mode: 0400
   register: erlang_cookie
 
 - name: add rabbitmq cluster configuration
-  template: 
-    src: etc/rabbitmq/rabbitmq.config 
+  template:
+    src: etc/rabbitmq/rabbitmq.config
     dest: /etc/rabbitmq/rabbitmq.config
     owner: rabbitmq
-    group: rabbitmq 
+    group: rabbitmq
     mode: 0600
   register: cluster_configuration
 
 # When rabbitmq starts it creates  '/var/lib/rabbitmq/mnesia'. This dir
 # should be deleted before clustering is setup because it retains data that
 # can conflict with the clustering information.
-- name: remove mnesia configuration
-  file: path=/var/lib/rabbitmq/mnesia state=absent
-  when: erlang_cookie.changed or 
-        cluster_configuration.changed
+- block:
+  - name: remove mnesia configuration
+    file: path=/var/lib/rabbitmq/mnesia state=absent
 
-- name: stop rabbit cluster
-  service: name=rabbitmq-server state=stopped
-  when: erlang_cookie.changed or
-        cluster_configuration.changed
+  - name: stop rabbit cluster
+    service: name=rabbitmq-server state=stopped
 
-  # In case there are lingering processes, ignore errors silently
-- name: send sigterm to any running rabbitmq processes
-  command: killall -u rabbitmq
-  failed_when: false
+    # In case there are lingering processes, ignore errors silently
+  - name: send sigterm to any running rabbitmq processes
+    command: killall -u rabbitmq
+    failed_when: false
   when: erlang_cookie.changed or
         cluster_configuration.changed
 

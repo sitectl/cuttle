@@ -9,8 +9,14 @@
   notify:
     - update locales
 
+- name: check current locale
+  shell: "locale | head -n 1 | awk -F= '{ print $2 }'"
+  register: locale
+  changed_when: false
+
 - name: set locale
   command: update-locale LANG={{ common.locale }} LC_ALL={{ common.locale }}
+  when: locale.stdout != "{{ common.locale }}"
 
 - name: configure /etc/hosts
   template:

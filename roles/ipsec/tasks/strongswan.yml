@@ -5,7 +5,7 @@
   notify:
     - restart {{ ipsec.implementation.service }}
 
-- name: avoid strongswan adjusting routes 
+- name: avoid strongswan adjusting routes
   lineinfile: dest=/etc/strongswan.d/charon.conf regexp="^    \# install_routes"
               line="    install_routes = no"
   notify:

@@ -11,7 +11,8 @@
          dest="{{ vault.archive_path }}/vault-{{ vault.version }}.zip"
          sha256sum={{ vault.download.sha256sum }}
 
-- stat: path={{ vault.bin_path }}/vault
+- name: check if vault binary exists
+  stat: path={{ vault.bin_path }}/vault
   register: vault_binary
 
 - name: unzip vault binary

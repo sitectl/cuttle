@@ -17,7 +17,8 @@
          dest="{{ consul.archive_path }}/consul-{{ consul.version }}.zip"
          sha256sum={{ consul.download.sha256sum }}
 
-- stat: path={{ consul.bin_path }}/consul
+- name: check if consul binary is already installed
+  stat: path={{ consul.bin_path }}/consul
   register: consul_binary
 
 - name: unzip consul binary

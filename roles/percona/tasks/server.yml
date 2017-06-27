@@ -69,10 +69,6 @@
 - name: install root .my.cnf defaults file
   template: src=root/.my.cnf dest=/root/.my.cnf owner=root group=root mode=0600
 
-- name: mysql error log
-  file: path=/var/lib/mysql/mysql-error.log state=touch
-        owner=mysql group=mysql mode=660
-
 - name: remove mysql test database
   mysql_db: state=absent name=test
 

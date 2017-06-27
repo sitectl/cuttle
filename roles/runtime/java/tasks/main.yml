@@ -8,7 +8,8 @@
   retries: 5
 
 - block: # when trusty
-  - apt_repository:
+  - name: add oracle java PPA
+    apt_repository:
       repo: 'ppa:webupd8team/java'
 
   - name: install debconf so we can sign oracle license

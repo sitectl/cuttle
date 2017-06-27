@@ -28,7 +28,7 @@
     - repo-manager
 
 - name: lay down yum.conf
-  template: 
+  template:
     src: "etc/yum/yum.conf"
     dest: "/etc/yum/yum.conf"
     owner: yum-mirror
@@ -121,6 +121,7 @@
   become_user: yum-mirror
   when: yum_mirror.pull_files and "{{ item.value.enabled }}"
   with_dict: "{{ yum_mirror.repositories }}"
+  tags: skip_ansible_lint
 
 - name: allow yum-mirror traffic
   ufw:

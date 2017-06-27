@@ -15,7 +15,7 @@
   register: result
   until: result|succeeded
   retries: 5
-  
+
 - name: install ruby gems
   gem: name={{ item }} user_install=no
   with_items:
