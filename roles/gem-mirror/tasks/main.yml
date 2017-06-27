@@ -3,29 +3,42 @@
   user: name=mirror comment=mirror shell=/bin/false
         system=yes home=/nonexistent
 
-- name: upgrade rubygems under ruby 2.0
-  gem:
-    name: rubygems-update
-    executable: /usr/bin/gem2.0
-    user_install: no
-  until: result|succeeded
-  retries: 5
+- block:
+  - name: upgrade rubygems under ruby 2.0 for trusty
+    gem:
+      name: rubygems-update
+      executable: /usr/bin/gem2.0
+      user_install: no
+    until: result|succeeded
+    retries: 5
 
-- name: refresh rubygems system after upgrade
-  command: update_rubygems
-  until: result|succeeded
-  retries: 5
+  - name: refresh rubygems system after upgrade for trusty
+    command: update_rubygems
+    until: result|succeeded
+    retries: 5
 
-- name: install geminabox and other dependencies under ruby 2.0
+  - name: install geminabox and other dependencies under ruby 2.0 for trusty
+    gem:
+      name: "{{ item.name }}"
+      version: "{{ item.version }}"
+      executable: /usr/bin/gem2.0
+      user_install: no
+    with_items: "{{ gem_mirror.packages }}"
+    register: result
+    until: result|succeeded
+    retries: 5
+  when: ansible_distribution_version == "14.04"
+
+- name: install geminabox and other dependencies on xenial
   gem:
     name: "{{ item.name }}"
     version: "{{ item.version }}"
-    executable: /usr/bin/gem2.0
     user_install: no
   with_items: "{{ gem_mirror.packages }}"
   register: result
   until: result|succeeded
   retries: 5
+  when: ansible_distribution_version == "16.04"
 
 - name: create gem mirror config path
   file: name="{{ gem_mirror.config_location }}" state=directory
@@ -43,12 +56,23 @@
   template: src=opt/gem_mirror/unicorn.rb
             dest="{{ gem_mirror.config_location }}/unicorn.rb"
 
-- name: gem_mirror service
+- name: gem_mirror upstart service
   upstart_service: name=gem_mirror
                    cmd="{{ gem_mirror.bin_location }}/unicorn"
                    args="--env production -c {{ gem_mirror.config_location }}/unicorn.rb {{ gem_mirror.config_location }}/config.ru"
                    user=mirror
   notify: restart gem_mirror server
+  when: ansible_distribution_version == "14.04"
+
+- name: gem_mirror systemd service
+  systemd_service: name=gem_mirror
+                   cmd="{{ gem_mirror.bin_location }}/unicorn"
+                   args="--env production -c {{ gem_mirror.config_location }}/unicorn.rb {{ gem_mirror.config_location }}/config.ru"
+                   user=mirror
+  notify: restart gem_mirror server
+  when: ansible_distribution_version == "16.04"
+
+
 
 - meta: flush_handlers
 

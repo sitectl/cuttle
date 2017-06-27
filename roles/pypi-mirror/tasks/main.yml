@@ -31,12 +31,21 @@
   file: name="{{ pypi_mirror.htpasswd_location }}" state=directory
         owner=mirror
 
-- name: pypi_mirror service
+- name: pypi_mirror upstart service
   upstart_service: name=pypi_mirror
                    cmd={{ pypi_mirror.virtualenv }}/bin/devpi-server
                    args="--port {{ pypi_mirror.port }} --host {{ pypi_mirror.ip }} --serverdir {{ pypi_mirror.mirror_location }} --restrict-modify=root --role {{ pypi_mirror.role }} {% if pypi_mirror.master_url %}--master {{ pypi_mirror.master_url }}{% endif %} {% if pypi_mirror.offline_mode|bool %}--offline-mode{% endif %}"
                    user=mirror
   notify: restart pypi_mirror server
+  when: ansible_distribution_version == "14.04"
+
+- name: pypi_mirror systemd service
+  systemd_service: name=pypi_mirror
+                   cmd={{ pypi_mirror.virtualenv }}/bin/devpi-server
+                   args="--port {{ pypi_mirror.port }} --host {{ pypi_mirror.ip }} --serverdir {{ pypi_mirror.mirror_location }} --restrict-modify=root --role {{ pypi_mirror.role }} {% if pypi_mirror.master_url %}--master {{ pypi_mirror.master_url }}{% endif %} {% if pypi_mirror.offline_mode|bool %}--offline-mode{% endif %}"
+                   user=mirror
+  notify: restart pypi_mirror server
+  when: ansible_distribution_version == "16.04"
 
 - name: add pypy_mirror apache vhost
   template: src=etc/apache2/sites-available/pypi_mirror
