@@ -1,4 +1,5 @@
 # Cuttle
+[![Build Status](https://travis-ci.org/IBM/cuttle.svg?branch=master)](https://travis-ci.org/IBM/cuttle)
 
 _Originally called Site Controller (sitectl) and is Pronounced "Cuddle"._
 
