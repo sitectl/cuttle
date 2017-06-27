@@ -3,9 +3,19 @@
   user: name=netdata comment=netdata shell=/bin/false
         system=yes home=/nonexistent
 
+- name: netdata defaults
+  lineinfile:
+    dest: /etc/default/netdata
+    line: "{{ item }}"
+    create: true
+    mode: 0644
+  with_items:
+    - 'PIDFILE="/var/run/netdata.pid"'
+    - 'EXTRA_OPTS="-P /var/run/netdata.pid"'
+
 - name: install netdata
   apt:
-    package: https://github.com/IBM/cuttle/releases/download/packages/netdata_1.5.1_amd64.deb
+    deb: "{{ netdata.package }}"
 
 - name: ensure netdata service is running
   service:

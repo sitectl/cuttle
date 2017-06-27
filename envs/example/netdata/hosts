@@ -1,2 +1,7 @@
-[netdata]
+[servers]
+netdata01
+netdata02
+netdata03
+
+[netdata_dashboard]
 netdata01
