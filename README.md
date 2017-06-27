@@ -1,9 +1,9 @@
 # Cuttle
-[![Build Status](https://travis-ci.org/IBM/cuttle.svg?branch=master)](https://travis-ci.org/IBM/cuttle)
-
 _Originally called Site Controller (sitectl) and is Pronounced "Cuddle"._
 
-![](./cuttleserver.png)
+[![Build Status](https://travis-ci.org/IBM/cuttle.svg?branch=master)](https://travis-ci.org/IBM/cuttle)
+
+![Cuttlefish are really gross ok](./logo.png)
 
 A Monolithic Repository of Composable Ansible Roles for building an SRE Operations Platform.
 
