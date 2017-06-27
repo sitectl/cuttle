@@ -1,6 +1,6 @@
 ---
 netdata:
-  package: https://github.com/IBM/cuttle/releases/download/packages/netdata_1.5.1_amd64.deb
+  package: https://github.com/IBM/cuttle/releases/download/packages/netdata_1.6.0_amd64.deb
   enabled: false
   firewall:
     allow_from: []

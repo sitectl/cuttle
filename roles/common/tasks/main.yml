@@ -16,7 +16,7 @@
 
 - name: set locale
   command: update-locale LANG={{ common.locale }} LC_ALL={{ common.locale }}
-  when: locale.stdout != "{{ common.locale }}"
+  when: locale.stdout != common.locale
 
 - name: configure /etc/hosts
   template:
