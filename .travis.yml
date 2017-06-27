@@ -12,6 +12,10 @@ install:
 matrix:
   fast_finish: true
 
+env:
+  global:
+    - ANSIBLE_LOG_PATH=/dev/null
+
 script:
-  -  ansible-lint site.yml
-  -  ansible-playbook -i envs/example/sitecontroller site.yml --syntax-check
+  - ansible-lint site.yml
+  - ansible-playbook -i envs/example/sitecontroller site.yml --syntax-check
