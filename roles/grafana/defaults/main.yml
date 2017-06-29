@@ -39,8 +39,9 @@ grafana:
   logrotate:
     frequency: 'daily'
     rotations: 7
-  remote_graphite:
-    datasources:
-      - name: graphite
-        hostname: 127.0.0.1
-        port: 8081
+  datasources: []
+#  - name: graphite
+#    type: graphite
+#    url: http://127.0.0.1:8081
+#    access: proxy
+#    database: ''

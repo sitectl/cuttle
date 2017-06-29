@@ -21,3 +21,6 @@ monitor
 
 [openid_proxy]
 monitor
+
+[netdata_dashboard]
+monitor

@@ -1,4 +1,5 @@
 # {{ ansible_managed }}
+Defaults:sensu !requiretty
 
 sensu ALL= NOPASSWD: /opt/sensu/plugins/check-raid.sh
 sensu ALL= NOPASSWD: /opt/sensu/plugins/check-log.rb

@@ -1,5 +1,8 @@
 ---
 flapjack:
+  packages:
+    flapjack_admin: https://github.com/IBM/cuttle/releases/download/packages/flapjack-admin_0.1.1-1_all.deb
+    flapjack_etet: https://github.com/IBM/cuttle/releases/download/packages/flapjack-etet_0.1.2-1_amd64.deb
   firewall:
     - port: 3080
       src: 127.0.0.1

@@ -14,6 +14,7 @@ apache:
   listen:
     - 80
     - 8081
+    - 8082
 
 database:
   host: "{{ hostvars[groups['percona'][0]][private_interface]['ipv4']['address']|default('172.16.1.103') }}"
@@ -71,18 +72,18 @@ sensu:
       password: sensu
       vhost: /sensu
       hostgroup: sensu
-    handlers:
-      default:
-        - flapjack_http
-      flapjack:
-        enabled: False
-        host: 127.0.0.1
-        port: 6380
-      flapjack_http:
-        enabled: True
-        uri: http://127.0.0.1:3090
-        ttl: -1 # -1 disables, otherwise httpbroker re-sends last received state until ttl expires
-        service_owner: development
+#    handlers:
+#      default:
+#        - flapjack_http
+#      flapjack:
+#        enabled: False
+#        host: 127.0.0.1
+#        port: 6380
+#      flapjack_http:
+#        enabled: True
+#        uri: http://127.0.0.1:3090
+#        ttl: -1 # -1 disables, otherwise httpbroker re-sends last received state until ttl expires
+#        service_owner: development
   api:
     bind_ip: 0.0.0.0
     firewall:
@@ -100,6 +101,7 @@ sensu:
         src: "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
 
 flapjack:
+  enabled: false
   dashboard:
     base_url: "http://monitor.local/flapjack/"
   api:
@@ -134,16 +136,34 @@ openid_proxy:
     sensu:
       proxy: "http://127.0.0.1:3000/"
       url: "/sensu/"
-    flapjack:
-      proxy: "http://127.0.0.1:3080/"
-      url: "/flapjack/"
-    flapjack_api:
-      proxy: "http://127.0.0.1:3081/"
     grafana:
       proxy: "http://127.0.0.1:3001/"
       url: "/grafana/"
+      # uncomment below to proxy for flapjack
+      #    flapjack:
+      #      proxy: "http://127.0.0.1:3080/"
+      #      url: "/flapjack/"
+      #    flapjack_api:
+      #      proxy: "http://127.0.0.1:3081/"
+
+
   ssl:
     enabled: False
+
+netdata:
+  enabled: true
+  firewall:
+    allow_from:
+      - any
+
+netdata_dashboard:
+  apache:
+    enabled: true
+    port: 8082
+  firewall:
+    - port: 8082
+      src: "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+      protocol: tcp
 
 grafana:
   host: "{{ hostvars[groups['grafana'][0]][private_interface]['ipv4']['address']|default('172.16.1.103') }}"
@@ -158,10 +178,17 @@ grafana:
     anonymous: true
     secret_key: nopenopenopenope
 
+  datasources:
+    - name: graphite
+      type: graphite
+      url: http://127.0.0.1:8081
+      access: proxy
+      database: ''
+
   database:
     type: mysql
     host: "{{ database.host }}:3306"
-    name: "{{ database.users.grafana.database }}"
+    name: "grafana"
     user: "{{ database.users.grafana.username }}"
     password: "{{ database.users.grafana.password }}"
   firewall:

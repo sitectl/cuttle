@@ -8,7 +8,7 @@
 
 {
   "client": {
-    "name": "{{ sensu.client_name|default(ansible_hostname ~ '.' ~ ansible_domain ~ '-' ~ site_abrv|default('unknown_site')) }}",
+    "name": "{{ sensu.client_name|default(ansible_hostname) }}",
     "address": "{{ local_external_address() }}",
     "subscriptions": [ "all" ],
     "keepalive": {

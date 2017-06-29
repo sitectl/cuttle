@@ -13,7 +13,13 @@
     - ruby{{ ruby_version }}
     - ruby{{ ruby_version }}-dev
     - flapjack
-    - flapjack-admin
+
+- name: install extra flapjack packages
+  apt:
+    deb: "{{ item }}"
+  with_items:
+    - "{{ flapjack.packages.flapjack_admin }}"
+    - "{{ flapjack.packages.flapjack_etet }}"
 
 - name: install flapjack-diner gem
   gem:
@@ -45,12 +51,21 @@
       - copytruncate
       - notifempty
 
-- name: httpbroker receiver service
-  upstart_service: name=flapjack-httpbroker
-                   cmd=/opt/flapjack/bin/httpbroker-nocache
-                   args="--port={{ flapjack.receivers.httpbroker.port }} --interval={{ flapjack.receivers.httpbroker.interval }} --database={{ flapjack.receivers.httpbroker.db }}{% if flapjack.receivers.httpbroker.debug %} --debug{% endif %}"
-                   user=flapjack
-  notify: restart flapjack-httpbroker
+- block:
+  - name: httpbroker receiver service
+    upstart_service: name=flapjack-httpbroker
+                     cmd=/opt/flapjack/bin/httpbroker-nocache
+                     args="--port={{ flapjack.receivers.httpbroker.port }} --interval={{ flapjack.receivers.httpbroker.interval }} --database={{ flapjack.receivers.httpbroker.db }}{% if flapjack.receivers.httpbroker.debug %} --debug{% endif %}"
+                     user=flapjack
+    notify: restart flapjack-httpbroker
+    when: ansible_distribution_version == "14.04"
+  - name: httpbroker receiver service
+    systemd_service: name=flapjack-httpbroker
+                     cmd=/opt/flapjack/bin/httpbroker-nocache
+                     args="--port={{ flapjack.receivers.httpbroker.port }} --interval={{ flapjack.receivers.httpbroker.interval }} --database={{ flapjack.receivers.httpbroker.db }}{% if flapjack.receivers.httpbroker.debug %} --debug{% endif %}"
+                     user=flapjack
+    notify: restart flapjack-httpbroker
+    when: ansible_distribution_version == "16.04"
   when: flapjack.receivers.httpbroker.enabled|bool
 
 - meta: flush_handlers

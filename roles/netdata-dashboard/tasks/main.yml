@@ -30,6 +30,14 @@
 - include: apache.yml
   when: netdata_dashboard.apache.enabled|bool
 
+- name: disable netdata_dashboard vhost
+  apache2_site:
+    state: disabled
+    name: netdata_dashboard
+  notify:
+    - restart apache
+  when: not netdata_dashboard.apache.enabled|bool
+
 - name: allow netdata dashboard traffic
   ufw: rule=allow
        to_port={{ item.port }}

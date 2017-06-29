@@ -41,6 +41,15 @@
                    args="-c /etc/sensu-server/uchiwa.json -d /etc/sensu/dashboard.d -p /opt/uchiwa/src/public"
                    user=uchiwa
   notify: restart sensu dashboard
+  when: ansible_distribution_version == "14.04"
+
+- name: configure uchiwa upstart
+  systemd_service: name=uchiwa
+                   cmd=/opt/uchiwa/bin/uchiwa
+                   args="-c /etc/sensu-server/uchiwa.json -d /etc/sensu/dashboard.d -p /opt/uchiwa/src/public"
+                   user=uchiwa
+  notify: restart sensu dashboard
+  when: ansible_distribution_version == "16.04"
 
 - name: remove uchiwa init file
   file:

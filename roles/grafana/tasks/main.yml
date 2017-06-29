@@ -18,9 +18,9 @@
   notify:
     - restart grafana
 
-- name: fix grafana service
-  template: src=etc/init.d/grafana-server dest=/etc/init.d/grafana-server
-            mode=0755
+#- name: fix grafana service
+#  template: src=etc/init.d/grafana-server dest=/etc/init.d/grafana-server
+#            mode=0755
 
 - name: install grafana
   apt: name="{{ 'grafana=' ~ grafana.version if grafana.version else 'grafana' }}"
@@ -64,8 +64,12 @@
   tags:
     - firewall
 
+- name: wait for grafana to be ready
+  wait_for:
+    port: "{{ grafana.server.http_port }}"
+
 - include: datasources.yml
-  when: grafana.remote_graphite.datasources|length > 0
+  when: grafana.datasources|length > 0
   tags: grafana-datasources
 
 - include: checks.yml

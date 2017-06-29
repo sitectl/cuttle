@@ -1,7 +1,7 @@
 ---
 - name: set grafana request url
   set_fact:
-    grafana_url: http://127.0.0.1:{{ grafana.server.http_port|default("3001") }}/api/datasources
+    grafana_url: http://127.0.0.1:{{ grafana.server.http_port }}/api/datasources
 
 - name: check if grafana datasources exist
   uri:
@@ -13,22 +13,14 @@
     return_content: yes
   register: grafana_api_datasources
 
-- name: create list of currently configured datasources
+- name: create empty list for currently configured datasources
   set_fact:
-    configured_datasources: "{{ configured_datasources | default([]) + [item.name|lower] }}"
-  with_items: "{{ grafana_api_datasources.content|from_json }}"
+    configured_datasources: []
 
-- name: create initial grafana datasources
-  uri:
-    url: "{{ grafana_url }}"
-    method: POST
-    user: "{{ grafana.security.admin_user }}"
-    password: "{{ grafana.security.admin_password }}"
-    force_basic_auth: yes
-    body: "{{ lookup('template', 'datasources.json')}}"
-    body_format: json
-  with_items: "{{ grafana.remote_graphite.datasources }}"
-  when: "{{ not grafana_api_datasources.content|from_json }}"
+- name: append to list of currently configured datasources
+  set_fact:
+    configured_datasources: "{{ configured_datasources + [item.name|lower] }}"
+  with_items: "{{ grafana_api_datasources.content|default('{}')|from_json }}"
 
 - name: add new grafana datasources
   uri:
@@ -37,7 +29,7 @@
     user: "{{ grafana.security.admin_user }}"
     password: "{{ grafana.security.admin_password }}"
     force_basic_auth: yes
-    body: "{{ lookup('template', 'datasources.json')}}"
+    body: "{{ item | to_json }}"
     body_format: json
-  with_items: "{{ grafana.remote_graphite.datasources }}"
-  when: "{{ grafana_api_datasources.content|from_json and item.name|lower not in configured_datasources }}"
+  with_items: "{{ grafana.datasources }}"
+  when: item.name|lower not in configured_datasources
