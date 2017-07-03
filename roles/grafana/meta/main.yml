@@ -2,7 +2,7 @@
 dependencies:
   - role: apt-repos
     repos:
-      - repo: 'deb {{ apt_repos.grafana.repo }} wheezy main'
+      - repo: 'deb {{ apt_repos.grafana.repo }} jessie main'
         key_url: '{{ apt_repos.grafana.key_url }}'
   - role: logging-config
     service: grafana

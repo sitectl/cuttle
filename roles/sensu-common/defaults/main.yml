@@ -1,7 +1,7 @@
 ---
 sensu:
   enabled: True
-  version: 0.25.7-1
+  version: 0.29.0-11
   api:
     bind_ip: 127.0.0.1
     port: 4567
@@ -143,8 +143,8 @@ sensu:
           -----END RSA PRIVATE KEY-----
     handlers:
       hijack:
-        default:
-          - flapjack_http
+        default: []
+          # - flapjack_http
         pagerduty: []
         flapjack: []
         flapjack_http: []
@@ -161,15 +161,6 @@ sensu:
         api_keys:
           - name: support
             api_key: notarealkey
-      remedy:
-        enabled: False
-        username: BluemixMonitor
-        password: notarealpassword
-        service: bluebox # Please change to bluebox_boxpanel for Box Panel monitoring
-        baseurl: https://chinabluemix.itsm.unisysedge.cn/arsys/WSDL/public/golddevar01
-        wsdl_create: Uni_HPDIncidentInterface_IBM_Create_Incident
-        wsdl_query: Uni_HPDIncidentInterface_IBM_Query_Incident
-        wsdl_update: Uni_HPDIncidentInterface_IBM_Update_Incident
       flapjack:
         enabled: False
         host: 127.0.0.1
@@ -177,7 +168,7 @@ sensu:
         port: 6380
         db: 0
       flapjack_http:
-        enabled: True
+        enabled: False
         uri: http://localhost:3090
         ttl: -1 # -1 disables, otherwise httpbroker re-sends last received state until ttl expires
         sensu_api:

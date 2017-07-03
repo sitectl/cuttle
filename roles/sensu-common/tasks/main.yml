@@ -16,6 +16,7 @@
   template: src=etc/init.d/sensu-service
             dest=/etc/init.d/sensu-service
             owner=root mode=0755
+  when: ansible_distribution_version == "14.04"
 
 - include: checks.yml
   when: sensu.client.enable_checks|default('True')|bool

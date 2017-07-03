@@ -83,6 +83,11 @@
             dest=/var/www/html/health_check
   when: openid_proxy.health_check_enabled|default('False')|bool
 
+- name: install logo
+  copy:
+    src: logo.png
+    dest: /var/www/html/logo.png
+
 - name: enable site
   apache2_site: name={{ openid_proxy.vhost_name }}.conf state={{ openid_proxy.apache.state }}
   notify: restart apache

@@ -3,7 +3,6 @@
   service:
     name: "{{ item }}"
     state: started
-    must_exist: false
   with_items:
     - sensu-api
     - sensu-server
@@ -12,7 +11,6 @@
   service:
     name: "{{ item }}"
     state: stopped
-    must_exist: true
   with_items:
     - sensu-api
     - sensu-server
@@ -26,8 +24,7 @@
 - name: restart sensu
   service:
     name: "{{ item }}"
-    state: restarted_if_running
-    must_exist: true
+    state: restarted
   with_items:
     - sensu-api # need this up before sensu-server gets restarted
     - sensu-server
@@ -35,5 +32,4 @@
 - name: restart sensu dashboard
   service:
     name: uchiwa
-    state: restarted_if_running
-    must_exist: true
+    state: restarted

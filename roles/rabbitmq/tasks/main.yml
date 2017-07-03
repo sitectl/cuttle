@@ -90,10 +90,17 @@
   rabbitmq_plugin: names={{ item }} state=enabled
   with_items: "{{ rabbitmq.plugins }}"
 
+- name: wait until rabbit url is listening
+  wait_for:
+    host: 127.0.0.1
+    port: 15672
+
 - name: install rabbitmqadmin
   get_url:
     url: "{{ rabbitmq.admin_cli_url }}"
     dest: /usr/local/bin/rabbitmqadmin
+    use_proxy: no
+  tags: rabbitmqadmin
 
 - name: correct rabbitmqadmin modes
   file: group=root owner=root mode=0755 path=/usr/local/bin/rabbitmqadmin

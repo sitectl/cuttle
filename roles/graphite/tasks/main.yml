@@ -1,4 +1,9 @@
 ---
+- name: install graphite dependencies
+  apt:
+    name: "{{ item }}"
+  with_items: "{{ graphite.system_deps }}"
+
 - name: create graphite user
   user:
     name: graphite
@@ -24,6 +29,14 @@
     - /var/log/graphite
     - /var/log/graphite/webapp
 
+- name: pip install graphite dependencies
+  pip:
+    name: "{{ item }}"
+    virtualenv: "{{ graphite.path.virtualenv }}"
+  environment:
+    PYTHONPATH: "{{ graphite.path.install_root }}/lib/:{{ graphite.path.install_root }}/webapp/"
+  with_items: "{{ graphite.pip_packages }}"
+
 # pip install carbon isn't idempotent.  lets make it so.
 - name: check if carbon is installed
   stat:
@@ -34,6 +47,8 @@
   pip:
     name: carbon
     virtualenv: "{{ graphite.path.virtualenv }}"
+  environment:
+    PYTHONPATH: "{{ graphite.path.install_root }}/lib/:{{ graphite.path.install_root }}/webapp/"
   when: not carbon.stat.exists
 
 - name: install carbon-cache service
@@ -49,14 +64,14 @@
     cmd: "{{ graphite.path.virtualenv }}/bin/twistd"
     args: "--nodaemon --reactor=epoll --no_save carbon-cache --config {{ graphite.path.home }}/conf/carbon.conf"
     env_vars:
-      - GRAPHITE_ROOT={{ graphite.path.home }}
-      - PYTHONPATH={{ graphite.path.install_root }}/opt/graphite/lib
+      - "GRAPHITE_ROOT={{ graphite.path.home }}"
+      - "PYTHONPATH={{ graphite.path.install_root }}/lib"
     user: graphite
     group: graphite
     restart: always
     service_type: simple
   notify: restart carbon-cache
-  when: ansible_distribution_version != "14.04"
+  when: ansible_distribution_version == "16.04"
 
 - name: configure carbon
   template:
@@ -80,6 +95,8 @@
   pip:
     name: graphite-web
     virtualenv: "{{ graphite.path.virtualenv }}"
+  environment:
+    PYTHONPATH: "{{ graphite.path.install_root }}/lib/:{{ graphite.path.install_root }}/webapp/"
   when: not graphite_web.stat.exists
   notify: setup graphite database
 

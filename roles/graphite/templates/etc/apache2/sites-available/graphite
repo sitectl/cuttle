@@ -25,7 +25,7 @@ WSGISocketPrefix /var/run/wsgi
 
         # I've found that an equal number of processes & threads tends
         # to show the best performance for Graphite (ymmv).
-        WSGIDaemonProcess graphite processes=5 threads=5 display-name='%{GROUP}' inactivity-timeout=120 user='graphite'
+        WSGIDaemonProcess graphite processes=5 threads=5 display-name='%{GROUP}' inactivity-timeout=120 user='graphite' python-home='{{ graphite.path.home }}'
         WSGIProcessGroup graphite
         WSGIApplicationGroup %{GLOBAL}
         WSGIImportScript {{ graphite.path.home }}/conf/graphite.wsgi process-group=graphite application-group=%{GLOBAL}

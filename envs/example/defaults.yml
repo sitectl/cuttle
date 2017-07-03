@@ -232,10 +232,7 @@ grafana:
     path: /usr/share/grafana/public/dashboards
     public:
       enabled:
-        - bbc-standard-sla.json
         - bbc-basic-host.json
-        - cleversafe-standard-sla.json
-        - bbc-ceph-usage.json
 
 percona:
   root_password: asdf

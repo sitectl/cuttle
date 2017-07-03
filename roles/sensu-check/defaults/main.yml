@@ -268,7 +268,7 @@ sensu_checks:
       notification: "unexpected number of rabbitmq-server processes"
       interval: 120
       standalone: true
-      command: "check-procs.rb -p rabbitmq-server -W 1 -C 1"
+      command: "check-procs.rb -p beam.smp -W 1 -C 1"
       service_owner: "{{ monitoring_common.service_owner }}"
     check_rabbitmq_messages:
       handler: default

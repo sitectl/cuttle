@@ -56,9 +56,9 @@ Type={{ service_type }}
 {% if pidfile -%}
 PIDFile={{ pidfile }}
 {% endif %}
-{% if env_vars -%}
-Environment={{ env_vars | join(' ') }}
-{% endif %}
+{% if env_vars -%}{% for env_var in env_vars %}
+Environment={{ env_var }}
+{% endfor %}{% endif %}
 {% if environment_file -%}
 EnvironmentFile={{ environment_file }}
 {% endif %}

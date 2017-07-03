@@ -1,6 +1,6 @@
 ---
 netdata_dashboard:
-  path: /var/www/html/netdata_dashboard
+  path: /var/www/html/netdata
   title: "Netdata Dashboard"
   auth: []
   apache:

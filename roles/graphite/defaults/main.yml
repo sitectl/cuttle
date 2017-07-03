@@ -10,21 +10,11 @@ graphite:
     - sqlite3
     - libmysqlclient-dev
   pip_packages:
-    - 'pyparsing<2.1.10'
-    - 'graphite-web<1.0'
-    - 'carbon<1.0'
-    - 'whisper<1.0'
-    - mysql-python
-    - 'Twisted<12.0'
-    - 'django<1.6'
-    - 'django-tagging<0.4'
+    - scandir
+    - MySQL-python
+    - whisper
   alternatives: []
-    #  - name: graphite
-    #    path: /opt/git/ipmi-proxy/current/src/ipmi-proxy-tool.py
-    #    link: /usr/local/bin/ipmi-proxy-tool.py
-    #  - name: sync-proxy-cache.py
-    #    path: /opt/git/ipmi-proxy/current/src/sync-proxy-cache.py
-    #    link: /usr/local/bin/sync-proxy-cache.py
+
   cleanup: []
 
   remote_poll:
