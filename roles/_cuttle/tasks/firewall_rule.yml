@@ -1,0 +1,7 @@
+---
+# Add or Remove a UFW firewall rule
+
+- name: add firewall rules
+  ufw:
+    args: "{{ item }}"
+  with_items: "{{ firewall }}"

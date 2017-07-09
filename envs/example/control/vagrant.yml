@@ -1,0 +1,19 @@
+default:
+  memory: 1024
+  cpus: 1
+box_url: https://atlas.hashicorp.com/envimation/boxes/ubuntu-xenial/versions/1.0.3-1498266821/providers/virtualbox.box
+box_name: envimation/ubuntu-xenial
+
+vms:
+  control-basic:
+    ip_address:
+      - 172.16.0.102
+      - 172.16.1.102
+  control-openid:
+    ip_address:
+      - 172.16.0.103
+      - 172.16.1.103
+#  control-oauth:
+#    ip_address:
+#      - 172.16.0.104
+#      - 172.16.1.104

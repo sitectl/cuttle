@@ -276,7 +276,7 @@ sensu_checks:
       interval: 120
       occurrences: 5
       standalone: true
-      command: "check-rabbitmq-messages.rb --user admin --password {{ secrets.sensu.server.rabbitmq.admin|default('admin') }} -w 10000 -c 50000"
+      command: "check-rabbitmq-messages.rb --user {{ sensu.server.rabbitmq.username }} --password {{ sensu.server.rabbitmq.password }} -w 10000 -c 50000"
       service_owner: "{{ monitoring_common.service_owner }}"
 
   redis:

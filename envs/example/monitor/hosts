@@ -19,7 +19,7 @@ monitor
 [flapjack]
 monitor
 
-[openid_proxy]
+[control_dashboard]
 monitor
 
 [netdata_dashboard]

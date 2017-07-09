@@ -1,14 +1,4 @@
 ---
-- name: setup graphite database
-  command: "{{ graphite.path.virtualenv }}/bin/django-admin.py migrate --run-syncdb --settings=graphite.settings"
-  environment:
-    PYTHONPATH: "{{ graphite.path.virtualenv }}/webapp"
-  register: result
-  until: result|succeeded
-  retries: 5
-  run_once: true
-  notify: restart apache
-
 - name: restart carbon-cache
   service:
     name: carbon-cache

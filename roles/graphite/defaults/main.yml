@@ -1,22 +1,27 @@
 ---
 graphite:
+  secret_key: SECRETKEY
+  # url_prefix must end in a /
+  url_prefix: /
   path:
     home: /opt/graphite
-    data: /data/graphite
+    data: /opt/graphite/storage
     virtualenv: /opt/graphite
     install_root: /opt/graphite
   system_deps:
     - python-cairo
     - sqlite3
     - libmysqlclient-dev
-  pip_packages:
+  pip_deps:
     - scandir
     - MySQL-python
-    - whisper
+  pip_packages:
+    carbon: https://github.com/graphite-project/carbon/tarball/1.0.1
+    whisper: https://github.com/graphite-project/whisper/tarball/1.0.1
+    web: https://github.com/graphite-project/graphite-web/tarball/1.0.1
   alternatives: []
-
   cleanup: []
-
+  firewall: []
   remote_poll:
     enabled: True
     port: 8081
@@ -29,7 +34,7 @@ graphite:
     database: "{{ database.users.graphite.database|default('graphite') }}"
     username: "{{ database.users.graphite.username|default('graphite') }}"
     password: "{{ database.users.graphite.password|default('graphite') }}"
-  secret_key: SECRETKEY
+
   amqp:
     enabled: False
     verbose: False

@@ -28,6 +28,8 @@
     - headers
     - ssl
     - rewrite
+    - status
+    - proxy_http
   notify: reload apache
 
 - name: install passlib pip module
@@ -59,10 +61,20 @@
               state=present
   notify: reload apache
 
+- name: install apache healthcheck file
+  template: src=var/www/html/health_check
+            dest=/var/www/html/health_check
+  when: apache.health_check_enabled|default('False')|bool
+
 - meta: flush_handlers
 
 - name: ensure apache is running
   service: name=apache2 state=started enabled=yes
+  when: apache.listen|length > 0
+
+- name: ensure apache is stopped
+  service: name=apache2 state=stopped enabled=no
+  when: apache.listen|length == 0
 
 - include: checks.yml
   when: sensu.client.enable_checks|default('True')|bool

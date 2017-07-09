@@ -1,0 +1,6 @@
+---
+apache_auth:
+  listen_ip: "*"
+  listen_port: 80
+  listen_ssl_port: 443
+  proxy_to: http://127.0.0.1:8080/

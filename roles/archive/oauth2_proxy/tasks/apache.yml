@@ -1,0 +1,48 @@
+---
+- name: enable apache mod proxy_http
+  apache2_module: name=proxy_http
+  notify: reload apache
+
+- name: enable apache mod status
+  apache2_module: name=status
+  when: oauth2_proxy.apache_status
+  notify: reload apache
+
+- name: install apache template
+  template: src=etc/apache2/sites-available/oauth2_proxy.conf
+            dest=/etc/apache2/sites-available/oauth2_proxy.conf
+  notify: restart apache
+
+- name: enable site
+  apache2_site: name=oauth2_proxy.conf state=enabled
+  notify: restart apache
+  when: oauth2_proxy.apache.enabled
+
+- name: allow oauth2_proxy traffic
+  ufw: rule=allow to_port={{ item.0.port }} src={{ item.1|default('127.0.0.1') }}
+  with_subelements:
+    - "{{ oauth2_proxy.firewall }}"
+    - src
+  tags:
+    - firewall
+
+- meta: flush_handlers
+
+- name: install apache location index
+  template: src=var/www/html/index.html
+            dest=/var/www/html/index.html
+
+- name: ensure apache is running
+  service: name=apache2 state=started enabled=yes
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

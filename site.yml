@@ -197,11 +197,11 @@
   environment: "{{ env_vars|default({}) }}"
   any_errors_fatal: true
 
-- name: openid_proxy
-  hosts: openid_proxy
+- name: control-dashboard
+  hosts: control-dashboard:control_dashboard
   roles:
-    - role: openid_proxy
-      tags: ['openid-proxy']
+    - role: control-dashboard
+      tags: ['control-dashboard']
   environment: "{{ env_vars|default({}) }}"
   any_errors_fatal: true
 

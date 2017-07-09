@@ -2,5 +2,18 @@
 netdata:
   package: https://github.com/IBM/cuttle/releases/download/packages/netdata_1.6.0_amd64.deb
   enabled: false
+  # see https://github.com/firehol/netdata/wiki/netdata-backends
+  config: {}
+  #  backend:
+  #    enabled: no
+  #    type: graphite
+  #    data_source: as collected
+  #    prefix: netdata
+  #    hostname: monitoring
+  #    update_every: 10
+  #    buffer_on_failures: 10
+  #    timeout_ms: 20000
+  #    send_charts_matching: "*"
+
   firewall:
     allow_from: []

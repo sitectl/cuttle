@@ -1,0 +1,36 @@
+---
+public_interface: ansible_eth1
+private_interface: ansible_eth2
+public_ipv4: "{{ hostvars[inventory_hostname][public_interface]['ipv4'] }}"
+private_ipv4: "{{ hostvars[inventory_hostname][private_interface]['ipv4'] }}"
+
+apache:
+  listen:
+    - 80
+    - 127.0.0.1:8080
+
+common:
+  firewall:
+    friendly_networks:
+      - "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+  ssh:
+    allow_from:
+      - "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+
+control_portal:
+  listen:
+    ip: 127.0.0.1
+    port: 8080
+  locations:
+    sensu:
+      proxy: "http://test:3000/"
+      url: "/test/"
+
+  firewall:
+    - port: 80
+      protocol: tcp
+      src:
+        - "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+
+monitoring_common:
+  service_owner: development

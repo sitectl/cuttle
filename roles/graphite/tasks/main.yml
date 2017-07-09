@@ -29,13 +29,33 @@
     - /var/log/graphite
     - /var/log/graphite/webapp
 
+- name: ensure gaphite-web log files owned by graphite
+  copy:
+    dest: "/var/log/graphite/webapp/{{ item }}"
+    content: ""
+    owner: graphite
+    force: false
+  with_items:
+    - exception.log
+    - info.log
+
+
 - name: pip install graphite dependencies
   pip:
     name: "{{ item }}"
     virtualenv: "{{ graphite.path.virtualenv }}"
   environment:
     PYTHONPATH: "{{ graphite.path.install_root }}/lib/:{{ graphite.path.install_root }}/webapp/"
-  with_items: "{{ graphite.pip_packages }}"
+  with_items: "{{ graphite.pip_deps }}"
+
+# pip install graphite-web isn't idempotent.  lets make it so.
+- name: pip install whisper
+  pip:
+    name: "{{ graphite.pip_packages.whisper }}"
+    virtualenv: "{{ graphite.path.virtualenv }}"
+    extra_args: "--no-binary=:all:"
+  environment:
+    PYTHONPATH: "{{ graphite.path.install_root }}/lib/:{{ graphite.path.install_root }}/webapp/"
 
 # pip install carbon isn't idempotent.  lets make it so.
 - name: check if carbon is installed
@@ -45,7 +65,7 @@
 
 - name: pip install carbon
   pip:
-    name: carbon
+    name: "{{ graphite.pip_packages.carbon }}"
     virtualenv: "{{ graphite.path.virtualenv }}"
   environment:
     PYTHONPATH: "{{ graphite.path.install_root }}/lib/:{{ graphite.path.install_root }}/webapp/"
@@ -93,12 +113,12 @@
 
 - name: pip install graphite-web
   pip:
-    name: graphite-web
+    name: "{{ graphite.pip_packages.web }}"
     virtualenv: "{{ graphite.path.virtualenv }}"
+    extra_args: "--no-binary=:all:"
   environment:
     PYTHONPATH: "{{ graphite.path.install_root }}/lib/:{{ graphite.path.install_root }}/webapp/"
   when: not graphite_web.stat.exists
-  notify: setup graphite database
 
 - name: graphite webapp configuration
   template:
@@ -106,6 +126,29 @@
     dest: "{{ graphite.path.install_root }}/webapp/graphite/local_settings.py"
   notify:
     - restart apache
+
+- name: check if graphite auth_user table exits
+  shell: |
+    mysql --user={{ graphite.mysql.username }} \
+    --password={{ graphite.mysql.password }} \
+    {{ graphite.mysql.database }} \
+    --host={{ graphite.mysql.host }} \
+    --port={{ graphite.mysql.port }} \
+     -e 'select * from auth_user;'
+  register: graphite_db_test
+  run_once: true
+  changed_when: false
+  failed_when: false
+
+- name: setup graphite database
+  command: "{{ graphite.path.virtualenv }}/bin/django-admin.py migrate --run-syncdb --settings=graphite.settings"
+  environment:
+    PYTHONPATH: "{{ graphite.path.virtualenv }}/webapp"
+  when: graphite_db_test.rc != 0
+  register: result
+  until: result|succeeded
+  retries: 5
+  run_once: true
 
 # GPH034
 - name: start and enable graphite carbon
@@ -174,6 +217,16 @@
     name: apache2
     state: started
     enabled: yes
+
+- name: add graphite firewall rules
+  ufw:
+    rule: allow
+    port: "{{ item.port }}"
+    from_ip: "{{ item.src }}"
+    proto: tcp
+  with_items: "{{ graphite.firewall }}"
+  tags:
+    - firewall
 
 - include: checks.yml
   when: sensu.client.enable_checks|default('True')|bool

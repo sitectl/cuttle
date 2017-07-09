@@ -1,0 +1,17 @@
+---
+allow_duplicates: yes
+dependencies:
+  - role: apt-repos
+    repos:
+      - repo: 'deb {{ apt_repos.blueboxcloud_misc.repo }} trusty main'
+        key_url: '{{ apt_repos.blueboxcloud_misc.key_url }}'
+  - role: bbg-ssl
+    name: "oauth2_proxy"
+    cert: "{{ oauth2_proxy.apache.ssl.cert }}"
+    key: "{{ oauth2_proxy.apache.ssl.key }}"
+  - role: apache/common
+  - role: logging-config
+    service: oauth2_proxy
+    logdata: "{{ oauth2_proxy.logs }}"
+    forward_type: "{{ oauth2_proxy.logging.forwarder }}"
+  - role: sensu-check

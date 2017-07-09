@@ -1,0 +1,4 @@
+---
+dependencies:
+  - role: apache-auth
+  - role: sensu-check

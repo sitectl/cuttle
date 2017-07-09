@@ -1,0 +1,17 @@
+---
+apache_auth:
+  method: openid
+  vhost_name: control-openid
+  listen_ip: "*"
+  listen_port: 80
+  listen_ssl_port: 443
+  proxy_to: http://127.0.0.1:8080/
+  openid:
+    provider_issuer: auth.xxxx.net
+    provider_auth_endpoint: http://auth.xxxx.net/oauth/authorize
+    provider_token_endpoint: http://auth.xxxx.net/oauth/token
+    provider_userinfo_endpoint: http://auth.xxxx.net/oauth/userinfo
+    redirect_uri: http://auth.xxxx.net/auth/callback
+    id: "DUMMY"
+    secret: "DUMMY"
+    passphrase: "DUMMY"

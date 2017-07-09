@@ -13,9 +13,10 @@
     - 'PIDFILE="/var/run/netdata.pid"'
     - 'EXTRA_OPTS="-P /var/run/netdata.pid"'
 
-- name: install netdata
-  apt:
-    deb: "{{ netdata.package }}"
+- include: ./roles/_cuttle/tasks/install_deb.yml
+  vars:
+    package_name: netdata
+    package_url: "{{ netdata.package }}"
 
 - name: ensure netdata service is running
   service:
@@ -28,6 +29,15 @@
   with_items: "{{ netdata.firewall.allow_from }}"
   tags:
     - firewall
+
+- name: configure metrics backend
+  ini_file:
+    path: /etc/netdata/netdata.conf
+    section: "{{ item.0 }}"
+    option: "{{ item.1|regex_replace('_',' ') }}"
+    value: "{{ item.2 }}"
+    backup: yes
+  with_inidata: "{{ netdata.config }}"
 
 - meta: flush_handlers
 

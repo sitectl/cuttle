@@ -6,34 +6,25 @@
   group: name=ssl-key state=present
 
 - name: install ssl key
-  template: src=etc/ssl/private/sitecontroller.key
-            dest=/etc/ssl/private/{{ name|default('sitecontroller') }}.key
+  template: src=etc/ssl/private/cuttle.key
+            dest=/etc/ssl/private/{{ name|default('cuttle') }}.key
             owner=root group=ssl-key mode=0640
   when: ssl_key or bbg_ssl.key
 
 - name: install ssl cert
-  template: src=etc/ssl/certs/sitecontroller.crt
-            dest=/etc/ssl/certs/{{ name|default('sitecontroller') }}.crt
+  template: src=etc/ssl/certs/cuttle.crt
+            dest=/etc/ssl/certs/{{ name|default('cuttle') }}.crt
   when: ssl_cert or bbg_ssl.cert
 
 - name: install ssl intermediate cert
   template: src=etc/ssl/certs/intermediate.crt
-            dest=/etc/ssl/certs/{{ name|default('sitecontroller') }}-intermediate.crt
+            dest=/etc/ssl/certs/{{ name|default('cuttle') }}-intermediate.crt
   when: ssl_intermediate or bbg_ssl.intermediate
 
 - name: install ssl ca cert
   template: src=usr/local/share/ca-certificates/ca_cert.crt
-            dest=/usr/local/share/ca-certificates/{{ name|default('sitecontroller-ca_cert') }}.crt
+            dest=/usr/local/share/ca-certificates/{{ name|default('cuttle-ca_cert') }}.crt
   when: ssl_ca_cert or bbg_ssl.ca_cert
-  notify: update ca certificates
-
-- name: remove antiquated ca certs
-  file:
-    path: "{{ item }}"
-    state: absent
-  with_items:
-    - /usr/local/share/ca-certificates/bbg/bbg-root-ca.crt
-    - /usr/local/share/ca-certificates/logging-forward.crt
   notify: update ca certificates
 
 - include: checks.yml

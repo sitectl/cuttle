@@ -1,0 +1,54 @@
+---
+- include: ./roles/_cuttle/tasks/install_deb.yml
+  vars:
+    package_name: oauth2-proxy
+    package_url: "{{ apache_auth.oauth2.package }}"
+
+- name: Create a folder to hold the oauth2_proxy configuration file.
+  file: path=/etc/oauth2_proxy state=directory mode=0755
+
+- name: ensure oauth2 config file exists
+  copy:
+    src: oauth2_proxy/oauth2_proxy.cfg
+    dest: /etc/oauth2_proxy/oauth2_proxy.cfg
+    owner: root
+    group: www-data
+    force: no
+    mode: 0640
+
+- name: configure oauth2 proxy
+  ini_file:
+    path: /etc/oauth2_proxy/oauth2_proxy.cfg
+    section: ""
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    quote_value: yes
+    backup: no
+  with_dict: "{{ apache_auth.oauth2.config }}"
+  when: item.value != None
+  notify: restart oauth2_proxy
+  tags: configure-oauth2-proxy
+
+- name: Install oauth2_proxy upstart service.
+  upstart_service: name=oauth2_proxy cmd=/opt/oauth2_proxy/bin/oauth2_proxy args="-config=/etc/oauth2_proxy/oauth2_proxy.cfg" user=www-data
+  notify: restart oauth2_proxy
+  when: ansible_distribution_version == "14.04"
+
+- name: Install oauth2_proxy systemd service.
+  systemd_service: name=oauth2_proxy cmd=/opt/oauth2_proxy/bin/oauth2_proxy args="-config=/etc/oauth2_proxy/oauth2_proxy.cfg" user=www-data
+  notify: restart oauth2_proxy
+  when: ansible_distribution_version == "16.04"
+
+- name: Ensure the oauth2_proxy is running.
+  service: name=oauth2_proxy state=started enabled=yes
+
+- name: install apache template
+  template: src=auth_oauth2/etc/apache2/sites-available/oauth2_proxy.conf
+            dest=/etc/apache2/sites-available/{{ apache_auth.vhost_name }}.conf
+  notify: restart apache
+
+- name: enable site
+  apache2_site: name={{ apache_auth.vhost_name }}.conf
+  notify: restart apache
+
+- meta: flush_handlers

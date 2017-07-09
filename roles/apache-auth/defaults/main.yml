@@ -1,0 +1,83 @@
+---
+apache_auth:
+  firewall: []
+  method: ~
+  http_redirect: false
+  apache_status: true
+  vhost_name: "basic_auth"
+  server_name: "basic_auth"
+  server_admin: "hostmaster@example.com"
+  log_level: warn
+  proxy_to: ~
+  listen_ip: "*"
+  listen_port: 80
+  ssl:
+    enabled: false
+    http_redirect: true
+    listen_port: 443
+    listen_ip: "*"
+    cert: ~
+    key: ~
+    ca_cert: ~
+    intermediate: ~
+# auth types:
+  basic:
+    users: []
+  openid:
+    libcjose_url: https://github.com/pingidentity/mod_auth_openidc/releases/download/v2.3.0/libcjose0_0.5.1-1.trusty.1_amd64.deb
+    mod_openid_url: https://github.com/pingidentity/mod_auth_openidc/releases/download/v2.3.0/libapache2-mod-auth-openidc_2.3.0-1.trusty.1_amd64.deb
+    provider_issuer: auth.xxx.net
+    provider_auth_endpoint: https://auth.xxxx.net/oauth/authorize
+    provider_token_endpoint: https://auth.xxxx.net/oauth/token
+    provider_userinfo_endpoint: https://auth.xxxx.net/oauth/userinfo
+    redirect_uri: https://auth.xxxx.net/auth/callback
+    id: ~
+    secret: ~
+    passphrase: ~
+
+    logs:
+    # See logging-config/defaults/main.yml for filebeat vs. logstash-forwarder example
+    - paths:
+        - "/var/log/apache2/*-access.log"
+      fields:
+        tags: apache_access
+    - paths:
+        - "/var/log/apache2/*-error.log"
+      fields:
+        tags: apache_error
+  logging:
+    forwarder: filebeat
+
+
+# settings for oauth2_proxy
+  oauth2:
+    package: https://github.com/IBM/cuttle/releases/download/packages/oauth2-proxy_2.0.1.2.a631197_amd64.deb
+    log_level: "warn"
+    listen_ip: 127.0.0.1
+    listen_port: 3010
+    protected_locations:
+      enabled: true
+      log_level: "warn"
+      ip: 127.0.0.1
+      port: 80
+      url: "http://127.0.0.1"
+
+    config:
+      # Implies port 80
+      http_address: "127.0.0.1:3010"
+      client_id: "add GitHub client ID here"
+      client_secret: "add GitHub client secret here"
+      email_domains: "*"
+      github_org: ~
+      redirect_url: "https://cuttle.example/oauth2/callback"
+      upstreams: "http://127.0.0.1:8080"
+      pass_access_token: "true"
+      pass_basic_auth: false
+      cookie_name: "oauth2_proxy_cookie"
+      cookie_secret: "oauth2_proxy_secret_pass"
+      cookie_domain: ""
+      cookie_expire: "168h"
+      cookie_refresh: "24h"
+      cookie_secure: "true"
+      cookie_httponly: "false"
+      provider: "github"

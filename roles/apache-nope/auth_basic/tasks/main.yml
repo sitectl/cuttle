@@ -1,0 +1,57 @@
+---
+- name: enable apache mod ssl
+  apache2_module: name=ssl
+  notify: restart apache
+  when: auth_basic.ssl.enabled
+
+- name: install ssl key
+  template: src=etc/ssl/private/auth_basic.key
+            dest=/etc/ssl/private/{{ auth_basic.vhost_name }}.key
+            owner=root group=ssl-key mode=0640
+  when: auth_basic.ssl.enabled
+  notify: restart apache
+
+- name: install ssl cert
+  template: src=etc/ssl/certs/auth_basic.pem
+            dest=/etc/ssl/certs/{{ auth_basic.vhost_name }}.pem
+  when: auth_basic.ssl.enabled
+  notify: restart apache
+
+- name: install apache template
+  template: src=etc/apache2/sites-available/auth_basic.conf
+            dest=/etc/apache2/sites-available/{{ auth_basic.vhost_name }}.conf
+  notify: restart apache
+
+- name: basic auth users
+  htpasswd: name={{ item.username }} password={{ item.password }}
+            path="/etc/apache2/{{ auth_basic.vhost_name }}_passwd"
+  with_items: "{{ auth_basic.users }}"
+
+- name: enable site
+  apache2_site: name={{ auth_basic.vhost_name }}.conf
+  notify: restart apache
+
+- name: allow auth_basic traffic
+  ufw: rule=allow to_port={{ item.0.port }} src={{ item.1|default('127.0.0.1') }}
+  with_subelements:
+    - "{{ auth_basic.firewall }}"
+    - src
+  tags:
+    - firewall
+
+- meta: flush_handlers
+
+- name: ensure apache is running
+  service: name=apache2 state=started enabled=yes
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

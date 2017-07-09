@@ -1,4 +1,5 @@
 ---
+allow_duplicates: yes
 dependencies:
   - role: logging-config
     service: apache

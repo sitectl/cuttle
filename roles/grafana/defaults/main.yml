@@ -11,6 +11,7 @@ grafana:
     anonymous: false
     admin_user: admin
     admin_password: admin
+    admin_apikey:
     basic: true
     secret_key: dsfdgrgrgrfewfdewgfreGregvre
   database:

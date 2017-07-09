@@ -8,3 +8,4 @@ cuttle:
   ruby:
     gem_sources: ~
   ubuntu_mirror: ~
+  temp_dir: /opt/cuttle/temp

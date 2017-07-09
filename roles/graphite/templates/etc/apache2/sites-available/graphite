@@ -30,12 +30,10 @@ WSGISocketPrefix /var/run/wsgi
         WSGIApplicationGroup %{GLOBAL}
         WSGIImportScript {{ graphite.path.home }}/conf/graphite.wsgi process-group=graphite application-group=%{GLOBAL}
 
-        # XXX You will need to create this file! There is a graphite.wsgi.example
-        # file in this directory that you can safely use, just copy it to graphite.wgsi
-        WSGIScriptAlias / {{ graphite.path.home }}/conf/graphite.wsgi
+        WSGIScriptAlias {{ graphite.url_prefix }} {{ graphite.path.home }}/conf/graphite.wsgi{{ graphite.url_prefix }}
 
-        Alias /content/ {{ graphite.path.virtualenv }}/webapp/content/
-        <Location "/content/">
+        Alias {{ graphite.url_prefix }}static/ {{ graphite.path.virtualenv }}/webapp/content/
+        <Location "{{ graphite.url_prefix }}static/">
                 SetHandler None
         </Location>
 
@@ -43,8 +41,8 @@ WSGISocketPrefix /var/run/wsgi
         # must change @DJANGO_ROOT@ to be the path to your django
         # installation, which is probably something like:
         # /usr/lib/python2.6/site-packages/django
-        Alias /media/ "@DJANGO_ROOT@/contrib/admin/media/"
-        <Location "/media/">
+        Alias {{ graphite.url_prefix }}media/ "@DJANGO_ROOT@/contrib/admin/media/"
+        <Location "{{ graphite.url_prefix }}media/">
                 SetHandler None
         </Location>
 

@@ -13,8 +13,10 @@ serverspec:
 apache:
   listen:
     - 80
-    - 8081
-    - 8082
+    - 443
+    - 127.0.0.1:8080
+    - 127.0.0.1:8081
+    - 127.0.0.1:8082
 
 database:
   host: "{{ hostvars[groups['percona'][0]][private_interface]['ipv4']['address']|default('172.16.1.103') }}"
@@ -34,6 +36,7 @@ database:
       host: '%'
 
 graphite:
+  url_prefix: /graphite/
   amqp:
     enabled: False
     verbose: False
@@ -44,7 +47,9 @@ graphite:
     password: graphite
     exchange: metrics
     metric_name_in_body: True
-
+  firewall:
+    - port: 2003
+      src: "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
 rabbitmq:
   users:
     - username: admin
@@ -73,7 +78,7 @@ sensu:
       vhost: /sensu
       hostgroup: sensu
 #    handlers:
-#      default:
+#      default:# set this if behind a proxy
 #        - flapjack_http
 #      flapjack:
 #        enabled: False
@@ -85,20 +90,16 @@ sensu:
 #        ttl: -1 # -1 disables, otherwise httpbroker re-sends last received state until ttl expires
 #        service_owner: development
   api:
-    bind_ip: 0.0.0.0
-    firewall:
-      - port: 4567
-        src: "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+    bind_ip: 127.0.0.1
+    firewall: []
+#      - port: 4567
+#        src: "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
   dashboard:
-    host: 0.0.0.0
+    host: 127.0.0.1
     datacenters:
       - hostname: localhost
         password: admin
-      - hostname: monitor.local
-        password: admin
-    firewall:
-      - port: 3000
-        src: "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+    firewall: []
 
 flapjack:
   enabled: false
@@ -118,18 +119,14 @@ flapjack:
     - port: 3090
       src: "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
 
-openid_proxy:
+
+control_dashboard:
   http_redirect: False
   apache:
-    servername: monitor.local
+    servername: control.local
   listen:
-    ip: "0.0.0.0"
-    port: 80
-  firewall:
-    - port: 80
-      protocol: tcp
-      src:
-        - any
+    ip: "127.0.0.1"
+    port: 8080
   locations:
     root:
       path: "/"
@@ -139,31 +136,32 @@ openid_proxy:
     grafana:
       proxy: "http://127.0.0.1:3001/"
       url: "/grafana/"
-      # uncomment below to proxy for flapjack
-      #    flapjack:
-      #      proxy: "http://127.0.0.1:3080/"
-      #      url: "/flapjack/"
-      #    flapjack_api:
-      #      proxy: "http://127.0.0.1:3081/"
-
-
-  ssl:
-    enabled: False
+    graphite:
+      proxy: "http://127.0.0.1:8081/graphite/"
+      url: "/graphite/"
+    netdata:
+      proxy: "http://127.0.0.1:8082"
+      url: "/netdata/"
+# uncomment below to proxy for flapjack
+#    flapjack:
+#      proxy: "http://127.0.0.1:3080/"
+#      url: "/flapjack/"
+#    flapjack_api:
+#      proxy: "http://127.0.0.1:3081/"
 
 netdata:
-  enabled: true
-  firewall:
-    allow_from:
-      - any
-
-netdata_dashboard:
-  apache:
-    enabled: true
-    port: 8082
-  firewall:
-    - port: 8082
-      src: "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
-      protocol: tcp
+  config:
+    backend:
+      enabled: yes
+      type: graphite
+      destination: "{{ hostvars[groups['graphite'][0]][private_interface]['ipv4']['address']|default('127.0.0.1') }}:2003"
+      data_source: as collected
+      prefix: netdata
+      hostname: "{{ ansible_nodename }}"
+      update_every: 10
+      buffer_on_failures: 10
+      timeout_ms: 20000
+      send_charts_matching: "*"
 
 grafana:
   host: "{{ hostvars[groups['grafana'][0]][private_interface]['ipv4']['address']|default('172.16.1.103') }}"
@@ -172,16 +170,17 @@ grafana:
     http_addr:  0.0.0.0
     root_url: "/grafana/"
   security:
-    enabled: True
+    enabled: true
     admin_user: admin
     admin_password: admin
     anonymous: true
     secret_key: nopenopenopenope
+    basic: true
 
   datasources:
     - name: graphite
       type: graphite
-      url: http://127.0.0.1:8081
+      url: http://127.0.0.1:8081/graphite/
       access: proxy
       database: ''
 

@@ -1,0 +1,37 @@
+---
+- debug: msg="installing {{ package_name }} from {{ package_url }}"
+
+- name: check if package is already installed
+  command: "dpkg -s {{ package_name }}"
+  register: package_is_installed
+  failed_when: false
+  changed_when: false
+
+- block:
+  - name: create .deb install location
+    file:
+      path: "/root/cuttle/temp"
+      state: directory
+      recurse: yes
+
+  - name: fetch package
+    get_url:
+      url: "{{ package_url }}"
+      dest: "/root/cuttle/temp/{{ package_name }}.deb"
+      mode: 0640
+    register: result
+    until: result|succeeded
+    retries: 5
+
+  - name: install package
+    apt:
+      deb: "/root/cuttle/temp/{{ package_name }}.deb"
+    register: result
+
+  - name: remove package after install
+    file:
+      path: "/root/cuttle/temp/{{ package_name }}.deb"
+      state: absent
+    when: result|succeeded
+
+  when: package_is_installed.rc != 0

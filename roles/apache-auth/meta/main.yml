@@ -1,0 +1,12 @@
+---
+dependencies:
+  - role: apache
+  - role: bbg-ssl
+    name: "apache_auth"
+    ssl_cert: "{{ apache_auth.ssl.cert }}"
+    ssl_key: "{{ apache_auth.ssl.key }}"
+    ssl_ca_cert: "{{ apache_auth.ssl.ca_cert}}"
+    ssl_intermediate: "{{ apache_auth.ssl.intermediate }}"
+    name: "{{ apache_auth.vhost_name }}"
+    when: apache_auth.ssl.enabled|bool
+  - role: sensu-check

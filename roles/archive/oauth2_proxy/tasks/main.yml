@@ -1,7 +1,8 @@
 ---
-- name: install oauth2_proxy package
-  apt:
-    deb: "{{ oauth2_proxy.package }}"
+- include: ./roles/_cuttle/tasks/install_deb.yml
+  vars:
+    package_name: oauth2-proxy
+    package_url: "{{ oauth2_proxy.package }}"
 
 - name: Create a folder to hold the oauth2_proxy configuration file.
   file: path=/etc/oauth2_proxy state=directory mode=0755

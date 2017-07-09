@@ -1,0 +1,10 @@
+---
+allow_duplicates: yes
+dependencies:
+  - role: apache/common
+  - role: bbg-ssl
+  - role: logging-config
+    service: openid_proxy
+    logdata: "{{ openid_proxy.logs }}"
+    forward_type: "{{ openid_proxy.logging.forwarder }}"
+  - role: sensu-check
