@@ -1,3 +1,0 @@
----
-- name: restart oauth2_proxy
-  service: name=oauth2_proxy state=restarted

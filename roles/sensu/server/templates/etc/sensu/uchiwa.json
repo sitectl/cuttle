@@ -1,0 +1,32 @@
+#jinja2:trim_blocks: False
+
+{% macro sensu_datacenter(sensu_dc) %}
+    {
+        "name": "{{ sensu_dc.name|default(sensu_dc.hostname) }}",
+        "host": "{{ sensu_dc.hostname }}",
+        "ssl":   false,
+        "port":  {{ sensu_dc.port|default(sensu.api.port) }},
+        "user": "{{ sensu_dc.username|default(sensu.api.username) }}",
+        "pass": "{{ sensu_dc.password }}",
+        "path": "",
+        "timeout": {{ sensu_dc.timeout|default(5000) }}
+    }
+{% endmacro %}
+
+{
+    "sensu": [
+    {% for sensu_dc in sensu.dashboard.datacenters %}
+      {{ sensu_datacenter(sensu_dc) }}{% if not loop.last %},{% endif %}
+    {% endfor %}
+    ],
+    "uchiwa": {
+{%- if sensu.dashboard.username is defined and sensu.dashboard.password is defined -%}
+    "user": "{{ sensu.dashboard.username }}",
+    "pass": "{{ sensu.dashboard.password }}",
+{%- endif %}
+    "host": "{{ sensu.dashboard.host }}",
+    "port": {{ sensu.dashboard.port }},
+    "stats": 10,
+    "refresh": {{ sensu.dashboard.refresh }}
+    }
+}

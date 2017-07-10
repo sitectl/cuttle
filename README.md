@@ -28,9 +28,13 @@ show Cuttle being used to build infrastructure to solve a number of problems.
 All of these environments can easily be deployed in Vagrant by using the `ursula-cli`
  (see [Example Usage](#example-usage) ).
 
-See [docs/deploy_2fa_secured_bastion.md](docs/deploy_2fa_secured_bastion.md) for
-a fairly comprensive document on deploying a secure ( 2fa, console logging, RBAC)
+### Examples
+
+* See [docs/deploy_2fa_secured_bastion.md](docs/deploy_2fa_secured_bastion.md) for
+a fairly comprehensive document on deploying a secure ( 2fa, console logging, RBAC)
 Bastion.
+* See [docs/deploy-oauth-secured-monitoring-server.md](docs/deploy-oauth-secured-monitoring-server.md) for a OAuth2 secured Sensu / Graphite server.
+
 
 How to Contribute
 -----------------

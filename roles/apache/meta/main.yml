@@ -6,4 +6,4 @@ dependencies:
     logdata: "{{ apache.logs }}"
     forward_type: "{{ apache.logging.forwarder }}"
     when: logging.enabled|default("True")|bool
-  - role: sensu-check
+  - role: sensu/check

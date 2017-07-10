@@ -3,9 +3,15 @@ default:
   cpus: 2
   box_url: https://atlas.hashicorp.com/envimation/boxes/ubuntu-xenial/versions/1.0.3-1498266821/providers/virtualbox.box
   box_name: envimation/ubuntu-xenial
-  
+
 vms:
   monitor:
     ip_address:
+      - 172.16.0.14
+      - 172.16.1.14
+  dashboard:
+    ip_address:
       - 172.16.0.15
       - 172.16.1.15
+    memory: 512
+    cpus: 1

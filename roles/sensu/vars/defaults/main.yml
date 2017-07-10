@@ -1,0 +1,226 @@
+---
+monitoring_common:
+  # Should be the same as a name listed in: sensu.handlers.pagerduty.api_keys
+  service_owner: default
+  checks:
+    memory:
+      warning: 4096
+      critical: 1024
+    raid:
+      severity: "critical"
+  graphite:
+    cluster_prefix: "stats.sc.{{ datacenter|replace('.', '_') }}"
+    host_prefix: "stats.sc.{{ datacenter|replace('.', '_') }}.{{ ansible_nodename|replace('.', '_') }}"
+
+sensu:
+  enabled: True
+  version: 1.0.0-1
+  client:
+    enabled: true
+    enable_checks: true
+    enable_metrics: true
+    plugins_from: file
+    plugin_path: /etc/sensu/plugins
+    rabbitmq:
+      host: 127.0.0.1
+      username: sensu
+      password: sensu
+      vhost: /sensu
+      hostgroup: sensu
+      ssl:
+        cert: |
+          -----BEGIN CERTIFICATE-----
+          MIIC3TCCAcWgAwIBAgIBAjANBgkqhkiG9w0BAQUFADASMRAwDgYDVQQDEwdTZW5z
+          dUNBMB4XDTE1MDEwNTIxMzYyM1oXDTIwMDEwNDIxMzYyM1owITEOMAwGA1UEAwwF
+          c2Vuc3UxDzANBgNVBAoMBmNsaWVudDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCC
+          AQoCggEBAPOCFDzom4sBkFbpy7D6OZX2Re/mbbcpdz7zAYR27X8WE7ai4FCe/OlW
+          lViHBkUdHl8TigYBLpZOX+BBu8UMFThotaq10+E07JQygeZLF/Yg6ihoC2qq1n2w
+          Nan2CkhTdKwYfzeMM14Kdc/cu+1TG64kZQQ6j/TCSho9n1BinxbjJi+Gnp34gDLY
+          c3pI/dpxflPNo9PiPD3XS0WUk1gJm1anNOJLdipGEZYW1fTXL3XciLyrEFEV3am1
+          pUFyD7l+ygHtUfPGJFc+i7iuHqPBU/HvSeIRd/5ynLIqJmNHzmtrUiRiie3TVIjo
+          6PHTLI9l/YS20TGuNQTWnYEFZp0WGtUCAwEAAaMvMC0wCQYDVR0TBAIwADALBgNV
+          HQ8EBAMCB4AwEwYDVR0lBAwwCgYIKwYBBQUHAwIwDQYJKoZIhvcNAQEFBQADggEB
+          AGmzryodqCedFin/9ytQerlAf4To3B1j+F/FSoQfnm7smRV3dz7FRr7vlNhX4Spg
+          p2AQAPV+PBobtvSToDZZGj5Puwog/lfX9PIcAI0JoQOi+ylXjMybJtGSC513fVEj
+          4h5isvAtLEtiEB0czVhF5REXwzFIMTSwTDuCAxgfvaZqkn6J7R5NChcQUpsHxeP+
+          TAuDsm+7LJC8K7mAYS4sCi1VR1Wmq7rF3Wqoe2PdzYg9jKzWDhoBrL+cHZ/CifoY
+          GH4uMZWaTZgJuDNCseRjRwrONFcJqdFm0IAFCt/8r8dlgLL8G3Uu2ABJt+lZvvHf
+          NaVOvEPwUrNq9IJtmam/Wlw=
+          -----END CERTIFICATE-----
+        key: |
+          -----BEGIN RSA PRIVATE KEY-----
+          MIIEowIBAAKCAQEA84IUPOibiwGQVunLsPo5lfZF7+Zttyl3PvMBhHbtfxYTtqLg
+          UJ786VaVWIcGRR0eXxOKBgEulk5f4EG7xQwVOGi1qrXT4TTslDKB5ksX9iDqKGgL
+          aqrWfbA1qfYKSFN0rBh/N4wzXgp1z9y77VMbriRlBDqP9MJKGj2fUGKfFuMmL4ae
+          nfiAMthzekj92nF+U82j0+I8PddLRZSTWAmbVqc04kt2KkYRlhbV9NcvddyIvKsQ
+          URXdqbWlQXIPuX7KAe1R88YkVz6LuK4eo8FT8e9J4hF3/nKcsiomY0fOa2tSJGKJ
+          7dNUiOjo8dMsj2X9hLbRMa41BNadgQVmnRYa1QIDAQABAoIBAD5Ju9uItKDuGXnh
+          /BSdLTXK9UDUdKQxmysjBfRYZ4/mmcxSBYcZ5B/b4f/vKg9rz2UKnnfCvaP9EFFQ
+          /zL8UEFJp46vTC+DVjDiao/6DXsMGFmVo7X5VTx5YoDDSwYNMv8ClSgkWM9pZZFy
+          KTAf3ijBboWSZVh6inID6UiqsX8sw8ZjHdexT2/b29/Q64nLKTrG472F0mACMCqT
+          TTNUSLCH78blAzySyZaK9miL7ehvxMTv2MfNwspg7vVV4PRtqlM0+bnYsz2aLkQ1
+          gMNzVTuyux1lg0mj+xst9aKpQ4ZGmfRT7MPr9USa65k2vakaik6DaAQNkS+C8l74
+          +JcvyIECgYEA/9ILhig/vvHxch7D8eq9sNXld0NNhZd9PKbb05t8K0zeCXTXVM4d
+          DQ1SLErpae6yFcTGWJWdSua6mClURGm2W10JH+QLUNq51Drl++Kj1scUSADVpjYZ
+          JkmvvRjGlLX5bzJ3mBGbmdKyGdMeppZRWk3+jhGuEMTo0z4URaDllE0CgYEA863S
+          gJBd7/bhVCFbNuXEATMjoXjLsKK9QPDjBaL/PEnKoYT1aTsVUN43Hkd86c5NXszR
+          ///IzA49TluKHvXjscLk2mzInUU3YyjwzWgN5vp6ZEh0bubXWABgQVVFsmqV3Gzp
+          KBrBg9mzWtC6KQGwtt3RRInFycTYE6d+uf8OBKkCgYEAv8PNXbC4MEOfMWO8kJDd
+          xzxf+ana58SqXZfa+2H3j2Hco4wRioHDJzCQI6G4HO+QUV8jK+5jbW1N/Jgmke4I
+          g65XE6/Xh7GeUWghVFMNbAfpvRvbC/BLo/bipMZ4vas3otJa8gRo9sMJPPCUbl4J
+          9761jfvU1r80pH1JpvQ4hJUCgYAS+zpHe3dlxtRcilChoRo4gbRH0rIDK1oUoe79
+          NGovVwwqssGvFcQeTYD7odPwHnrWZJwDFfidNIq//M9wg/TdlvHetdSWs5qR5dGE
+          HpPepyo7f41aSi8CEt1smWjZcgYEapNq5VKno6Cd9V5a7V/HjtXLQfQfOG8gcM6l
+          TGHaKQKBgFRnRUE3tBeEKvM1touGxNjURea4aFVzFk4b8lL/OQJnkWhMmhrBKCHw
+          WRiRItwHQxTunlN0gK4qty2rczWIv/yzWALHJAOFLIyX0ynO4xY7x/3H9df9IuDe
+          Gs1548GcEmUG0CWujFXsEJkjjBxT4/fabx4NOJjg9Ij1Mi3LYmB2
+          -----END RSA PRIVATE KEY-----
+    ursula_sensu_plugins:
+      version: 2.2.5-1
+    serverspec:
+      enabled: True
+
+  logs:
+    # See logging-config/defaults/main.yml for filebeat vs. logstash-forwarder example
+    - paths:
+        - /var/log/sensu/sensu-client.log
+      document_type: json
+      fields:
+        tags: sensu,sensu-client
+    - paths:
+        - /var/log/sensu/sensu-server.log
+      document_type: json
+      fields:
+        tags: sensu,sensu-server
+    - paths:
+        - /var/log/sensu/sensu-api.log
+      document_type: json
+      fields:
+        tags: sensu,sensu-api
+    - paths:
+        - /var/log/uchiwa.log
+        - /var/log/uchiwa.err
+      document_type: json
+      fields:
+        tags: sensu,uchiwa
+  logging:
+    forwarder: filebeat
+
+  api:
+    bind_ip: 127.0.0.1
+    port: 4567
+    username: admin
+    password: admin
+    firewall: []
+    ssl_enabled: False
+
+  dashboard:
+    version: 0.17.1*
+    host: 127.0.0.1
+    port: 3000
+    refresh: 10
+    firewall: []
+    datacenters:
+      - hostname: localhost
+        password: admin
+    sensu_plugins:
+      - name: sensu-plugins-uchiwa
+        version: 0.0.3
+
+  server:
+    instances: 0
+    rabbitmq:
+      host: 172.16.0.15
+      username: rabbit
+      password: rabbit
+      vhost: /rabbit
+      hostgroup: sensu
+      ssl:
+        cert: |
+          -----BEGIN CERTIFICATE-----
+          MIIC3TCCAcWgAwIBAgIBAjANBgkqhkiG9w0BAQUFADASMRAwDgYDVQQDEwdTZW5z
+          dUNBMB4XDTE1MDEwNTIxMzYyM1oXDTIwMDEwNDIxMzYyM1owITEOMAwGA1UEAwwF
+          c2Vuc3UxDzANBgNVBAoMBmNsaWVudDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCC
+          AQoCggEBAPOCFDzom4sBkFbpy7D6OZX2Re/mbbcpdz7zAYR27X8WE7ai4FCe/OlW
+          lViHBkUdHl8TigYBLpZOX+BBu8UMFThotaq10+E07JQygeZLF/Yg6ihoC2qq1n2w
+          Nan2CkhTdKwYfzeMM14Kdc/cu+1TG64kZQQ6j/TCSho9n1BinxbjJi+Gnp34gDLY
+          c3pI/dpxflPNo9PiPD3XS0WUk1gJm1anNOJLdipGEZYW1fTXL3XciLyrEFEV3am1
+          pUFyD7l+ygHtUfPGJFc+i7iuHqPBU/HvSeIRd/5ynLIqJmNHzmtrUiRiie3TVIjo
+          6PHTLI9l/YS20TGuNQTWnYEFZp0WGtUCAwEAAaMvMC0wCQYDVR0TBAIwADALBgNV
+          HQ8EBAMCB4AwEwYDVR0lBAwwCgYIKwYBBQUHAwIwDQYJKoZIhvcNAQEFBQADggEB
+          AGmzryodqCedFin/9ytQerlAf4To3B1j+F/FSoQfnm7smRV3dz7FRr7vlNhX4Spg
+          p2AQAPV+PBobtvSToDZZGj5Puwog/lfX9PIcAI0JoQOi+ylXjMybJtGSC513fVEj
+          4h5isvAtLEtiEB0czVhF5REXwzFIMTSwTDuCAxgfvaZqkn6J7R5NChcQUpsHxeP+
+          TAuDsm+7LJC8K7mAYS4sCi1VR1Wmq7rF3Wqoe2PdzYg9jKzWDhoBrL+cHZ/CifoY
+          GH4uMZWaTZgJuDNCseRjRwrONFcJqdFm0IAFCt/8r8dlgLL8G3Uu2ABJt+lZvvHf
+          NaVOvEPwUrNq9IJtmam/Wlw=
+          -----END CERTIFICATE-----
+        key: |
+          -----BEGIN RSA PRIVATE KEY-----
+          MIIEowIBAAKCAQEA84IUPOibiwGQVunLsPo5lfZF7+Zttyl3PvMBhHbtfxYTtqLg
+          UJ786VaVWIcGRR0eXxOKBgEulk5f4EG7xQwVOGi1qrXT4TTslDKB5ksX9iDqKGgL
+          aqrWfbA1qfYKSFN0rBh/N4wzXgp1z9y77VMbriRlBDqP9MJKGj2fUGKfFuMmL4ae
+          nfiAMthzekj92nF+U82j0+I8PddLRZSTWAmbVqc04kt2KkYRlhbV9NcvddyIvKsQ
+          URXdqbWlQXIPuX7KAe1R88YkVz6LuK4eo8FT8e9J4hF3/nKcsiomY0fOa2tSJGKJ
+          7dNUiOjo8dMsj2X9hLbRMa41BNadgQVmnRYa1QIDAQABAoIBAD5Ju9uItKDuGXnh
+          /BSdLTXK9UDUdKQxmysjBfRYZ4/mmcxSBYcZ5B/b4f/vKg9rz2UKnnfCvaP9EFFQ
+          /zL8UEFJp46vTC+DVjDiao/6DXsMGFmVo7X5VTx5YoDDSwYNMv8ClSgkWM9pZZFy
+          KTAf3ijBboWSZVh6inID6UiqsX8sw8ZjHdexT2/b29/Q64nLKTrG472F0mACMCqT
+          TTNUSLCH78blAzySyZaK9miL7ehvxMTv2MfNwspg7vVV4PRtqlM0+bnYsz2aLkQ1
+          gMNzVTuyux1lg0mj+xst9aKpQ4ZGmfRT7MPr9USa65k2vakaik6DaAQNkS+C8l74
+          +JcvyIECgYEA/9ILhig/vvHxch7D8eq9sNXld0NNhZd9PKbb05t8K0zeCXTXVM4d
+          DQ1SLErpae6yFcTGWJWdSua6mClURGm2W10JH+QLUNq51Drl++Kj1scUSADVpjYZ
+          JkmvvRjGlLX5bzJ3mBGbmdKyGdMeppZRWk3+jhGuEMTo0z4URaDllE0CgYEA863S
+          gJBd7/bhVCFbNuXEATMjoXjLsKK9QPDjBaL/PEnKoYT1aTsVUN43Hkd86c5NXszR
+          ///IzA49TluKHvXjscLk2mzInUU3YyjwzWgN5vp6ZEh0bubXWABgQVVFsmqV3Gzp
+          KBrBg9mzWtC6KQGwtt3RRInFycTYE6d+uf8OBKkCgYEAv8PNXbC4MEOfMWO8kJDd
+          xzxf+ana58SqXZfa+2H3j2Hco4wRioHDJzCQI6G4HO+QUV8jK+5jbW1N/Jgmke4I
+          g65XE6/Xh7GeUWghVFMNbAfpvRvbC/BLo/bipMZ4vas3otJa8gRo9sMJPPCUbl4J
+          9761jfvU1r80pH1JpvQ4hJUCgYAS+zpHe3dlxtRcilChoRo4gbRH0rIDK1oUoe79
+          NGovVwwqssGvFcQeTYD7odPwHnrWZJwDFfidNIq//M9wg/TdlvHetdSWs5qR5dGE
+          HpPepyo7f41aSi8CEt1smWjZcgYEapNq5VKno6Cd9V5a7V/HjtXLQfQfOG8gcM6l
+          TGHaKQKBgFRnRUE3tBeEKvM1touGxNjURea4aFVzFk4b8lL/OQJnkWhMmhrBKCHw
+          WRiRItwHQxTunlN0gK4qty2rczWIv/yzWALHJAOFLIyX0ynO4xY7x/3H9df9IuDe
+          Gs1548GcEmUG0CWujFXsEJkjjBxT4/fabx4NOJjg9Ij1Mi3LYmB2
+          -----END RSA PRIVATE KEY-----
+    handlers:
+      hijack:
+        default: []
+          # - flapjack_http
+        pagerduty: []
+        flapjack: []
+        flapjack_http: []
+        sensu_api: []
+      metrics:
+        - graphite
+      graphite:
+        enabled: True
+        host: 127.0.0.1
+        port: 2003
+      pagerduty:
+        enabled: False
+        api_key_default: notarealkey
+        api_keys:
+          - name: support
+            api_key: notarealkey
+      flapjack:
+        enabled: False
+        host: 127.0.0.1
+        # flapjack dedicated redis instance
+        port: 6380
+        db: 0
+      flapjack_http:
+        enabled: False
+        uri: http://localhost:3090
+        ttl: -1 # -1 disables, otherwise httpbroker re-sends last received state until ttl expires
+        sensu_api:
+          uri: http://127.0.0.1:4567
+          user: admin
+          pass: admin
+      sensu_api:
+        enabled: True
+        host: 127.0.0.1
+        port: 4567
+        user: admin
+        pass: admin
+        datacenter: "{{ site_abrv|default('unknown') }}"

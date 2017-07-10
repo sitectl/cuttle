@@ -36,7 +36,7 @@
     - role: dnsmasq
       tags: ['dnsmasq']
       when: dnsmasq.enabled|default("False")|bool
-    - role: sensu-client
+    - role: sensu/client
       tags: ['sensu-client']
       when: sensu.client.enabled|default("True")|bool
     - role: logging
@@ -98,10 +98,10 @@
   any_errors_fatal: true
 
 - name: netdata dashboard
-  hosts: netdata_dashboard
+  hosts: netdata_dashboard:netdata-dashboard
   roles:
     - role: netdata-dashboard
-      tags: ['netdata-dashboard']
+      tags: ['netdata-dashboard','netdata_dashboard']
   environment: "{{ env_vars|default({}) }}"
   any_errors_fatal: true
 
@@ -126,13 +126,25 @@
   environment: "{{ env_vars|default({}) }}"
   any_errors_fatal: true
 
-- name: elk
-  hosts: elk
+- name: elasticsearch
+  hosts: elk:elasticsearch
   roles:
     - role: elk/elasticsearch
       tags: ['elasticsearch']
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true
+
+- name: logstash
+  hosts: elk:logstash
+  roles:
     - role: elk/logstash
       tags: ['logstash']
+  environment: "{{ env_vars|default({}) }}"
+  any_errors_fatal: true
+
+- name: kibana
+  hosts: elk:kibana
+  roles:
     - role: elk/kibana
       tags: ['kibana']
   environment: "{{ env_vars|default({}) }}"
@@ -158,7 +170,7 @@
   roles:
     - role: rabbitmq
       tags: ['rabbitmq']
-    - role: sensu-server
+    - role: sensu/server
       tags: ['sensu-server']
       when: sensu.server.enabled|default("True")|bool
     - role: graphite
@@ -201,7 +213,7 @@
   hosts: control-dashboard:control_dashboard
   roles:
     - role: control-dashboard
-      tags: ['control-dashboard']
+      tags: ['control-dashboard', 'control_dashboard']
   environment: "{{ env_vars|default({}) }}"
   any_errors_fatal: true
 

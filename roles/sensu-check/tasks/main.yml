@@ -1,9 +1,0 @@
----
-- name: delete antiquated ursula-monitoring serverspec
-  file:
-    path: /etc/serverspec/spec/localhost/monitoring-common_spec.rb
-    state: absent
-
-- name: sensu checks directory
-  file: dest=/etc/sensu/conf.d/checks
-        state=directory mode=0755

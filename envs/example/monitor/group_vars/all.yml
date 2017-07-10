@@ -10,186 +10,27 @@ private_ipv4: "{{ hostvars[inventory_hostname][private_interface]['ipv4'] }}"
 serverspec:
   enabled: True
 
-apache:
-  listen:
-    - 80
-    - 443
-    - 127.0.0.1:8080
-    - 127.0.0.1:8081
-    - 127.0.0.1:8082
-
-database:
-  host: "{{ hostvars[groups['percona'][0]][private_interface]['ipv4']['address']|default('172.16.1.103') }}"
-  port: 3306
-  users:
-    graphite:
-      databases:
-        - graphite
-      username: graphite
-      password: graphite
-      host: '%'
-    grafana:
-      databases:
-        - grafana
-      username: grafana
-      password: grafana
-      host: '%'
-
-graphite:
-  url_prefix: /graphite/
-  amqp:
-    enabled: False
-    verbose: False
-    host: 172.16.0.15
-    port: 5672
-    vhost: /graphite
-    user: graphite
-    password: graphite
-    exchange: metrics
-    metric_name_in_body: True
-  firewall:
-    - port: 2003
-      src: "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
-rabbitmq:
-  users:
-    - username: admin
-      password: admin
-      vhost: /
-    - username: sensu
-      password: sensu
-      vhost: /sensu
-    - username: graphite
-      password: graphite
-      vhost: /graphite
-
 sensu:
   client:
+    enable_metrics: false
+    enable_checks: true
     rabbitmq:
-      host: 172.16.0.15
+      host: "{{ hostvars[groups['rabbitmq'][0]][private_interface]['ipv4']['address'] }}"
       username: sensu
       password: sensu
       vhost: /sensu
       hostgroup: sensu
-  server:
-    rabbitmq:
-      host: 172.16.0.15
-      username: sensu
-      password: sensu
-      vhost: /sensu
-      hostgroup: sensu
-#    handlers:
-#      default:# set this if behind a proxy
-#        - flapjack_http
-#      flapjack:
-#        enabled: False
-#        host: 127.0.0.1
-#        port: 6380
-#      flapjack_http:
-#        enabled: True
-#        uri: http://127.0.0.1:3090
-#        ttl: -1 # -1 disables, otherwise httpbroker re-sends last received state until ttl expires
-#        service_owner: development
-  api:
-    bind_ip: 127.0.0.1
-    firewall: []
-#      - port: 4567
-#        src: "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
-  dashboard:
-    host: 127.0.0.1
-    datacenters:
-      - hostname: localhost
-        password: admin
-    firewall: []
-
-flapjack:
-  enabled: false
-  dashboard:
-    base_url: "http://monitor.local/flapjack/"
-  api:
-    base_url: "http://monitor.local/flapjack_api/"
-  receivers:
-    httpbroker:
-      enabled: True
-      debug: True
-  firewall:
-    - port: 3080
-      src: "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
-    - port: 3081
-      src: "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
-    - port: 3090
-      src: "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
-
-
-control_dashboard:
-  http_redirect: False
-  apache:
-    servername: control.local
-  listen:
-    ip: "127.0.0.1"
-    port: 8080
-  locations:
-    root:
-      path: "/"
-    sensu:
-      proxy: "http://127.0.0.1:3000/"
-      url: "/sensu/"
-    grafana:
-      proxy: "http://127.0.0.1:3001/"
-      url: "/grafana/"
-    graphite:
-      proxy: "http://127.0.0.1:8081/graphite/"
-      url: "/graphite/"
-    netdata:
-      proxy: "http://127.0.0.1:8082"
-      url: "/netdata/"
-# uncomment below to proxy for flapjack
-#    flapjack:
-#      proxy: "http://127.0.0.1:3080/"
-#      url: "/flapjack/"
-#    flapjack_api:
-#      proxy: "http://127.0.0.1:3081/"
 
 netdata:
   config:
     backend:
-      enabled: yes
+      enabled: "yes"
       type: graphite
-      destination: "{{ hostvars[groups['graphite'][0]][private_interface]['ipv4']['address']|default('127.0.0.1') }}:2003"
+      destination: "{{ hostvars[groups['graphite'][0]][private_interface]['ipv4']['address'] }}:2003"
       data_source: as collected
-      prefix: netdata
+      prefix: "{{ monitoring_common.graphite.cluster_prefix }}"
       hostname: "{{ ansible_nodename }}"
       update_every: 10
       buffer_on_failures: 10
       timeout_ms: 20000
       send_charts_matching: "*"
-
-grafana:
-  host: "{{ hostvars[groups['grafana'][0]][private_interface]['ipv4']['address']|default('172.16.1.103') }}"
-  server:
-    http_port: 3001
-    http_addr:  0.0.0.0
-    root_url: "/grafana/"
-  security:
-    enabled: true
-    admin_user: admin
-    admin_password: admin
-    anonymous: true
-    secret_key: nopenopenopenope
-    basic: true
-
-  datasources:
-    - name: graphite
-      type: graphite
-      url: http://127.0.0.1:8081/graphite/
-      access: proxy
-      database: ''
-
-  database:
-    type: mysql
-    host: "{{ database.host }}:3306"
-    name: "grafana"
-    user: "{{ database.users.grafana.username }}"
-    password: "{{ database.users.grafana.password }}"
-  firewall:
-    - port: 5671
-      src: "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"

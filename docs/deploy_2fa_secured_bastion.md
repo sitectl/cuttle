@@ -1,20 +1,25 @@
 # Deploying a 2FA enabled Bastion
 
-One of the core compontents of Cuttle is the two factor enabled secure Bastion.
+One of the core components of Cuttle is the two factor enabled secure Bastion.
 This document will talk through how to use the composable nature of Cuttle to
 install just the necessary parts to create a secure Bastion with two factor
 authentication and secure logging.
 
 We will deploy two bastion servers for HA that utilize Google Authenticator
-for 2FA and sshagentmux for group based access control.  To do this we will
-use Vagrant and the `envs/example/bastion` inventory. Take the time to
-explore the inventory files in that directory before starting.
+for 2FA and [sshagentmux](https://github.com/blueboxgroup/sshagentmux) for group
+based access control.  To do this we will use Vagrant and the `envs/example/bastion`
+inventory. Take the time to explore the inventory files in that directory before
+starting.
+
+The majority of our settings are in [group_vars/all](envs/example/bastion/group_vars/all.yml)
+but you may find some in [defaults.yml]([group_vars/all](envs/example/defaults.yml) or
+some vagrant overrides in [vagrant.yml](envs/example/vagrant.yml).
 
 Ordinarily you would use `ansible-vault` to encrypt the variables found in here,
 especially the ones that include keys and passwords, however for the sake of
 demonstration they're left plain text here.
 
-Before we set up the 2 Factor Authentication we will kick of a basic install of
+Before we set up the 2 Factor Authentication we will kick off a basic install of
 Bastion and Logging servers.
 
 ```

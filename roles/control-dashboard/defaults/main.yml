@@ -4,6 +4,7 @@ control_dashboard:
   root: "/var/www/html"
   server_name: control_portal
   server_admin: staff@sitecontroller
+  title: Cuttle Dashboard
   log_level: warn
   locations: []
   remote_locations: []

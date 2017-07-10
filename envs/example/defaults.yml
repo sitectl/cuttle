@@ -348,8 +348,8 @@ apache_auth:
       url: "http://127.0.0.1"
     config:
       # Implies port 80
-      client_id: "35914a674949d1f8e264"
-      client_secret: "df0b37f85b7d6b959fa76a7a4fc0ad11b8233174"
+      client_id: "xxxxxxxxxxxx"
+      client_secret: "xxxxxxxxxxxx"
       pass_access_token: "true"
       pass_basic_auth: false
       cookie_name: "oauth2_proxy_cookie"

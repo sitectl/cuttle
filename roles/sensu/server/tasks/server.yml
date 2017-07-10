@@ -1,0 +1,233 @@
+---
+- name: sensu server config directories
+  file: dest={{ item }} mode=0770
+    state=directory
+    owner=sensu
+    group=sensu
+  with_items:
+    - /etc/sensu-server
+    - /etc/sensu-server/conf.d
+    - /etc/sensu-server/conf.d/handlers
+    - /etc/sensu-server/handlers
+    - /etc/sensu-server/extensions/handlers
+    - /etc/sensu-server/scripts
+    - /etc/sensu-server/ssl
+
+- name: create cert
+  template: src=etc/sensu/ssl/cert.pem
+    dest=/etc/sensu-server/ssl/cert.pem
+    owner=sensu
+    group=sensu
+    mode=0660
+  notify: restart sensu
+
+- name: create key
+  template: src=etc/sensu/ssl/key.pem
+    dest=/etc/sensu-server/ssl/key.pem
+    owner=sensu
+    group=sensu
+    mode=0660
+  notify: restart sensu
+
+- name: sensu-server defaults
+  template: src=etc/default/sensu-server
+            dest=/etc/default/sensu-server
+  notify:
+    - kill sensu
+    - start sensu
+
+- name: sensu-api defaults
+  template: src=etc/default/sensu-api
+            dest=/etc/default/sensu-api
+  notify: restart sensu
+
+- name: sensu-server init script
+  template: src=etc/init.d/sensu-server
+            dest=/etc/init.d/sensu-server
+  notify:
+    - kill sensu
+    - start sensu
+  when: ansible_distribution_version == "14.04"
+
+- name: sensu-server systemd unit
+  systemd_service:
+    name: sensu-server
+    cmd: /opt/sensu/bin/sensu-server
+    environment_file: /etc/default/sensu-server
+    args: "-c ${CONFIG_FILE} -d ${CONFIG_DIR} -e ${EXTENSION_DIR} -p /var/run/sensu/sensu-server.pid -l /var/log/sensu/sensu-server.log -L info"
+    user: sensu
+  notify: restart sensu server
+  when: ansible_distribution_version == "16.04"
+
+- name: sensu-api systemd unit
+  systemd_service:
+    name: sensu-api
+    cmd: /opt/sensu/bin/sensu-api
+    environment_file: /etc/default/sensu-api
+    args: "-c ${CONFIG_FILE} -d ${CONFIG_DIR} -e ${EXTENSION_DIR} -p /var/run/sensu/sensu-server.pid -l /var/log/sensu/sensu-server.api -L info"
+    user: sensu
+  notify: restart sensu api
+  when: ansible_distribution_version == "16.04"
+
+- name: sensu-server logrotate
+  template: src=etc/logrotate.d/sensu
+            dest=/etc/logrotate.d/sensu
+
+- name: configure sensu
+  template: src=etc/sensu/conf.d/{{ item }}
+    dest=/etc/sensu-server/conf.d/{{ item }} mode=0644
+  with_items:
+    - api.json
+    - rabbitmq.json
+    - redis.json
+  notify: restart sensu
+
+- block:
+  - name: copy sensu handlers
+    copy: src={{ item }} dest=/etc/sensu-server/handlers mode=0755
+    with_fileglob: etc/sensu/handlers/*
+    notify: restart sensu
+
+  - name: copy sensu extension handlers
+    copy: src=etc/sensu/extensions/handlers/{{ item.name }} dest=/etc/sensu-server/extensions/handlers/{{ item.name }} mode=0755
+    when: item.when
+    with_items:
+      - name: flapjack.rb
+        when: "{{ sensu.server.handlers.flapjack.enabled|bool }}"
+      - name: flapjack_http.rb
+        when: "{{ sensu.server.handlers.flapjack_http.enabled|bool }}"
+      - name: sensu_api.rb
+        when: "{{ sensu.server.handlers.sensu_api.enabled|bool }}"
+    notify: restart sensu
+
+  - name: remove unused sensu extension handlers
+    file: dest=/etc/sensu-server/extensions/handlers/{{ item.name }} state=absent
+    when: not item.when
+    with_items:
+      - name: flapjack.rb
+        when: "{{ sensu.server.handlers.flapjack.enabled|bool }}"
+      - name: flapjack_http.rb
+        when: "{{ sensu.server.handlers.flapjack_http.enabled|bool }}"
+      - name: sensu_api.rb
+        when: "{{ sensu.server.handlers.sensu_api.enabled|bool }}"
+    notify: restart sensu
+
+  - name: configure handlers
+    template: src="etc/sensu/conf.d/handlers/{{ item.key }}.json"
+              dest="/etc/sensu-server/conf.d/handlers/{{ item.key }}.json"
+              mode=0640
+              group=sensu
+    when: item.value.when
+    with_dict:
+      metrics:
+        when: true
+      graphite:
+        when: "{{ sensu.server.handlers.graphite.enabled|bool }}"
+      pagerduty:
+        when: "{{ sensu.server.handlers.pagerduty.enabled|bool }}"
+      flapjack:
+        when: "{{ sensu.server.handlers.flapjack.enabled|bool }}"
+      flapjack_http:
+        when: "{{ sensu.server.handlers.flapjack_http.enabled|bool }}"
+      sensu_api:
+        when: "{{ sensu.server.handlers.sensu_api.enabled|bool }}"
+    notify: restart sensu
+
+  - name: configure hijack handlers
+    template: src="etc/sensu/conf.d/handlers/hijack.json"
+              dest="/etc/sensu-server/conf.d/handlers/{{ item.key }}_hijack.json"
+              mode=0640
+              group=sensu
+    with_dict: "{{ sensu.server.handlers.hijack }}"
+    when: item.value|length > 0
+    notify: restart sensu
+
+  - name: de-configure handlers
+    file: dest="/etc/sensu-server/conf.d/handlers/{{ item.key }}.json"
+          state=absent
+    when: not item.value.when
+    with_dict:
+      metrics:
+        when: true
+      graphite:
+        when: "{{ sensu.server.handlers.graphite.enabled|bool }}"
+      pagerduty:
+        when: "{{ sensu.server.handlers.pagerduty.enabled|bool }}"
+      flapjack:
+        when: "{{ sensu.server.handlers.flapjack.enabled|bool }}"
+      flapjack_http:
+        when: "{{ sensu.server.handlers.flapjack_http.enabled|bool }}"
+      sensu_api:
+        when: "{{ sensu.server.handlers.sensu_api.enabled|bool }}"
+    notify: restart sensu
+  tags: sensu-handlers
+
+- name: copy sensu scripts
+  template: src={{ item }} dest=/etc/sensu-server/scripts/ mode=0755
+  with_fileglob: etc/sensu/scripts/*
+  notify: restart sensu
+
+- name: configure clear-stashes cron
+  cron: name="clear stashes"
+        user="sensu"
+        minute="0"
+        hour="20"
+        weekday="3"
+        job="/etc/sensu-server/scripts/clear-stashes.rb"
+
+- name: copy sensu apache config
+  template: src=etc/apache2/sites-available/sensu-api.conf dest=/etc/apache2/sites-available/ mode=0755
+  when: sensu.api.ssl_enabled|bool
+
+- name: use embedded ruby
+  lineinfile: dest=/etc/default/sensu regexp=^EMBEDDED_RUBY
+              line=EMBEDDED_RUBY=true
+  notify: restart sensu
+
+- name: install gems into sensu embedded ruby
+  gem:
+    name: "{{ item }}"
+    executable: /opt/sensu/embedded/bin/gem
+    user_install: no
+  with_items:
+   - redphone
+   - net-http-persistent
+   - savon
+   - sensu-plugins-graphite
+  register: result
+  until: result|succeeded
+  retries: 5
+  notify: restart sensu
+  tags: elk-stats
+
+- meta: flush_handlers
+
+- name: wait for redis-db to load
+  command: redis-cli ping
+  register: result
+  until: result.stdout.find("PONG") != -1
+  retries: 15
+  delay: 1
+  changed_when: false
+
+- name: start sensu-server
+  service: name=sensu-server state=started enabled=yes
+  when: ansible_distribution_version == "14.04"
+
+- name: start sensu-server
+  service: name=sensu-server state=started
+  when: ansible_distribution_version == "16.04"
+
+- name: start sensu-api
+  service: name=sensu-api state=started enabled=yes
+  when: ansible_distribution_version == "14.04"
+
+- name: start sensu-api
+  service: name=sensu-api state=started
+  when: ansible_distribution_version == "16.04"
+
+- name: permit api traffic
+  ufw: rule=allow to_port={{ item.port }} proto=tcp src={{ item.src }}
+  with_items: "{{ sensu.api.firewall }}"
+  tags:
+    - firewall

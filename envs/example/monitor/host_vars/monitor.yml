@@ -1,0 +1,116 @@
+---
+apache:
+  listen:
+    - "{{ graphite.http_addr }}:{{ graphite.http_port }}"
+
+database:
+  host: "{{ hostvars[groups['percona'][0]][private_interface]['ipv4']['address'] }}"
+  port: 3306
+  users:
+    graphite:
+      databases:
+        - graphite
+      username: graphite
+      password: graphite
+      host: '%'
+    grafana:
+      databases:
+        - grafana
+      username: grafana
+      password: grafana
+      host: '%'
+
+graphite:
+  http_addr: "{{ private_ipv4.address }}"
+  http_port: 8081
+  url_prefix: /graphite/
+  amqp:
+    enabled: False
+  firewall:
+    - port: 2003
+      src: "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+    - port: 8081
+      src: "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+
+rabbitmq:
+  users:
+    - username: admin
+      password: admin
+      vhost: /
+    - username: sensu
+      password: sensu
+      vhost: /sensu
+
+sensu:
+  server:
+    rabbitmq:
+      host: "{{ hostvars[groups['rabbitmq'][0]][private_interface]['ipv4']['address'] }}"
+      username: sensu
+      password: sensu
+      vhost: /sensu
+      hostgroup: sensu
+    handlers:
+      graphite:
+        enabled: True
+        host: "{{ hostvars[groups['graphite'][0]][private_interface]['ipv4']['address'] }}"
+        port: 2003
+  api:
+    bind_ip: 0.0.0.0
+    firewall:
+      - port: 4567
+        src: "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"
+  dashboard:
+    host: 0.0.0.0
+    datacenters:
+      - hostname: 127.0.0.1
+        password: admin
+    firewall: []
+
+flapjack:
+  enabled: false
+  dashboard:
+    base_url: "http://monitor.local/flapjack/"
+  api:
+    base_url: "http://monitor.local/flapjack_api/"
+  receivers:
+    httpbroker:
+      enabled: True
+      debug: True
+  firewall:
+    - port: 3080
+      src: "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+    - port: 3081
+      src: "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+    - port: 3090
+      src: "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+
+grafana:
+  host: "{{ hostvars[groups['grafana'][0]][private_interface]['ipv4']['address'] }}"
+  server:
+    http_port: 3001
+    http_addr:  0.0.0.0
+    root_url: "/grafana/"
+  security:
+    enabled: true
+    admin_user: admin
+    admin_password: admin
+    anonymous: true
+    secret_key: nopenopenopenope
+    basic: true
+
+  datasources:
+    - name: graphite
+      type: graphite
+      url: http://127.0.0.1:8081/graphite/
+      access: proxy
+      database: ''
+
+  database:
+    type: mysql
+    host: "{{ database.host }}:3306"
+    name: "grafana"
+    user: "{{ database.users.grafana.username }}"
+    password: "{{ database.users.grafana.password }}"
+  firewall:
+    - port: 3001
+      src: "{{ private_ipv4.network }}/{{ private_ipv4.netmask }}"

@@ -20,7 +20,7 @@ monitor
 monitor
 
 [control_dashboard]
-monitor
+dashboard
 
 [netdata_dashboard]
-monitor
+dashboard

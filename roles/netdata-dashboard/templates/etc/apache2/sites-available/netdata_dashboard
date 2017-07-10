@@ -16,13 +16,13 @@
     Require all granted
   </Directory>
 
-  <Location /netdata/localhost/>
+  <Location /localhost/>
       ProxyPass http://127.0.0.1:19999/
       ProxyPassReverse http://127.0.0.1:19999/
   </Location>
   {% for host in groups['all'] %}
   {% if hostvars[host]['ansible_distribution'] == 'Ubuntu' and hostvars[host]['netdata']['enabled']|bool %}
-  <Location /netdata/{{ host }}/>
+  <Location /{{ host }}/>
       ProxyPass http://{{ hostvars[host][public_interface]['ipv4']['address'] }}:19999/
       ProxyPassReverse http://{{ hostvars[host][public_interface]['ipv4']['address'] }}:19999/
   </Location>
@@ -52,8 +52,6 @@
 {% if bbg_ssl.intermediate or netdata_dashboard.apache.ssl.intermediate %}
     SSLCertificateChainFile /etc/ssl/certs/{{ netdata_dashboard.apache.ssl.name|default('sitecontroller') }}-intermediate.crt
 {% endif %}
-{% else %}
-<VirtualHost {{ netdata_dashboard.apache.ip }}:{{ netdata_dashboard.apache.port }}>
-{% endif %}
 {{ virtualhost() }}
 </VirtualHost>
+{% endif %}

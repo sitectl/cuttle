@@ -3,17 +3,36 @@ netdata:
   package: https://github.com/IBM/cuttle/releases/download/packages/netdata_1.6.0_amd64.deb
   enabled: false
   # see https://github.com/firehol/netdata/wiki/netdata-backends
-  config: {}
-  #  backend:
-  #    enabled: no
-  #    type: graphite
-  #    data_source: as collected
-  #    prefix: netdata
-  #    hostname: monitoring
-  #    update_every: 10
-  #    buffer_on_failures: 10
-  #    timeout_ms: 20000
-  #    send_charts_matching: "*"
+  config:
+    global:
+      run_as_user: netdata
+      web_files_owner: root
+      web_files_group: netdata
+    backend:
+      # Note the "" around the enabled value is necessary so ansible doesn't
+      # turn it into Frue or False when netdata expects yes or no.  Yes its
+      # 2017 and we're still screwing up booleans
+      enabled: "no"
+      type: graphite
+      destination: "127.0.0.1:2003"
+      data_source: as collected
+      prefix: netdata
+      hostname: "{{ ansible_nodename }}"
+      update_every: 10
+      buffer_on_failures: 10
+      timeout_ms: 20000
+      send_charts_matching: "*"
 
   firewall:
     allow_from: []
+
+  logrotate:
+    frequency: 'daily'
+    rotations: 7
+    size: '1G'
+
+  logs:
+    - paths:
+        - /var/log/netdata/*.log
+      fields:
+        tags: netdata

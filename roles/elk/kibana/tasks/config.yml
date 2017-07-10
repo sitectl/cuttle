@@ -1,15 +1,23 @@
 ---
+- name: set elasticsearch url
+  set_fact:
+    elasticsearch_url: "http://{{ hostvars['elk01'][private_interface]['ipv4']['address']|default('127.0.0.1') }}:9200"
+
+- name: show elasticsearch url
+  debug:
+    msg: "using {{ elasticsearch_url }}"
+
 - name: check if kibana has config
   uri: method=HEAD return_content=yes status_code=200,404
-       url=http://localhost:9200/.kibana/config/{{ kibana.version }}
+       url="{{ elasticsearch_url }}/.kibana/config/{{ kibana.version }}"
   register: kibana_configured
   until: kibana_configured|succeeded
   retries: 5
   delay: 120
 
 - name: check if kibana has index-pattern
-  uri: method=HEAD return_content=yes status_code=200,404
-       url=http://localhost:9200/.kibana/index-pattern/{{ kibana.default_index.name }}
+  uri: method=HEAD return_content=yes status_code=200,404 use_proxy=no
+       url="{{ elasticsearch_url }}/.kibana/index-pattern/{{ kibana.default_index.name }}"
   register: kibana_has_index_pattern
 
 - name: install kibana json
@@ -20,18 +28,20 @@
 
 - name: upload kibana config
   uri:
-    url: http://localhost:9200/.kibana/config/{{ kibana.version }}?version_type=force&version=1
+    url: "{{ elasticsearch_url }}/.kibana/config/{{ kibana.version }}?version_type=force&version=1"
     method: PUT
     body: "{{ lookup('template', 'opt/kibana/config/config.json') }}"
     body_format: json
     status_code: 200,201
+    use_proxy: no
   when: kibana_configured.status != 200 or kibana.force_config
 
 - name: upload kibana index-pattern
   uri:
-    url: http://localhost:9200/.kibana/index-pattern/{{ kibana.default_index.name }}?version_type=force&version=1
+    url: "{{ elasticsearch_url }}/.kibana/index-pattern/{{ kibana.default_index.name }}?version_type=force&version=1"
     method: PUT
     body: "{{ lookup('template', 'opt/kibana/config/index-pattern.json') }}"
     body_format: json
     status_code: 200,201
+    use_proxy: no
   when: kibana_has_index_pattern.status != 200 or kibana.force_config

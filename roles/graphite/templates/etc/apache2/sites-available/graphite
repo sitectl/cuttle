@@ -17,7 +17,7 @@
 # Read http://code.google.com/p/modwsgi/wiki/ConfigurationDirectives#WSGISocketPrefix
 WSGISocketPrefix /var/run/wsgi
 
-<VirtualHost *:8081>
+<VirtualHost {{ graphite.http_addr}}:{{ graphite.http_port}}>
         ServerName graphite
         DocumentRoot "{{ graphite.path.virtualenv }}/webapp"
         ErrorLog /var/log/apache2/graphite_error.log

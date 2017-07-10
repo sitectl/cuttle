@@ -1,7 +1,7 @@
-[elk:children]
-elasticsearch
-logstash
-kibana
+#[elk:children]
+#elasticsearch
+#logstash
+#kibana
 
 [elasticsearch]
 elk01
@@ -12,9 +12,11 @@ elk01
 elk02
 
 [kibana]
-elk01
-elk02
+kibana01
 
 [openid_proxy]
 elk01
 elk02
+
+[control_dashboard]
+kibana01

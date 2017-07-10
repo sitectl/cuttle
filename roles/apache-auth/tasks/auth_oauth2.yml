@@ -17,7 +17,7 @@
     mode: 0640
 
 - name: configure oauth2 proxy
-  ini_file:
+  ini_file2:
     path: /etc/oauth2_proxy/oauth2_proxy.cfg
     section: ""
     option: "{{ item.key }}"

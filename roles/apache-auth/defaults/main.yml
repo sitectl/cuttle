@@ -4,8 +4,8 @@ apache_auth:
   method: ~
   http_redirect: false
   apache_status: true
-  vhost_name: "basic_auth"
-  server_name: "basic_auth"
+  vhost_name: "apache_auth"
+  server_name: "apache_auth"
   server_admin: "hostmaster@example.com"
   log_level: warn
   proxy_to: ~

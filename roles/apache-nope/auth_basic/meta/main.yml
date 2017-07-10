@@ -1,6 +1,0 @@
----
-allow_duplicates: yes
-dependencies:
-  - role: apache/common
-  - role: bbg-ssl
-  - role: sensu-check

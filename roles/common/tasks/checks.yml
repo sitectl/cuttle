@@ -41,7 +41,7 @@
   user: name=sensu groups=adm append=yes
 
 - name: log files greater than 1gb check
-  sensu_check: name=log_file_size plugin=check-for-large-files.sh
+  sensu_check: name=log_file_size plugin=/etc/sensu/plugins/check-for-large-files.sh
                args='-d /var/log -s 1G' use_sudo=true
                service_owner={{ monitoring_common.service_owner }}
   notify: restart sensu-client missing ok

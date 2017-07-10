@@ -4,6 +4,10 @@ private_interface: ansible_eth2
 public_ipv4: "{{ hostvars[inventory_hostname][public_interface]['ipv4'] }}"
 private_ipv4: "{{ hostvars[inventory_hostname][private_interface]['ipv4'] }}"
 
+kibana:
+  config:
+    elasticsearch_url: "http://{{ hostvars['elk01'][private_interface]['ipv4']['address'] }}:9200"
+
 elasticsearch:
   config:
     cluster.name: "elk_{{ stack_name }}"
@@ -14,11 +18,14 @@ elasticsearch:
     cluster.routing.allocation.disk.watermark.low: 5gb
     cluster.routing.allocation.disk.watermark.high: 2gb
     node.name: "{{ ansible_hostname }}"
+    node.master: true
+    node.data: true
     path.conf: /etc/elasticsearch
     path.data: /var/lib/elasticsearch
     path.logs: /var/log/elasticsearch
-    http.bind_host: "0.0.0.0"
-    network.publish_host: "{{ public_ipv4.address }}"
+    network.host: 0.0.0.0
+    http.bind_host: 0.0.0.0
+    network.publish_host: "{{ private_ipv4.address }}"
   curator:
     tasks:
       - action: delete
@@ -40,6 +47,7 @@ elasticsearch:
       src:
         - "{{ hostvars['elk01'][private_interface]['ipv4']['address'] }}/32"
         - "{{ hostvars['elk02'][private_interface]['ipv4']['address'] }}/32"
+        - "{{ hostvars['kibana01'][private_interface]['ipv4']['address'] }}/32"
     - port: 9300
       src:
         - "{{ hostvars['elk01'][private_interface]['ipv4']['address'] }}/32"
@@ -55,8 +63,15 @@ apache:
   listen:
     - 80
     - 443
+    - 127.0.0.1:8080
 
-openid_proxy:
+control_dashboard:
+  http_redirect: False
+  apache:
+    servername: control.local
+  listen:
+    ip: "127.0.0.1"
+    port: 8080
   locations:
     root:
       path: "/"
@@ -64,33 +79,5 @@ openid_proxy:
       proxy: "http://127.0.0.1:5601/"
       url: "/kibana/"
     elasticsearch:
-      proxy: "http://127.0.0.1:9200/"
+      proxy: "http://127.0.0.1:5601/"
       url: "/kibana/elasticsearch/"
-    hq:
-      proxy: "http://127.0.0.1:9200/_plugin/HQ/"
-      url: "/hq/?url=http://ip_of_host/kibana/elasticsearch/"
-    head:
-      proxy: "http://127.0.0.1:9200/_plugin/head/"
-      url: "/head/?base_uri=http://ip_of_host/kibana/elasticsearch/"
-    bigdesk:
-      proxy: "http://127.0.0.1:9200/_plugin/bigdesk/"
-      url: "/bigdesk/?endpoint=http://ip_of_host/kibana/elasticsearch/&connect=true"
-  admin:
-    apache:
-      state: present
-    users:
-      - username: admin
-        password: admin
-  listen:
-    admin_ip: "*"
-    admin_port: 80
-    admin_port_ssl: 443
-  firewall:
-    - port: 80
-      protocol: tcp
-      src:
-        - 0.0.0.0/0
-    - port: 443
-      protocol: tcp
-      src:
-        - 0.0.0.0/0
