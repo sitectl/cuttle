@@ -6,6 +6,9 @@
 #####################################
 # General Configuration #
 #####################################
+# set this if behind a proxy
+URL_PREFIX = '{{ graphite.url_prefix }}'
+
 # Set this to a long, random unique string to use as a secret key for this
 # install. This key is used for salting of hashes used in auth tokens,
 # CRSF middleware, cookie storage, etc. This should be set identically among
@@ -242,4 +245,3 @@ DATABASES = {
 # Uncomment the following line for direct access to Django settings such as
 # MIDDLEWARE_CLASSES or APPS
 #from graphite.app_settings import *
-

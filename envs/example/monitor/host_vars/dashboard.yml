@@ -1,0 +1,44 @@
+---
+apache:
+  listen:
+    - 80
+    - 443
+    - 127.0.0.1:8080
+    - 127.0.0.1:8089
+
+apache_auth:
+  oauth2:
+    config:
+      client_id: "XXXXXXX"
+      client_secret: "XXXXXXX"
+
+control_dashboard:
+  http_redirect: False
+  apache:
+    servername: control.local
+  listen:
+    ip: "127.0.0.1"
+    port: 8080
+  locations:
+    root:
+      path: "/"
+    sensu:
+      proxy: "http://172.16.1.14:3000/"
+      url: "/sensu/"
+    grafana:
+      proxy: "http://172.16.1.14:3001/"
+      url: "/grafana/"
+    graphite:
+      proxy: "http://172.16.1.14:8081/graphite/"
+      url: "/graphite/"
+    netdata:
+      proxy: "http://127.0.0.1:8089/"
+      url: "/netdata/"
+
+netdata_dashboard:
+  apache:
+    enabled: true
+    port: 8089
+    ip: 127.0.0.1
+    ssl:
+      enabled: False

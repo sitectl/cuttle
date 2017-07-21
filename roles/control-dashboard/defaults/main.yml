@@ -1,0 +1,18 @@
+---
+control_dashboard:
+  auth_method: ~
+  root: "/var/www/html"
+  server_name: control_portal
+  server_admin: staff@sitecontroller
+  title: Cuttle Dashboard
+  log_level: warn
+  locations: []
+  remote_locations: []
+  listen:
+    ip: "*"
+    port: 80
+  firewall: []
+
+  # options to pass to apache auth roles
+  # see envs/example/control
+  apache_auth_options: {}

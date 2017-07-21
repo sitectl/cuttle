@@ -1,6 +1,6 @@
 default:
   memory: 2048
-  cpus: 2
+  cpus: 1
 # LULZ WAT?  needed a xenial box that had old style ethernet naming, as the newer predictive network
 # names are affected by the number of networks a person has configured in virtualbox
 # making it inconsistent across development machines.
@@ -16,3 +16,9 @@ vms:
     ip_address:
       - 172.16.0.14
       - 172.16.1.14
+  kibana01:
+    ip_address:
+      - 172.16.0.15
+      - 172.16.1.15
+    memory: 4000
+    cpus: 1

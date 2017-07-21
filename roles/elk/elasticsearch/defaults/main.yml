@@ -1,6 +1,6 @@
 ---
 elasticsearch:
-  version: 5.4.1
+  version: 5.5.0
   wait_for_listening: true # sometimes need to skip, like upgrades
   start_on_config: true # sane defaults to avoid blowing up the cluster in prod
   restart_on_config: false # sane defaults to avoid blowing up the cluster in prod
@@ -20,9 +20,9 @@ elasticsearch:
   plugin_dir: /usr/share/elasticsearch/plugins
   plugins:
     - name: x-pack
-      file: x-pack-5.4.1.zip
-      url: http://artifacts.elastic.co/downloads/packs/x-pack/x-pack-5.4.1.zip
-      sha256sum: 7a93565b8d4af2d7d4dc804245543a4f38b2b31f8d0395dad792b7ea05d0088c
+      file: x-pack-5.5.0.zip
+      url: http://artifacts.elastic.co/downloads/packs/x-pack/x-pack-5.5.0.zip
+      #sha256sum: 7a93565b8d4af2d7d4dc804245543a4f38b2b31f8d0395dad792b7ea05d0088c
       config:
         xpack.security.enabled: false
   sensu_plugins:

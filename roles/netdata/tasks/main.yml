@@ -13,9 +13,10 @@
     - 'PIDFILE="/var/run/netdata.pid"'
     - 'EXTRA_OPTS="-P /var/run/netdata.pid"'
 
-- name: install netdata
-  apt:
-    deb: "{{ netdata.package }}"
+- include: ./roles/_cuttle/tasks/install_deb.yml
+  vars:
+    package_name: netdata
+    package_url: "{{ netdata.package }}"
 
 - name: ensure netdata service is running
   service:
@@ -28,6 +29,27 @@
   with_items: "{{ netdata.firewall.allow_from }}"
   tags:
     - firewall
+
+- name: configure netdata
+  template:
+    src: etc/netdata/netdata.conf
+    dest: /etc/netdata/netdata.conf
+  tags: netdata-config
+  notify: restart netdata
+  
+- name: set up log rotation for netdata
+  logrotate:
+    name: netdata
+    path: /var/log/netdata/*.log
+  args:
+    options:
+      - "{{ netdata.logrotate.frequency }}"
+      - "size {{ netdata.logrotate.size }}"
+      - "rotate {{ netdata.logrotate.rotations }}"
+      - missingok
+      - copytruncate
+      - compress
+      - notifempty
 
 - meta: flush_handlers
 

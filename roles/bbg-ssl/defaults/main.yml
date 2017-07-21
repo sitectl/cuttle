@@ -4,3 +4,9 @@ bbg_ssl:
   cert: ~
   key: ~
   ca_cert: ~
+
+ssl_cert: ~
+ssl_key: ~
+ssl_ca_cert: ~
+ssl_intermediate_cert: ~
+name: ~

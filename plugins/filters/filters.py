@@ -1,3 +1,5 @@
+
+import os.path
 from urlparse import urlsplit
 
 
@@ -17,7 +19,6 @@ def urlparse(url, index):
 def domain(url):
     return urlsplit(url)[0] + '://' + urlsplit(url)[1]
 
-
 def hostname(url):
     return urlsplit(url).hostname
 
@@ -36,5 +37,5 @@ class FilterModule(object):
             'urlparse': urlparse,
             'domain': domain,
             'hostname': hostname,
-            'list_contains_url': list_contains_url
+            'list_contains_url': list_contains_url,
         }

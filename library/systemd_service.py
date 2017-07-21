@@ -60,7 +60,7 @@ PIDFile={{ pidfile }}
 Environment={{ env_var }}
 {% endfor %}{% endif %}
 {% if environment_file -%}
-EnvironmentFile={{ environment_file }}
+EnvironmentFile=-{{ environment_file }}
 {% endif %}
 {% if chdir -%}
 WorkingDirectory={{ chdir }}
@@ -102,6 +102,7 @@ def main():
             default_deps=dict(default=None),
             description=dict(default=None),
             env_vars=dict(default=None, type='list'),
+            environment_file=dict(default=None),
             group=dict(default=None),
             name=dict(default=None, required=True),
             path=dict(default=None),

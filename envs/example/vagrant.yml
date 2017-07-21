@@ -27,9 +27,10 @@ common:
     - name: vagrant
       args:
         - "ALL=(ALL) NOPASSWD:ALL"
-kibana:
-  start: false
-  config_in_es: false
+
+#kibana:
+#  start: false
+#  config_in_es: false
 
 security:
   enabled: false

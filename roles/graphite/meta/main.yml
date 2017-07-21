@@ -1,17 +1,17 @@
 ---
 dependencies:
   - role: apache
-  - role: source-install
-    source_install:
-      name: graphite
-      virtualenvs:
-        - path: "{{ graphite.path.virtualenv }}"
-          owner: root
-      system_deps: "{{ graphite.system_deps }}"
-      alternatives: "{{ graphite.alternatives }}"
-      pip_virtualenv: "{{ graphite.path.virtualenv }}"
-      pip_packages: "{{ graphite.pip_packages }}"
-      cleanup: "{{ graphite.cleanup }}"
+#  - role: source-install
+#    source_install:
+#      name: graphite
+#      virtualenvs:
+#        - path: "{{ graphite.path.virtualenv }}"
+#          owner: root
+#      system_deps: "{{ graphite.system_deps }}"
+#      alternatives: "{{ graphite.alternatives }}"
+#      pip_virtualenv: "{{ graphite.path.virtualenv }}"
+#      pip_packages: "{{ graphite.pip_packages }}"
+#      cleanup: "{{ graphite.cleanup }}"
   - role: logging-config
     service: graphite
     logdata: "{{ graphite.logs }}"

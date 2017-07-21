@@ -14,13 +14,10 @@ collectd:
 apache:
   listen:
     - 80
-    - 443
-    - 81
-    - 444
-    - 82
-    - 445
-    - 83
-    - 446
+    - 8080
+    - 8081
+    - 8082
+    - 8083
 
 apt_mirror:
   protected_repos: ['packagecloud.io']
@@ -46,15 +43,12 @@ apt_mirror:
         - deb
         - deb-i386
   apache:
-    port: 80
+    port: 8080
     ssl:
-      enabled: True
+      enabled: false
       port: 443
   firewall:
-    - port: 80
-      protocol: tcp
-      src: 0.0.0.0/0
-    - port: 443
+    - port: 8080
       protocol: tcp
       src: 0.0.0.0/0
 
@@ -68,16 +62,12 @@ pypi_mirror:
         url: https://fdec6132ec19dc59011548774d514af7005c494495107ff9:@packagecloud.io/blueboxcloud
         cache_expiry: 300
   apache:
-    port: 81
-    ip: "{{ private_ipv4.address }}"
+    port: 8081
+    ip: "{{ public_ipv4.address }}"
     ssl:
-      enabled: True
-      port: 444
+      enabled: false
   firewall:
-    - port: 81
-      protocol: tcp
-      src: 0.0.0.0/0
-    - port: 444
+    - port: 8081
       protocol: tcp
       src: 0.0.0.0/0
 
@@ -85,16 +75,13 @@ gem_mirror:
   ip: 127.0.0.1
   port: 9292
   apache:
-    port: 82
-    ip: "{{ private_ipv4.address }}"
+    port: 8082
+    ip: "{{ public_ipv4.address }}"
     ssl:
-      enabled: True
+      enabled: false
       port: 445
   firewall:
-    - port: 82
-      protocol: tcp
-      src: 0.0.0.0/0
-    - port: 445
+    - port: 8082
       protocol: tcp
       src: 0.0.0.0/0
 
@@ -109,18 +96,17 @@ file_mirror:
       username: ubuntu
       password: ubuntu
   apache:
-    ip: "{{ private_ipv4.address }}"
-    port: 83
+    ip: "{{ public_ipv4.address }}"
+    port: 8083
     ssl:
-      enabled: True
-      port: 446
+      enabled: false
   firewall:
-    - port: 83
+    - port: 8083
       protocol: tcp
       src: 0.0.0.0/0
-    - port: 446
-      protocol: tcp
-      src: 0.0.0.0/0
+
+yum_mirror:
+  enabled: false
 
 squid:
   port: 3128
@@ -136,3 +122,28 @@ squid:
   blacklist_packages: []
   cache_dir:
     size: 40000
+
+apache_auth:
+  method: ~
+
+control_dashboard:
+  http_redirect: False
+  apache:
+    servername: control.local
+  listen:
+    ip: "*"
+    port: 80
+  locations:
+    root:
+      path: "/"
+    apt_mirror:
+      url: "http://{{ public_ipv4.address }}:8080"
+    file_mirror:
+      url: "http://{{ public_ipv4.address }}:8083"
+    gem_mirror:
+      url: "http://{{ public_ipv4.address }}:8082"
+    pypi_mirror:
+      url: "http://{{ public_ipv4.address }}:8081"
+
+varnish:
+  enabled: False

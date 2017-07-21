@@ -1,0 +1,30 @@
+---
+- name: install apache template
+  template: src=etc/apache2/sites-available/control_dashboard.conf
+            dest=/etc/apache2/sites-available/control_dashboard.conf
+  notify: restart apache
+
+- name: install apache location index
+  template: src=var/www/html/index.html
+            dest=/var/www/html/index.html
+
+- name: enable site
+  apache2_site: name=control_dashboard.conf
+  notify: restart apache
+
+- meta: flush_handlers
+
+- name: ensure apache is running
+  service: name=apache2 state=started enabled=yes
+
+- include: checks.yml
+  when: sensu.client.enable_checks|default('True')|bool
+  tags: sensu-checks
+
+- include: metrics.yml
+  when: sensu.client.enable_metrics|default('True')|bool
+  tags: sensu-metrics
+
+- include: serverspec.yml
+  when: serverspec.enabled|default("True")|bool
+  tags: serverspec

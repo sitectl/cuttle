@@ -1,0 +1,70 @@
+---
+- name: install mod_auth_openidc deps
+  apt: pkg=ssl-cert
+
+- include: ./roles/_cuttle/tasks/install_deb.yml
+  vars:
+    package_name: libcjose0
+    package_url: "{{ apache_auth.openid.libcjose_url }}"
+  notify: restart apache
+
+- include: ./roles/_cuttle/tasks/install_deb.yml
+  vars:
+    package_name: libapache2-mod-auth-openidc
+    package_url: "{{ apache_auth.openid.mod_openid_url }}"
+  notify: restart apache
+
+- name: enable apache mod auth_openidc
+  apache2_module: name=auth_openidc
+  notify: restart apache
+
+# if mod auth_openidc is enabled but not configured or used by any sites
+# it blocks apache start
+- name: configure default auth provider
+  lineinfile: dest=/etc/apache2/mods-available/auth_openidc.conf
+              line="OIDCProviderIssuer {{ apache_auth.openid.provider_issuer }}"
+  notify: restart apache
+
+- name: enable apache mod ssl
+  apache2_module: name=ssl
+  notify: restart apache
+  when: apache_auth.ssl.enabled
+
+#- name: install ssl key
+#  template: src=auth_openid/etc/ssl/private/openid_proxy.key
+#            dest=/etc/ssl/private/{{ apache_auth.vhost_name }}.key
+#            owner=root group=ssl-key mode=0640
+#  when: apache_auth.ssl.enabled
+#  notify: restart apache
+
+#- name: install ssl cert
+#  template: src=auth_openid/etc/ssl/certs/openid_proxy.pem
+#            dest=/etc/ssl/certs/{{ apache_auth.vhost_name }}.pem
+#  when: apache_auth.ssl.enabled
+#  notify: restart apache
+
+- name: install apache template
+  template: src=auth_openid/etc/apache2/sites-available/auth_openid.conf
+            dest=/etc/apache2/sites-available/{{ apache_auth.vhost_name }}.conf
+  notify: restart apache
+
+- name: enable site
+  apache2_site: name={{ apache_auth.vhost_name }}.conf
+  notify: restart apache
+
+- meta: flush_handlers
+
+- name: ensure apache is running
+  service: name=apache2 state=started enabled=yes
+
+#- include: checks.yml
+#  when: sensu.client.enable_checks|default('True')|bool
+#  tags: sensu-checks
+
+#- include: metrics.yml
+#  when: sensu.client.enable_metrics|default('True')|bool
+#  tags: sensu-metrics
+
+#- include: serverspec.yml
+#  when: serverspec.enabled|default("True")|bool
+#  tags: serverspec

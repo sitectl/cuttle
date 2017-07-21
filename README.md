@@ -5,18 +5,21 @@ _Originally called Site Controller (sitectl) and is Pronounced "Cuddle"._
 
 ![Cuttlefish are really gross ok](./logo.png)
 
-A Monolithic Repository of Composable Ansible Roles for building an SRE Operations Platform.
+A Monolithic Repository of Composable Ansible Roles for building an [Bluebox]
+Opinionated SRE Operations Platform.
 
 Originally built by the BlueBox Cloud team to install the infrastructure required to build and
 support Openstack Clouds using [Ursula](http://github.com/blueboxgroup/ursula) it quickly grew into
-a larger project for enabling SRE Operations both in the Datacenter and in the Cloud.
+a larger project for enabling SRE Operations both in the Data Center and in the Cloud for any kind
+of infrastructure.
 
-Like Ursula, [Ursula](http://github.com/blueboxgroup/ursula) Cuttle uses the
+Like [Ursula](http://github.com/blueboxgroup/ursula), Cuttle uses the
 [ursula-cli](https://github.com/blueboxgroup/ursula-cli) ( installed via requirements.txt )
-for running Ansible on specific environments.
+for running Ansible on specific environments and has some strong opinions on [how
+ansible inventory](docs/inventory.md) should be written and handled.
 
 For a rough idea of how Blue Box uses Cuttle by building Central and Remote sites
-tethered together with IPSEC VPNs check out [architecture.md](architecture.md).
+tethered together with IPSEC VPNs check out [docs/architecture.md](docs/architecture.md).
 
 You will see a number of example Ansible Inventories in `envs/example/` that
 show Cuttle being used to build infrastructure to solve a number of problems.
@@ -25,9 +28,13 @@ show Cuttle being used to build infrastructure to solve a number of problems.
 All of these environments can easily be deployed in Vagrant by using the `ursula-cli`
  (see [Example Usage](#example-usage) ).
 
-See [docs/deploy_2fa_secured_bastion.md](docs/deploy_2fa_secured_bastion.md) for
-a fairly comprensive document on deploying a secure ( 2fa, console logging, RBAC)
+### Examples
+
+* See [docs/deploy_2fa_secured_bastion.md](docs/deploy_2fa_secured_bastion.md) for
+a fairly comprehensive document on deploying a secure ( 2fa, console logging, RBAC)
 Bastion.
+* See [docs/deploy-oauth-secured-monitoring-server.md](docs/deploy-oauth-secured-monitoring-server.md) for a OAuth2 secured Sensu / Graphite server.
+
 
 How to Contribute
 -----------------

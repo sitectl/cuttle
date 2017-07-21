@@ -19,7 +19,6 @@
   template:
     src: var/www/html/index.html
     dest: "{{ netdata_dashboard.path }}/index.html"
-  tags: foo
 
 - name: install apache healthcheck file
   template:

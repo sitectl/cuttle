@@ -1,0 +1,74 @@
+---
+- debug: msg="uchiwa - {{ sensu.dashboard.host }}"
+  tags:
+    - sensu-server
+    - uchiwa
+    - sensu-dashboard
+
+- name: install sensu dashboard
+  apt:
+    name: uchiwa={{ sensu.dashboard.version }}
+    force: yes
+
+- name: add uchiwa user to sensu group
+  user: name=uchiwa
+        groups=sensu
+        append=yes
+
+- name: sensu dashboard default
+  template: src=etc/default/uchiwa
+            dest=/etc/default/uchiwa
+  notify:
+    - restart sensu dashboard
+
+- name: configure sensu dashboard
+  template: src=etc/sensu/uchiwa.json
+    dest=/etc/sensu-server/uchiwa.json
+    owner=uchiwa
+    group=sensu
+    mode=0660
+  notify:
+    - restart sensu dashboard
+
+- name: install sensu dashboard plugins
+  gem:
+    name: "{{ item.name }}"
+    version: "{{ item.version | default(omit) }}"
+    executable: /opt/sensu/embedded/bin/gem
+    user_install: no
+  with_items: "{{ sensu.dashboard.sensu_plugins }}"
+  register: result
+  until: result|succeeded
+  retries: 5
+
+- name: configure uchiwa upstart
+  upstart_service: name=uchiwa
+                   cmd=/opt/uchiwa/bin/uchiwa
+                   args="-c /etc/sensu-server/uchiwa.json -d /etc/sensu/dashboard.d -p /opt/uchiwa/src/public"
+                   user=uchiwa
+  notify: restart sensu dashboard
+  when: ansible_distribution_version == "14.04"
+
+- name: configure uchiwa systemd
+  systemd_service: name=uchiwa
+                   cmd=/opt/uchiwa/bin/uchiwa
+                   args="-c /etc/sensu-server/uchiwa.json -d /etc/sensu/dashboard.d -p /opt/uchiwa/src/public"
+                   user=uchiwa
+  notify: restart sensu dashboard
+  when: ansible_distribution_version == "16.04"
+
+- name: remove uchiwa init file
+  file:
+    path: /etc/init.d/uchiwa
+    state: absent
+
+- meta: flush_handlers
+
+- name: start sensu dashboard
+  service: name=uchiwa state=started enabled=yes
+
+- name: permit dashboard traffic
+  ufw: rule=allow to_port={{ item.port }} proto=tcp src={{ item.src }}
+  with_items: "{{ sensu.dashboard.firewall }}"
+  tags:
+    - firewall

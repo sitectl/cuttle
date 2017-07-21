@@ -1,0 +1,17 @@
+---
+- name: allow apache_auth traffic
+  ufw: rule=allow to_port={{ item.0.port }} src={{ item.1|default('127.0.0.1') }}
+  with_subelements:
+    - "{{ apache_auth.firewall }}"
+    - src
+  tags:
+    - firewall
+
+- include: auth_basic.yml
+  when: apache_auth.method == "basic"
+
+- include: auth_openid.yml
+  when: apache_auth.method == "openid"
+
+- include: auth_oauth2.yml
+  when: apache_auth.method == "oauth2"

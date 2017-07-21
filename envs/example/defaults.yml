@@ -78,24 +78,6 @@ sensu:
     enable_metrics: true
     enable_checks: true
 
-openid_proxy:
-  locations:
-    root:
-      path: "/"
-      auth_type: "openid-connect"
-    sensu:
-      proxy: "http://172.16.0.15:3000/"
-      auth_type: "openid-connect"
-  firewall:
-    - port: 80
-      protocol: tcp
-      src:
-        - "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
-    - port: 443
-      protocol: tcp
-      src:
-        - "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
-
 logging:
   enabled: true
   follow:
@@ -266,56 +248,144 @@ support_tools:
       path: /opt/venv/ursula/master/bin/ursula
       link: /usr/local/bin/ursula
 
-bbg_ssl:
-  intermediate: ~
-  cert: |
-    -----BEGIN CERTIFICATE-----
-    MIIDbjCCAlagAwIBAgIJANyptbhIpO8TMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV
-    BAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX
-    aWRnaXRzIFB0eSBMdGQwHhcNMTUwMTE0MTg0MTQyWhcNMTYwMTE0MTg0MTQyWjBF
-    MQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50
-    ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
-    CgKCAQEA1MWu8kJ20FCLbBIMqgTlKCOL54X06C0bERm3wIOwu6dk35s7uy78I2pt
-    dA2sbwLeIMiJHKY85eBNI+pMZGNsRYajl3BZRvSWcjO6DHGN8k0ljf6gvzAlzyG0
-    2Pz0Th1R2fveOE0fNZcT/JqbKLFb/Cu3GoaC/wUAbRK36qgzQkX4hQD0QVylhdmS
-    82Fsr6H4fl7iybn7w1HwA2DG4MuJRjCeskujfz0ch7/BBdON84SDVGcemHkO45R/
-    c6n49jnTHiJ5CJXsZz4uH8lEs0Q6CW2GMtVbPiXfJ8TLBdSgMp6atVMCMNsa0Pg1
-    I5hXAqknZf9Uc3KWdBRkufJrwHnFuwIDAQABo2EwXzAPBgNVHREECDAGhwSsEAAN
-    MB0GA1UdDgQWBBQzjGYx1ss5NQuRGAf3nk7KenvLyTAfBgNVHSMEGDAWgBQzjGYx
-    1ss5NQuRGAf3nk7KenvLyTAMBgNVHRMEBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IB
-    AQBAcq4Fe5+5jeRBqS0R9EApBeQZfCV+h88UpzAsWWhxicft1BUiftMzAwAE0VnG
-    xTB96jmlmHXjSR8ugCED4A6wkjW3mDo5SmkWLQBCY1EHSUdIgVbhK4zxP4TLhGbD
-    54+nGAsRLM1Hb5UlI1uCa4E/1gdeLUd41vSfKc8/A133Rl1CMpFLHuMgE1VgVQkU
-    ElkHVD8xQlOrza/yMT1eGg4tbR4ukqjdC4vOWqGPmajlR+gk/sJ2Ut1CzN4fcmtj
-    yqcwxri9aiDB1mimS+m/SjKvPf6lV5bDRtQWXbCPAWzq8gKvv2PqoNyyZOxbqJhM
-    eb0+9ULVAGAYtcZuNHgs0bH+
-    -----END CERTIFICATE-----
-  key: |
-    -----BEGIN PRIVATE KEY-----
-    MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDUxa7yQnbQUIts
-    EgyqBOUoI4vnhfToLRsRGbfAg7C7p2Tfmzu7Lvwjam10DaxvAt4gyIkcpjzl4E0j
-    6kxkY2xFhqOXcFlG9JZyM7oMcY3yTSWN/qC/MCXPIbTY/PROHVHZ+944TR81lxP8
-    mpsosVv8K7cahoL/BQBtErfqqDNCRfiFAPRBXKWF2ZLzYWyvofh+XuLJufvDUfAD
-    YMbgy4lGMJ6yS6N/PRyHv8EF043zhINUZx6YeQ7jlH9zqfj2OdMeInkIlexnPi4f
-    yUSzRDoJbYYy1Vs+Jd8nxMsF1KAynpq1UwIw2xrQ+DUjmFcCqSdl/1RzcpZ0FGS5
-    8mvAecW7AgMBAAECggEAeP6BYdpR3lwvLKGG+hgWiCDOqjYO8wjTX4IUcDFzCwNB
-    5bZM3UD2uN0IqPotmGM1Fcdz0QrnjoFi3I2cK2ouY8sQtEl7O1JTS1YG8pSQd71P
-    IdQubQpgNc2hHdOayeD6bs8/qxyQJtVm1DrHCPjyqg/h6/+Z9pNNjrkaRSKpI4HF
-    Jtuj8iRHV9yWDoNU1eWO6qzoEU1fNE48XVefpLpVDJx0u4Ih8/BHguTBH1DO5qQt
-    sNkBUNh09Fy3ZqM2085ZMmi+W+EqtNJyYsB7J2324Bga7Voo71s9HNDZWLWHTIYW
-    jaPBRvn4mjlVua1o8Dd3/RQ2JVzwiv/aZ47IGw3cgQKBgQDwco2IduJkWHnOyPKZ
-    +uo4xmYBa8UswBMqmfPaTijZ4naG9J34LjZFtvsJhSqOrdKEYbP3ONz3UwvOFUQg
-    kzC/F5TJidDzNXPiLd+3NpssofnVwLKdZUwORkLoBph7oAY2fImaoWIGfPsHyam5
-    o4RWbsyhxKozFyBn2NBIyxQ0EQKBgQDiiN6rsHusVdH5OreO6Z8RvB9ULUH8seB+
-    f1oYiHSfPZQ4fkwsB8k9gF6yJOb/Kob3FSoc5GRpd4TK9DXHTZh41Q3/CSwveYYa
-    5BJlupXGgAzu6vFuyUxAw/TclZFD9uAjrlfu8lbRpBHzKZtJnJQtgNPFflH6ZxbY
-    ljlNO4f5CwKBgA42l0szy9omqLyigES94k6M28bFuhgVGozwIMwMxrlqe5sqppPf
-    F3IziM9dQdDBUaplpB+/CsDL9eyusSJD0SPanv7y2Jkn1bvO/mR0I+QVhxEtnOFU
-    9ZP6b0YL7cORCAz8e53aYFMF3EjvkMracZ4yWoJNf8oZWd8Jn/ZNmtohAoGAN/yF
-    s78BQb1QEJ2PYhWhB5wLzh0FUvOPPRQyax/GWti4OiIUp0khVj7UqIhwQp37DzO+
-    3bcgjeRJAHPMmr41sZ9OPzrAHdeV6i110oiDnbRl/eI42x2K5/LGIIIijb6E9KyQ
-    9PAVvugiu4sL4ux8vqY5MHUgw5cY0VyHOuw8lbMCgYBPZtqsJs+zrkZj9HD+lQvo
-    N2CQtonrnIwqaorgbZVr1PDBJo0AHBraQRt/0Xpzu4Q/rjkHxlhESjW17Ax3JS1s
-    gRwuu+SIjud/7fZcGy8to7MbdJrWiYFUOlQF6F/kEIq3bsHmJWbi1FgTdeQkkEl6
-    DFeUkc2q0uaO1lZIAnMA4w==
-    -----END PRIVATE KEY-----
+apache:
+  listen:
+    - 80
+    - 443
+
+apache_auth:
+  method: oauth2
+  ssl:
+    enabled: true
+    cert: |
+      -----BEGIN CERTIFICATE-----
+      MIIDDDCCAfSgAwIBAgIJAKKtngZX9wd2MA0GCSqGSIb3DQEBCwUAMBIxEDAOBgNV
+      BAMMB3Rlc3QtY2EwHhcNMTcwNzA0MTYzMjIzWhcNMTcwOTAyMTYzMjIzWjAWMRQw
+      EgYDVQQDDAtleGFtcGxlLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC
+      ggEBALKKk04XKTKb+YvsYSvV56qSD5LBE/X5MCAwn8YL9pFBkhag5svw56Dreyn4
+      lgXx5IumrCd/eXE/YgBHUWmRS0INIXsVwEpFjXPC+8lWPP/kxLkoeLY4X74e7asC
+      j6XJuy94ayJUjug1275B3ODHJRmjelfw283BWMh48cmUuWv18Hj+EqX2LNwcNXg0
+      k4695UAqg46vFSl7miL2l4HrCGQ6julSS9GMfGSujTTmNelfqgfytxY5feKt1LUc
+      fjo8kXZZQv/XG83s848/mxbLWNMEMPeY2Pp1lonJqVUD3NxhmtyFvXbR9Nw9MiHL
+      vYbMNhseLFAKBCLLt04+HqhMvpsCAwEAAaNhMF8wCQYDVR0TBAIwADALBgNVHQ8E
+      BAMCBeAwHQYDVR0lBBYwFAYIKwYBBQUHAwIGCCsGAQUFBwMBMCYGA1UdEQQfMB2C
+      DmN1dHRsZS5leGFtcGxlggtleGFtcGxlLmNvbTANBgkqhkiG9w0BAQsFAAOCAQEA
+      QYNksRsbUJiJXp0rGvlZEAZh6b82s5nR17jAg6kDTCIgAAmsDzlzPnpYhy/K1bGz
+      Jpruh+Me4W/4mjKGfzJRtv/ieoUXj0yDPGxhWBEy641NcLRawz1ucZPwDtYUZkpc
+      ZM/JHOGeBXVfLvUM4fcLm5ocVMWNHv13K5kg1i9+bVEu5ZaajXVAmILJhN0S50Pd
+      i9Y138LnxYZGmqwmyBgbQtUrqZLnKJ6SacgiZqBhdnX9Aa0vQWqUQlN3ikmqWZ9V
+      58XZYs9ofPfAIFs/DKzcS/nd6DWye66Fo58GaUYQW5gq4lqrwk9Ouy5YiY2vHv6Q
+      eQqGi131MxdBxHCCIgnGRw==
+      -----END CERTIFICATE-----
+    key: |
+      -----BEGIN RSA PRIVATE KEY-----
+      MIIEogIBAAKCAQEAsoqTThcpMpv5i+xhK9XnqpIPksET9fkwIDCfxgv2kUGSFqDm
+      y/DnoOt7KfiWBfHki6asJ395cT9iAEdRaZFLQg0hexXASkWNc8L7yVY8/+TEuSh4
+      tjhfvh7tqwKPpcm7L3hrIlSO6DXbvkHc4MclGaN6V/DbzcFYyHjxyZS5a/XweP4S
+      pfYs3Bw1eDSTjr3lQCqDjq8VKXuaIvaXgesIZDqO6VJL0Yx8ZK6NNOY16V+qB/K3
+      Fjl94q3UtRx+OjyRdllC/9cbzezzjz+bFstY0wQw95jY+nWWicmpVQPc3GGa3IW9
+      dtH03D0yIcu9hsw2Gx4sUAoEIsu3Tj4eqEy+mwIDAQABAoIBAFDyVQDVrV79qnFO
+      9WtbatJBsH/XvAYMOU6O3RF8gQiwUtyhjKIwEcQ6nzeTNelyFy1dnrW1rMi0dOkt
+      bHLRZe6HZ4OXg/vods5iO6e3yqY2AR71g20SOA5JlXWwDpKa2JwYG3KQJc6QBJXI
+      5KygfWiXXrOaRv2NSIRzmSPMoxiXwWfF+MolbIVxTEoPh//nRY4gEPAKUKjYo4rE
+      jZyLlARCzeNX12iUyiDiUmxQZGY0khoAOqzrbBvoWi3rfLLXW/hwPnUfYWa9O8mG
+      DeZuUUgjNkOeERYTa8zL1gEh9avZ99x2UV5glhTV0dUiFycRzr0mmRxye8LZN9c5
+      cY+R1ekCgYEA5Kt9wmy/m1c97Lz8038GxQgcJsmLCo8Y4LeSUv2VypGcFs3ehM5q
+      J8Z2LLhbZ3PrQ93J95rJCMWKNH35CZYRRouRKEMdWcOksqe7X3ZawgtqjJBuJ2kN
+      OaMtb44Thuwinss62naUffXLP7DICPvm2zQhqEMMcHbst1DRn8vr5p0CgYEAx+FS
+      pR9E7wtRmYbcgkPzSSYlr0hDBrl+nDMwtSrHduCudW9hdC0805UpQyCLdIOGQ/jx
+      cAbBV4qtCa2z61irMfe2Sbc9IGPqRLBTSrEF9EhXVyoI/cghbjDWkJBbuWRLdnWU
+      EgdDJ9AAfS5w8ST4yzwiDWuEewcGpwCpL9HdGJcCgYAj+vfmx8W+Y5PS1EnT3YDr
+      L8N+Nugx2SJI+ZmEhXI0VYUB8ZK5wuDhMVEW6Es5k/vIyfUliK1pO+vrJocxAvPk
+      7cEBXM4ZebdIhSvucWkGb1VsmK08dkMmdo6Hpwtbh3xLEB9KkK38w9gfRWm0QC6q
+      /yDsoOAsMgo9LfJN+oA74QKBgGB2MXhW2uGySLMbDpgfSu3mZxFsgkxggOXJHpyQ
+      BKsuS4OJOTLkEhLaTYuDzUlxn/51ya8S04P3/QJKviW6KQR4U5THxcw36/syTUAi
+      poj50IzUUHqJdvjCwQoLYPjbmj+VBtycfKBeFZ5UJ1V5TkhmwNhRJyJohaFbBEt7
+      sIQJAoGAfLZPGjN2W1htjqeRZ8HdiAPSmNtEmzXERgFLIMShdWJDrZD3t9thciB5
+      LDKD4yrHBQAMwIy9euuiEY2sV5U8Bt2UVJUgsGwCpDKjMlRVuCWTDF9UJR4begXZ
+      0JAk8ZodNrxyHu7mk/h4DGFYWdEaGBrD7elrBU4TxtinU1Flcyw=
+      -----END RSA PRIVATE KEY-----
+    ca_cert: |
+      -----BEGIN CERTIFICATE-----
+      MIIC9zCCAd+gAwIBAgIJAOIAr9geZ4oVMA0GCSqGSIb3DQEBCwUAMBIxEDAOBgNV
+      BAMMB3Rlc3QtY2EwHhcNMTcwNzA0MTYzMjIzWhcNMTcwOTAyMTYzMjIzWjASMRAw
+      DgYDVQQDDAd0ZXN0LWNhMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA
+      tO5+9d8DV9vcNOyzjrJvlzG7vLaRKKOKN39DmVhnqpTN3lb+t5Xx+TYdCtGZ+LKT
+      WeC954g8pYBfuC7/2SPUni38LkkR/ll2W16rPSWa37L/7BiNclo9Y/F9Lur2uzs8
+      R4sPXpcpaEo3LViucjDbbOjR8TEhZVQ/Rd9MWJ1A4Lh/cQPBNo0e09NvP5B0L5UW
+      mr4oXTXJCTlBEAwnZWLZPY7Or7CJFwYFN08gfT9bRPhrNuW31C9cohjUsttNkMmq
+      FKxR+1/kninajKgZFwyyfp9cAspnV2YuHQgpc7qykCHjaer/2suMgDj6iXZxsNC2
+      e3cmSarUmsERlwdWe7FaSQIDAQABo1AwTjAdBgNVHQ4EFgQU2YdByCUJSaHKAVxS
+      9sH8ZfTr7MQwHwYDVR0jBBgwFoAU2YdByCUJSaHKAVxS9sH8ZfTr7MQwDAYDVR0T
+      BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAePgVptlGdcq/mcyod17eNC4fSs6J
+      wt7yWU6AWdnTXujlUf6vdcMP5gz2EQPk9sEsKwl/vGbhdkX9ZRsEGEtNgzAsl45O
+      v8cgIFEJKWulwuipWp+d4L3s9C0XfEP6aRG5S1w4JAI7y0bUePNkYJPhqOBNjVdQ
+      YpHNL6KyTV02aP6QJGbOgI/T5/B7XRpZtY2sEMVfojveiuHthlhQwg1oZeXhkyFW
+      ajE9T0qG5URPqg/9wDDvK69Rjo2W08ISzuWmBEGr/EjVcicf0MtOxPrCIpZMqHHX
+      3NcCQNRcPtperjzXF6jgiqR9I1OuH2bvwzE9NLZLStO+8IXKOupIUDaXsA==
+      -----END CERTIFICATE-----
+  vhost_name: control-portal
+  server_name: control.local
+  listen_ip: "*"
+  listen_port: 80
+  listen_ssl_port: 443
+  proxy_to: http://127.0.0.1:8080/
+  basic:
+    users:
+      - username: admin
+        password: admin
+  oauth2:
+    auth_proxy:
+      enabled: true
+      log_level: "warn"
+      ip: 127.0.0.1
+      port: 8089
+    protected_locations:
+      enabled: true
+      log_level: "warn"
+      ip: 127.0.0.1
+      port: 80
+      url: "http://127.0.0.1"
+    config:
+      # Implies port 80
+      client_id: "xxxxxxxxxxxx"
+      client_secret: "xxxxxxxxxxxx"
+      pass_access_token: "true"
+      pass_basic_auth: false
+      cookie_name: "oauth2_proxy_cookie"
+      cookie_secret: "oauth2_proxy_secret_pass"
+      cookie_domain: ""
+      cookie_expire: "168h"
+      cookie_refresh: "24h"
+      cookie_secure: "true"
+      cookie_httponly: "false"
+      provider: "github"
+      provider_url: "https://github.com"
+      http_address: "127.0.0.1:3010"
+      email_domains: "*"
+      github_org: ~
+      redirect_url: "https://control.local/oauth2/callback"
+      upstreams: "http://127.0.0.1:8080"
+  firewall:
+  - port: 80
+    protocol: tcp
+    src:
+      - "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+  - port: 443
+    protocol: tcp
+    src:
+      - "{{ public_ipv4.network }}/{{ public_ipv4.netmask }}"
+
+netdata:
+  enabled: true
+  config:
+    backend:
+      enabled: no
+  firewall:
+    allow_from: []
+
+netdata_dashboard:
+  apache:
+    enabled: true
+    port: 8082
+  firewall: []

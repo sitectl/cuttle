@@ -18,10 +18,6 @@
   notify:
     - restart grafana
 
-#- name: fix grafana service
-#  template: src=etc/init.d/grafana-server dest=/etc/init.d/grafana-server
-#            mode=0755
-
 - name: install grafana
   apt: name="{{ 'grafana=' ~ grafana.version if grafana.version else 'grafana' }}"
 
