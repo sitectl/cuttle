@@ -35,7 +35,7 @@ file_mirror:
       enabled: False
       port: 443
       ip: '*'
-      name: sitecontroller
+      name: cuttle
       cert: ~
       key: ~
       intermediate: ~

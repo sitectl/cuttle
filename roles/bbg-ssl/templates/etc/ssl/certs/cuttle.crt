@@ -1,3 +1,0 @@
-# {{ ansible_managed }}
-
-{% if ssl_cert %}{{ ssl_cert }}{% else %}{{ bbg_ssl.cert }}{% endif %}

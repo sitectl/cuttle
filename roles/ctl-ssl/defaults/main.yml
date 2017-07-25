@@ -1,5 +1,5 @@
 ---
-bbg_ssl:
+ctl_ssl:
   intermediate: ~
   cert: ~
   key: ~

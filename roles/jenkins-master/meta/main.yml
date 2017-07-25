@@ -3,12 +3,12 @@ dependencies:
   - role: jenkins-common
   - role: apache
     when: jenkins.apache.enabled|bool
-  - role: bbg-ssl
+  - role: ctl-ssl
     name: jenkins
     ssl_cert: "{{ jenkins.apache.ssl.cert }}"
     ssl_key: "{{ jenkins.apache.ssl.key }}"
     ssl_intermediate: "{{ jenkins.apache.ssl.intermediate }}"
     ssl_ca_cert: ~
     when: jenkins.apache.enabled|bool
-    tags: ['bbg-ssl']
+    tags: ['ctl-ssl']
   - role: sensu-check

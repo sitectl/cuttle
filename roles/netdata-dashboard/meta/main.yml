@@ -1,12 +1,12 @@
 ---
 dependencies:
-  - role: bbg-ssl
+  - role: ctl-ssl
     name: "{{ netdata_dashboard.apache.ssl.name }}"
     ssl_cert: "{{ netdata_dashboard.apache.ssl.cert }}"
     ssl_key: "{{ netdata_dashboard.apache.ssl.key }}"
     ssl_intermediate: "{{ netdata_dashboard.apache.ssl.intermediate }}"
     when: netdata_dashboard.apache.ssl.enabled
-    tags: ['bbg-ssl']
+    tags: ['ctl-ssl']
   - role: apache
   - role: logging-config
     service: netdata_dashboard

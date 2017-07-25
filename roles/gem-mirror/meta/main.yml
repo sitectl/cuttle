@@ -1,13 +1,13 @@
 ---
 dependencies:
-  - role: bbg-ssl
+  - role: ctl-ssl
     name: "{{ gem_mirror.apache.ssl.name }}"
     ssl_cert: "{{ gem_mirror.apache.ssl.cert }}"
     ssl_key: "{{ gem_mirror.apache.ssl.key }}"
     ssl_intermediate: "{{ gem_mirror.apache.ssl.intermediate }}"
     ssl_ca_cert: ~
     when: gem_mirror.apache.ssl.enabled
-    tags: ['bbg-ssl']
+    tags: ['ctl-ssl']
   - role: apache
   - role: logging-config
     service: gem_mirror

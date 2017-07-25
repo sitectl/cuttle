@@ -1,3 +1,0 @@
-# {{ ansible_managed }}
-
-{% if ssl_intermediate %}{{ ssl_intermediate }}{% else %}{{ bbg_ssl.intermediate }}{% endif %}

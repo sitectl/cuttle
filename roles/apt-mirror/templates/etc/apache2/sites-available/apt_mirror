@@ -65,10 +65,10 @@
 {% if apt_mirror.apache.ssl.enabled|bool %}
 <VirtualHost {{ apt_mirror.apache.ssl.ip }}:{{ apt_mirror.apache.ssl.port }}>
     {{ apache.ssl.settings }}
-    SSLCertificateFile /etc/ssl/certs/{{ apt_mirror.apache.ssl.name|default('sitecontroller') }}.crt
-    SSLCertificateKeyFile /etc/ssl/private/{{ apt_mirror.apache.ssl.name|default('sitecontroller') }}.key
-{% if bbg_ssl.intermediate or apt_mirror.apache.ssl.intermediate %}
-    SSLCertificateChainFile /etc/ssl/certs/{{ apt_mirror.apache.ssl.name|default('sitecontroller') }}-intermediate.crt
+    SSLCertificateFile /etc/ssl/certs/{{ apt_mirror.apache.ssl.name|default('cuttle') }}.crt
+    SSLCertificateKeyFile /etc/ssl/private/{{ apt_mirror.apache.ssl.name|default('cuttle') }}.key
+{% if ctl_ssl.intermediate or apt_mirror.apache.ssl.intermediate %}
+    SSLCertificateChainFile /etc/ssl/certs/{{ apt_mirror.apache.ssl.name|default('cuttle') }}-intermediate.crt
 {% endif %}
 {% else %}
 <VirtualHost {{ apt_mirror.apache.ip }}:{{ apt_mirror.apache.port }}>
