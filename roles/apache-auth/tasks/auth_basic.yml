@@ -26,6 +26,7 @@
   htpasswd: name={{ item.username }} password={{ item.password }}
             path="/etc/apache2/{{ apache_auth.vhost_name }}_passwd"
   with_items: "{{ apache_auth.basic.users }}"
+  no_log: true
 
 - name: enable site
   apache2_site: name={{ apache_auth.vhost_name }}.conf

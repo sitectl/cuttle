@@ -123,6 +123,9 @@ apache_auth:
       client_secret: "XXXXXXXXXXXXXXXXX"
 ````
 
+  > Note: You can set `apache_auth.method` to `basic` if you want to skip oauth.
+    It will create a default user/pass of admin/admin instead.
+
 You will also want to add `control.local` to your hosts file (likely `/etc/hosts`) so
 that you can resolve this URL locally.
 
