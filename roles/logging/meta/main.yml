@@ -4,12 +4,12 @@ dependencies:
     repos:
       - repo: 'deb {{ apt_repos.filebeat.repo }} stable main'
         key_url: '{{ apt_repos.filebeat.key_url }}'
-  - role: bbg-ssl
+  - role: ctl-ssl
     name: "logging-forward-ca_cert"
     ssl_cert: ~
     ssl_key: ~
     ssl_intermediate: ~
     ssl_ca_cert: "{{ logging.forward.tls.ca_cert }}"
     when: logging.forward.tls.ca_cert
-    tags: ['bbg-ssl']
+    tags: ['ctl-ssl']
   - role: sensu-check

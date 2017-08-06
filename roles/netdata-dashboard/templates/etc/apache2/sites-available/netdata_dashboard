@@ -47,10 +47,10 @@
 {% if netdata_dashboard.apache.ssl.enabled|bool %}
 <VirtualHost {{ netdata_dashboard.apache.ssl.ip }}:{{ netdata_dashboard.apache.ssl.port }}>
     {{ apache.ssl.settings }}
-    SSLCertificateFile /etc/ssl/certs/{{ netdata_dashboard.apache.ssl.name|default('sitecontroller') }}.crt
-    SSLCertificateKeyFile /etc/ssl/private/{{ netdata_dashboard.apache.ssl.name|default('sitecontroller') }}.key
-{% if bbg_ssl.intermediate or netdata_dashboard.apache.ssl.intermediate %}
-    SSLCertificateChainFile /etc/ssl/certs/{{ netdata_dashboard.apache.ssl.name|default('sitecontroller') }}-intermediate.crt
+    SSLCertificateFile /etc/ssl/certs/{{ netdata_dashboard.apache.ssl.name|default('cuttle') }}.crt
+    SSLCertificateKeyFile /etc/ssl/private/{{ netdata_dashboard.apache.ssl.name|default('cuttle') }}.key
+{% if ctl_ssl.intermediate or netdata_dashboard.apache.ssl.intermediate %}
+    SSLCertificateChainFile /etc/ssl/certs/{{ netdata_dashboard.apache.ssl.name|default('cuttle') }}-intermediate.crt
 {% endif %}
 {{ virtualhost() }}
 </VirtualHost>

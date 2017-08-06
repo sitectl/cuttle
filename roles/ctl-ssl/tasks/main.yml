@@ -9,22 +9,22 @@
   template: src=etc/ssl/private/cuttle.key
             dest=/etc/ssl/private/{{ name|default('cuttle') }}.key
             owner=root group=ssl-key mode=0640
-  when: ssl_key or bbg_ssl.key
+  when: ssl_key or ctl_ssl.key
 
 - name: install ssl cert
   template: src=etc/ssl/certs/cuttle.crt
             dest=/etc/ssl/certs/{{ name|default('cuttle') }}.crt
-  when: ssl_cert or bbg_ssl.cert
+  when: ssl_cert or ctl_ssl.cert
 
 - name: install ssl intermediate cert
   template: src=etc/ssl/certs/intermediate.crt
             dest=/etc/ssl/certs/{{ name|default('cuttle') }}-intermediate.crt
-  when: ssl_intermediate or bbg_ssl.intermediate
+  when: ssl_intermediate or ctl_ssl.intermediate
 
 - name: install ssl ca cert
   template: src=usr/local/share/ca-certificates/ca_cert.crt
             dest=/usr/local/share/ca-certificates/{{ name|default('cuttle-ca_cert') }}.crt
-  when: ssl_ca_cert or bbg_ssl.ca_cert
+  when: ssl_ca_cert or ctl_ssl.ca_cert
   notify: update ca certificates
 
 - include: checks.yml

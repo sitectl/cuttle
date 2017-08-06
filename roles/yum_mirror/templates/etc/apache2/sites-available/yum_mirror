@@ -55,10 +55,10 @@
 {% if yum_mirror.apache.ssl.enabled|bool %}
 <VirtualHost {{ yum_mirror.apache.ssl.ip }}:{{ yum_mirror.apache.ssl.port }}>
 {{ apache.ssl.settings | indent(4,true) }}
-    SSLCertificateFile /etc/ssl/certs/{{ yum_mirror.apache.ssl.name|default('sitecontroller') }}.crt
-    SSLCertificateKeyFile /etc/ssl/private/{{ yum_mirror.apache.ssl.name|default('sitecontroller') }}.key
-{% if bbg_ssl.intermediate or yum_mirror.apache.ssl.intermediate %}
-    SSLCertificateChainFile /etc/ssl/certs/{{ yum_mirror.apache.ssl.name|default('sitecontroller') }}-intermediate.crt
+    SSLCertificateFile /etc/ssl/certs/{{ yum_mirror.apache.ssl.name|default('cuttle') }}.crt
+    SSLCertificateKeyFile /etc/ssl/private/{{ yum_mirror.apache.ssl.name|default('cuttle') }}.key
+{% if ctl_ssl.intermediate or yum_mirror.apache.ssl.intermediate %}
+    SSLCertificateChainFile /etc/ssl/certs/{{ yum_mirror.apache.ssl.name|default('cuttle') }}-intermediate.crt
 {% endif %}
 {% else %}
 <VirtualHost {{ yum_mirror.apache.ip }}:{{ yum_mirror.apache.port }}>

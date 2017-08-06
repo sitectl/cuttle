@@ -1,12 +1,12 @@
 ---
 dependencies:
-  - role: bbg-ssl
+  - role: ctl-ssl
     name: "{{ logstash.ssl.name }}"
     ssl_cert: "{{ logstash.ssl.cert }}"
     ssl_key: "{{ logstash.ssl.key }}"
     ssl_intermediate: "{{ logstash.ssl.intermediate }}"
     ssl_ca_cert: ~
-    tags: bbg-ssl
+    tags: ctl-ssl
   - role: apt-repos
     repos:
       - repo: 'deb {{ apt_repos.logstash.repo }} stable main'

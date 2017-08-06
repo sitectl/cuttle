@@ -1,4 +1,4 @@
 ---
 dependencies:
   - role: apache
-  - role: bbg-ssl
+  - role: ctl-ssl

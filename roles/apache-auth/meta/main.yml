@@ -1,7 +1,7 @@
 ---
 dependencies:
   - role: apache
-  - role: bbg-ssl
+  - role: ctl-ssl
     name: "{{ apache_auth.vhost_name }}"
     ssl_cert: "{{ apache_auth.ssl.cert }}"
     ssl_key: "{{ apache_auth.ssl.key }}"

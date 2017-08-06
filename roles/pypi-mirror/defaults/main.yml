@@ -42,7 +42,7 @@ pypi_mirror:
       servername: mirror01.local
       serveraliases:
         - mirror01
-      name: sitecontroller
+      name: cuttle
       cert: ~
       key: ~
       intermediate: ~

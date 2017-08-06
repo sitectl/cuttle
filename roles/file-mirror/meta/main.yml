@@ -1,13 +1,13 @@
 ---
 dependencies:
-  - role: bbg-ssl
+  - role: ctl-ssl
     name: "{{ file_mirror.apache.ssl.name }}"
     ssl_cert: "{{ file_mirror.apache.ssl.cert }}"
     ssl_key: "{{ file_mirror.apache.ssl.key }}"
     ssl_intermediate: "{{ file_mirror.apache.ssl.intermediate }}"
     ssl_ca_cert: ~
     when: file_mirror.apache.ssl.enabled
-    tags: ['bbg-ssl']
+    tags: ['ctl-ssl']
   - role: apache
   - role: logging-config
     service: file_mirror

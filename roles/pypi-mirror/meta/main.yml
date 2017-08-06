@@ -1,13 +1,13 @@
 ---
 dependencies:
-  - role: bbg-ssl
+  - role: ctl-ssl
     name: "{{ pypi_mirror.apache.ssl.name }}"
     ssl_cert: "{{ pypi_mirror.apache.ssl.cert }}"
     ssl_key: "{{ pypi_mirror.apache.ssl.key }}"
     ssl_intermediate: "{{ pypi_mirror.apache.ssl.intermediate }}"
     ssl_ca_cert: ~
     when: pypi_mirror.apache.ssl.enabled
-    tags: ['bbg-ssl']
+    tags: ['ctl-ssl']
   - role: apache
   - role: logging-config
     service: pypi_mirror

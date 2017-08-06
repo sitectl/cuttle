@@ -1,0 +1,3 @@
+# {{ ansible_managed }}
+
+{% if ssl_intermediate %}{{ ssl_intermediate }}{% else %}{{ ctl_ssl.intermediate }}{% endif %}

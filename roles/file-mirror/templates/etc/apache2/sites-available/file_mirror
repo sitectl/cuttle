@@ -36,10 +36,10 @@
 {% if file_mirror.apache.ssl.enabled|bool %}
 <VirtualHost {{ file_mirror.apache.ssl.ip }}:{{ file_mirror.apache.ssl.port }}>
     {{ apache.ssl.settings }}
-    SSLCertificateFile /etc/ssl/certs/{{ file_mirror.apache.ssl.name|default('sitecontroller') }}.crt
-    SSLCertificateKeyFile /etc/ssl/private/{{ file_mirror.apache.ssl.name|default('sitecontroller') }}.key
-{% if bbg_ssl.intermediate or file_mirror.apache.ssl.intermediate %}
-    SSLCertificateChainFile /etc/ssl/certs/{{ file_mirror.apache.ssl.name|default('sitecontroller') }}-intermediate.crt
+    SSLCertificateFile /etc/ssl/certs/{{ file_mirror.apache.ssl.name|default('cuttle') }}.crt
+    SSLCertificateKeyFile /etc/ssl/private/{{ file_mirror.apache.ssl.name|default('cuttle') }}.key
+{% if ctl_ssl.intermediate or file_mirror.apache.ssl.intermediate %}
+    SSLCertificateChainFile /etc/ssl/certs/{{ file_mirror.apache.ssl.name|default('cuttle') }}-intermediate.crt
 {% endif %}
 {% else %}
 <VirtualHost {{ file_mirror.apache.ip }}:{{ file_mirror.apache.port }}>
