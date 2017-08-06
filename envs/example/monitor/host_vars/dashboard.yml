@@ -7,6 +7,8 @@ apache:
     - 127.0.0.1:8089
 
 apache_auth:
+  method: oauth2
+  # method: basic
   oauth2:
     config:
       client_id: "XXXXXXX"

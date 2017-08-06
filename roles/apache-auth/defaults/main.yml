@@ -20,9 +20,11 @@ apache_auth:
     key: ~
     ca_cert: ~
     intermediate: ~
-# auth types:
+# auth types
   basic:
-    users: []
+    users:
+      - username: admin
+        password: admin
   openid:
     libcjose_url: https://github.com/pingidentity/mod_auth_openidc/releases/download/v2.3.0/libcjose0_0.5.1-1.trusty.1_amd64.deb
     mod_openid_url: https://github.com/pingidentity/mod_auth_openidc/releases/download/v2.3.0/libapache2-mod-auth-openidc_2.3.0-1.trusty.1_amd64.deb
