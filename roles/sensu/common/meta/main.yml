@@ -1,6 +1,6 @@
 ---
 dependencies:
-  - role: sensu/vars  
+  - role: sensu/vars
   - role: apt-repos
     repos:
       - repo: "deb {{ apt_repos.sensu.repo }} {{ ansible_distribution_release }} main"
