@@ -9,6 +9,13 @@
   notify:
     - update locales
 
+- name: set motd
+  template:
+    src: etc/update-motd.d/cuttle-motd
+    dest: /etc/update-motd.d/90-cuttle-motd
+    mode: 0755
+  tags: motd
+
 - name: check current locale
   shell: "locale | head -n 1 | awk -F= '{ print $2 }'"
   register: locale
@@ -17,6 +24,10 @@
 - name: set locale
   command: update-locale LANG={{ common.locale }} LC_ALL={{ common.locale }}
   when: locale.stdout != common.locale
+
+- name: debug /etc/hosts
+  debug: msg="hosts - {{etc_hosts}}"
+  tags: etc_hosts
 
 - name: configure /etc/hosts
   template:

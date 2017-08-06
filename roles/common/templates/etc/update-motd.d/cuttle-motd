@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# {{ ansible_managed }}
+
+cat <<End-of-message
+
+{{ common.motd.message }}
+
+End-of-message

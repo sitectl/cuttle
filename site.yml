@@ -73,7 +73,7 @@
   any_errors_fatal: true
 
 - name: ttyspy server
-  hosts: ttyspy-server
+  hosts: ttyspy-server:ttyspy
   roles:
     - role: ttyspy/ttyspy-server
       tags: ['ttyspy-server', 'ttyspy']

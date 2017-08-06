@@ -77,9 +77,7 @@ common:
       - 3.ubuntu.pool.ntp.org
       - ntp.ubuntu.com
     peers: []
-    clients:
-      - ip: 172.16.1.115
-        netmask: 255.255.255.0
+    clients: []
 
   firewall:
     forwarding: False
@@ -92,6 +90,7 @@ common:
     allow_from:
       - "{{ ansible_default_ipv4.network }}/{{ ansible_default_ipv4.netmask }}"
     disable_dns: True
+    permit_root_login: "no"
     max_sessions: 25
 
     client_alive:
@@ -107,6 +106,15 @@ common:
       api_url: ~ # ex: https://api.github.com
       api_user: ~
       api_pass: ~
+
+  motd:
+    message: |
+      This system is restricted to authorized users only. All activities on this system are logged.
+      Unauthorized access will be fully investigated and reported to the appropriate law enforcement agencies.
+
+      This system is managed using https://github.com/IBM/cuttle. Any changes you make may be reverted
+      by the automation tooling.
+
 
   sysdig:
     enabled: True
@@ -145,7 +153,7 @@ common:
     forwarder: filebeat # or 'logstash-forwarder'
 
   sudoers:
-    - name: blueboxadmin
+    - name: "{{ admin_user }}"
       args:
         - "ALL=NOPASSWD: /usr/sbin/tcpdump"
 

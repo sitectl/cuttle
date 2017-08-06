@@ -25,7 +25,7 @@
   with_dict: "{{ users_to_add }}"
 
 - block:
-
+  - debug: msg="{{ users }}"
   - name: create root-managed authorized keys directory
     file:
       path: /etc/ssh/authorized_keys
@@ -43,6 +43,12 @@
       mode: 0644
     with_dict: "{{ users_to_add }}"
 
+  - name: copy root authorized_keys when remote root is allowed
+    copy:
+      src: /root/.ssh/authorized_keys
+      dest: /etc/ssh/authorized_keys/root.keys
+      remote_src: true
+    when: common.ssh.permit_root_login|default('no')|bool
   when: _users.manage_authorized_keys|bool
 
 - block:

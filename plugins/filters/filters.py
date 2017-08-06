@@ -11,6 +11,24 @@ def consul_server_ips(hostvars, groups, consul_group='consul'):
         consul_ips.add(ip)
     return sorted(list(consul_ips))
 
+def etc_hosts(hostvars, groups, group='all', interface='eth0'):
+    etc_hosts = []
+    for host in groups[group]:
+        if "ansible_nodename" in hostvars[host]:
+            address = hostvars[host]['ansible_' + interface]['ipv4']['address']
+            host_ip = {
+                "ip": address,
+                "name": hostvars[host]['ansible_nodename']
+            }
+            etc_hosts.append(host_ip.copy())
+    return etc_hosts
+
+def group_ips(hostvars, groups, group='all', interface='eth0'):
+    ips = []
+    for host in groups[group]:
+        if "ansible_" + interface in hostvars[host]:
+            ips.append(hostvars[host]['ansible_' + interface]['ipv4']['address'])
+    return ips
 
 def urlparse(url, index):
     return urlsplit(url)[index]
@@ -38,4 +56,6 @@ class FilterModule(object):
             'domain': domain,
             'hostname': hostname,
             'list_contains_url': list_contains_url,
+            'etc_hosts': etc_hosts,
+            'group_ips': group_ips
         }

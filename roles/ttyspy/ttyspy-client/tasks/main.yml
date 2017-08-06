@@ -32,7 +32,7 @@
 - name: configure ttyspyd upstart service
   upstart_service:
     name: ttyspyd
-    cmd: /usr/sbin/ttyspyd -f
+    cmd: /usr/sbin/ttyspyd
     args: "-f"
     user: root
   notify: restart ttyspyd
@@ -41,7 +41,7 @@
 - name: configure ttyspyd systemd service
   systemd_service:
     name: ttyspyd
-    cmd: /usr/sbin/ttyspyd -f
+    cmd: /usr/sbin/ttyspyd
     args: "-f"
     user: root
   notify: restart ttyspyd

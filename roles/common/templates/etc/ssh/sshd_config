@@ -31,7 +31,7 @@ LogLevel INFO
 
 # Authentication:
 LoginGraceTime 120
-PermitRootLogin no
+PermitRootLogin {{ common.ssh.permit_root_login }}
 StrictModes yes
 
 RSAAuthentication yes
