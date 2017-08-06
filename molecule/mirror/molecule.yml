@@ -1,0 +1,42 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: vagrant
+lint:
+  name: yamllint
+platforms:
+  - name: mirror01
+    box: bento/ubuntu-14.04
+    groups:
+      - mirror
+provisioner:
+  name: ansible
+  options:
+    extra-vars: "@../../envs/example/vagrant.yml"
+  config_options:
+    defaults:
+      hash_behaviour: merge
+      vars_plugins: ../../plugins/vars
+      connection_plugins: ../../plugins/connection
+      callback_plugins: ../../plugins/callbacks
+      filter_plugins: ../../plugins/filters
+      var_defaults_file: ../../envs/example/defaults.yml
+  connection_options:
+    ansible_become: true
+  lint:
+    name: ansible-lint
+  playbooks:
+    setup: create.yml
+    converge: ../../site.yml
+    teardown: destroy.yml
+  inventory:
+    links:
+      group_vars: ../../../envs/example/mirror/group_vars/
+      #host_vars: ../host_vars/
+scenario:
+  name: default
+verifier:
+  name: testinfra
+  lint:
+    name: flake8

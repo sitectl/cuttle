@@ -83,6 +83,34 @@ $ deactivate
 
 [Vagrant](https://www.vagrantup.com/) is our preferred Development/Testing framework.
 
+### Experimental molecule support
+
+```
+# clone this repo
+$ git clone git@github.com:ibm/cuttle.git
+
+# install pip, hopefully your system has it already
+# install virtualenv
+$ pip install virtualenv
+
+# create a new virtualenv so python is happy
+$ virtualenv --system-site-packages --no-wheel ~/<username>/venv
+
+# activate your new venv like normal
+$ source ~/<username>/venv/bin/activate
+
+# install ursula-cli, the correct version of ansible, and all other deps
+$ cd cuttle
+$ pip install -r requirements-molecule.txt
+
+# run molecule to deploy dev env for mirror
+$ molecule converge --scenario-name mirror
+
+# cleanup
+$ molecule destroy --scenario-name mirror
+$ deactivate
+```
+
 ### Example Usage
 
 ursula-cli understands how to interact with vagrant using the `--provisioner` flag:
