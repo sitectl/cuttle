@@ -40,8 +40,9 @@
   retries: 5
 
 - name: disable default vhost
-  file: dest=/etc/apache2/sites-enabled/{{ item }}
-        state=absent
+  file:
+    dest: "/etc/apache2/sites-enabled/{{ item }}"
+    state: absent
   with_items:
     - 000-default
     - 000-default.conf
@@ -49,31 +50,48 @@
     - default.conf
   notify: stop apache
 
-- name: configure apache listen ports
-  template: src=etc/apache2/ports.conf
-            dest=/etc/apache2/ports.conf
-  notify: reload apache
+- name: extra configuration from template
+  template:
+    src: "{{ item }}"
+    dest: "/etc/apache2/conf-available/"
+  with_fileglob: ../templates/etc/apache2/*
 
-- name: include ports.conf
-  lineinfile: dest=/etc/apache2/apache2.conf
-              line="Include ports.conf"
-              regexp="^Include\sports\.conf$"
-              state=present
+- name: extra configuration from file
+  copy:
+    src: "{{ item }}"
+    dest: "/etc/apache2/conf-available/"
+  with_fileglob: ../files/etc/apache2/*
+
+- name: enable extra configuration
+  file:
+    src: /etc/apache2/conf-available/{{ item }}
+    dest: /etc/apache2/conf-enabled/{{ item }}
+    state: link
+  with_items:
+    - logs.conf
+    - ports.conf
   notify: reload apache
 
 - name: install apache healthcheck file
-  template: src=var/www/html/health_check
-            dest=/var/www/html/health_check
+  template:
+    src: var/www/html/health_check
+    dest: /var/www/html/health_check
   when: apache.health_check_enabled|default('False')|bool
 
 - meta: flush_handlers
 
 - name: ensure apache is running
-  service: name=apache2 state=started enabled=yes
+  service:
+    name: apache2
+    state: started
+    enabled: yes
   when: apache.listen|length > 0
 
 - name: ensure apache is stopped
-  service: name=apache2 state=stopped enabled=no
+  service:
+    name: apache2
+    state: stopped
+    enabled: no
   when: apache.listen|length == 0
 
 - include: checks.yml

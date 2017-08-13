@@ -1,7 +1,7 @@
 # {{ ansible_managed }}
 
 CONFIG_FILE=/etc/sensu-server/config.json
-CONFIG_DIR=/etc/sensu-server/conf.d
+CONFD_DIR=/etc/sensu-server/conf.d
 EXTENSION_DIR=/etc/sensu-server/extensions
 PLUGINS_DIR=/etc/sensu-server/plugins
 HANDLERS_DIR=/etc/sensu-server/handlers

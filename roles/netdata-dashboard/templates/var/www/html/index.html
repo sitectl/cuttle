@@ -10,23 +10,24 @@
     <div class="panel">
       <h3>{{ netdata_dashboard.title }}</h3>
 
-      {% for host in groups['all'] %}
-      {% if hostvars[host]['ansible_distribution'] == 'Ubuntu' and hostvars[host]['netdata']['enabled']|bool %}
-      <a href="/netdata/{{ host }}/">
+      {% for host in groups[netdata_dashboard.for_group] if hostvars[host]['netdata']|default(None) %}
+      {% if hostvars[host]['ansible_distribution']|default("") == 'Ubuntu' and hostvars[host]['netdata']['enabled']|default('false')|bool %}
+      <a href="/netdata/{{ hostvars[host]['ansible_nodename']|default(host) }}/">
       <div class=table-block>
-        <div    data-host="/netdata/{{ host }}/"
+        <p align="center">{{ hostvars[host]['ansible_nodename']|default(host) }}</p>
+        <div    data-host="/netdata/{{ hostvars[host]['ansible_nodename']|default(host) }}/"
                 data-netdata="netdata.server_cpu"
                 data-dimensions="user"
                 data-chart-library="gauge"
                 data-width="150px"
                 data-after="-60"
                 data-points="60"
-                data-title="{{ host }}"
-                data-units="I am alive!"
+                data-title="CPU"
+                data-units=""
                 data-colors="#FF5555"
                 ></div>
         <br/>
-        <div    data-host="/netdata/{{ host }}/"
+        <div    data-host="/netdata/{{ hostvars[host]['ansible_nodename']|default(host) }}/"
                 data-netdata="netdata.server_cpu"
                 data-dimensions="user"
                 data-chart-library="dygraph"

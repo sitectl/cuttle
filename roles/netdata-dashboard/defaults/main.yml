@@ -2,6 +2,9 @@
 netdata_dashboard:
   path: /var/www/html/netdata
   title: "Netdata Dashboard"
+  remote_interface: eth1
+  # badly named, used to determine group of servers to host dashboards for
+  for_group: all
   auth: []
   apache:
     enabled: true

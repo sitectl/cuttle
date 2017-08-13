@@ -276,7 +276,7 @@ sensu_checks:
       interval: 60
       occurrences: 5
       standalone: true
-      command: "/opt/sitecontroller/sensu-plugins/check-sensu-api-health.rb --user sensu --password {{ sensu.server.rabbitmq.password }} --keepalives 100 --results 10000"
+      command: "/opt/sitecontroller/sensu-plugins/check-sensu-api-health.rb --user {{ sensu.api.username }} --password {{ sensu.api.password }} --keepalives 100 --results 10000"
       service_owner: "{{ monitoring_common.service_owner }}"
 
   sensu_client:

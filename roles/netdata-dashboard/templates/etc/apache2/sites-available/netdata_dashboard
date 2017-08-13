@@ -20,11 +20,11 @@
       ProxyPass http://127.0.0.1:19999/
       ProxyPassReverse http://127.0.0.1:19999/
   </Location>
-  {% for host in groups['all'] %}
+  {% for host in groups[netdata_dashboard.for_group] if hostvars[host]['netdata']|default(None) %}
   {% if hostvars[host]['ansible_distribution'] == 'Ubuntu' and hostvars[host]['netdata']['enabled']|bool %}
-  <Location /{{ host }}/>
-      ProxyPass http://{{ hostvars[host][public_interface]['ipv4']['address'] }}:19999/
-      ProxyPassReverse http://{{ hostvars[host][public_interface]['ipv4']['address'] }}:19999/
+  <Location /{{ hostvars[host]['ansible_nodename']|default(host) }}/>
+      ProxyPass http://{{ hostvars[host]["ansible_" + netdata_dashboard.remote_interface]['ipv4']['address'] }}:19999/
+      ProxyPassReverse http://{{ hostvars[host]["ansible_" + netdata_dashboard.remote_interface]['ipv4']['address'] }}:19999/
   </Location>
   {% endif %}
   {% endfor %}

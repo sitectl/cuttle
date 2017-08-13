@@ -15,7 +15,10 @@ def etc_hosts(hostvars, groups, group='all', interface='eth0'):
     etc_hosts = []
     for host in groups[group]:
         if "ansible_nodename" in hostvars[host]:
-            address = hostvars[host]['ansible_' + interface]['ipv4']['address']
+            if hostvars[host][interface]:
+                address = hostvars[host][interface]
+            else:
+                address = hostvars[host]['ansible_' + interface]['ipv4']['address']
             host_ip = {
                 "ip": address,
                 "name": hostvars[host]['ansible_nodename']

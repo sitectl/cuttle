@@ -127,7 +127,7 @@
     name: "{{ item.mount_point }}"
     src: "/dev/mapper/{{ item.volume_group }}-{{ item.name }}"
     fstype: "{{ item.filesystem }}"
-    opts: "{{ item.mount_opts|default(omit) }}"
+    opts: "{{ item.mount_opts|default('defaults') }}"
     state: mounted
   when: item.mount_point is defined and
         item.filesystem is defined

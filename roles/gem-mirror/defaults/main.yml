@@ -8,6 +8,7 @@ gem_mirror:
   worker_processes: 16 # !!!update the sensu-check/defaults/main.yml too!!!
   rubygems_proxy: true
   allow_remote_failure: true
+  allow_upload: false
   timeout: 30 # seconds
   host: 127.0.0.1
   port: 9292

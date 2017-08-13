@@ -35,9 +35,9 @@
       mode: 0755
 
   - name: add root-managed authorized keys
-    template:
-      src: authorized_keys
+    copy:
       dest: "/etc/ssh/authorized_keys/{{ item.key }}.keys"
+      content: "{{ item.value.public_keys | sort | join('\n') }}"
       owner: root
       group: root
       mode: 0644

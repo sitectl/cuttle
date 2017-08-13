@@ -1,5 +1,7 @@
 ---
 - include: server.yml
+  tags:
+    - sensu-server
 
 - include: dashboard.yml
   tags:

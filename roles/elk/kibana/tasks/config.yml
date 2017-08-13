@@ -1,7 +1,7 @@
 ---
 - name: set elasticsearch url
   set_fact:
-    elasticsearch_url: "http://{{ hostvars['elk01'][private_interface]['ipv4']['address']|default('127.0.0.1') }}:9200"
+    elasticsearch_url: "http://{{hostvars[groups['elasticsearch'][0]][private_interface]['ipv4']['address']|default('127.0.0.1') }}:9200"
 
 - name: show elasticsearch url
   debug:

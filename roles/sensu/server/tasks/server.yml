@@ -54,7 +54,7 @@
     name: sensu-server
     cmd: /opt/sensu/bin/sensu-server
     environment_file: /etc/default/sensu-server
-    args: "-c ${CONFIG_FILE} -d ${CONFIG_DIR} -e ${EXTENSION_DIR} -p /var/run/sensu/sensu-server.pid -l /var/log/sensu/sensu-server.log -L info"
+    args: "-c ${CONFIG_FILE} -d ${CONFD_DIR} -e ${EXTENSION_DIR} -p /var/run/sensu/sensu-server.pid -l /var/log/sensu/sensu-server.log -L info"
     user: sensu
   notify: restart sensu server
   when: ansible_distribution_version == "16.04"
@@ -64,7 +64,7 @@
     name: sensu-api
     cmd: /opt/sensu/bin/sensu-api
     environment_file: /etc/default/sensu-api
-    args: "-c ${CONFIG_FILE} -d ${CONFIG_DIR} -e ${EXTENSION_DIR} -p /var/run/sensu/sensu-server.pid -l /var/log/sensu/sensu-server.api -L info"
+    args: "-c ${CONFIG_FILE} -d ${CONFD_DIR} -e ${EXTENSION_DIR} -p /var/run/sensu/sensu-server.pid -l /var/log/sensu/sensu-api.log -L info"
     user: sensu
   notify: restart sensu api
   when: ansible_distribution_version == "16.04"

@@ -4,23 +4,16 @@
   notify: restart apache
   when: apache_auth.ssl.enabled
 
-#- name: install ssl key
-#  template: src=auth_basic/etc/ssl/private/apache_auth.key
-#            dest=/etc/ssl/private/{{ apache_auth.vhost_name }}.key
-#            owner=root group=ssl-key mode=0640
-#  when: apache_auth.ssl.enabled
-#  notify: restart apache
-
-#- name: install ssl cert
-#  template: src=auth_basic/etc/ssl/certs/apache_auth.pem
-#            dest=/etc/ssl/certs/{{ apache_auth.vhost_name }}.pem
-#  when: apache_auth.ssl.enabled
-#  notify: restart apache
-
 - name: install apache template
   template: src=auth_basic/etc/apache2/sites-available/auth_basic.conf
             dest=/etc/apache2/sites-available/{{ apache_auth.vhost_name }}.conf
   notify: restart apache
+
+- name: delete htpassword file if no users
+  file:
+    dest: "/etc/apache2/{{ apache_auth.vhost_name }}_passwd"
+    state: absent
+  when: apache_auth.basic.users|length == 0
 
 - name: basic auth users
   htpasswd: name={{ item.username }} password={{ item.password }}

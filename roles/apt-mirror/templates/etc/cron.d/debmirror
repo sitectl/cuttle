@@ -2,4 +2,4 @@
 #
 # Regular cron jobs for all packages that use debmirror syncing
 #
-0 6     * * *   apt-mirror      /opt/apt-mirror/cron/debmirror.sh
+0 6     * * *   apt-mirror      {{ apt_mirror.path }}/cron/debmirror.sh

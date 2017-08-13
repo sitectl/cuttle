@@ -9,10 +9,10 @@
   tasks:
     - name: ping all hosts
       action: ping
-      tags: ['ping']
+      tags: [ping,always]
     - name: ansible setup
       action: setup
-      tags: ['ping']
+      tags: [ping,always]
   any_errors_fatal: true
   max_fail_percentage: 0
 
@@ -130,7 +130,7 @@
   hosts: elk:elasticsearch
   roles:
     - role: elk/elasticsearch
-      tags: ['elasticsearch']
+      tags: [elk, elasticsearch]
   environment: "{{ env_vars|default({}) }}"
   any_errors_fatal: true
 
@@ -138,7 +138,7 @@
   hosts: elk:logstash
   roles:
     - role: elk/logstash
-      tags: ['logstash']
+      tags: [elk, logstash]
   environment: "{{ env_vars|default({}) }}"
   any_errors_fatal: true
 
@@ -146,14 +146,7 @@
   hosts: elk:kibana
   roles:
     - role: elk/kibana
-      tags: ['kibana']
-  environment: "{{ env_vars|default({}) }}"
-  any_errors_fatal: true
-
-- name: rally benchmark host
-  hosts: rally
-  roles:
-    - rally
+      tags: [elk, kibana]
   environment: "{{ env_vars|default({}) }}"
   any_errors_fatal: true
 
